@@ -1,0 +1,15 @@
+node_modules
+src
+test
+coverage
+.turbo
+.env*
+!.env.example
+*.md
+.git
+.gitignore
+.eslintrc.js
+.prettierrc
+jest.config.js
+tsconfig.json
+nest-cli.json 
