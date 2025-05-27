@@ -6,6 +6,19 @@
       "outputs": [".next/**", "!.next/cache/**", "dist/**"],
       "inputs": ["$TURBO_DEFAULT$", ".env"]
     },
+    "api#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "inputs": ["$TURBO_DEFAULT$", ".env"],
+      "env": [
+        "SUPABASE_URL",
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "OPENAI_API_KEY",
+        "PAT_ENCRYPTION_KEY",
+        "PORT",
+        "FRONTEND_URL"
+      ]
+    },
     "dev": {
       "cache": false,
       "persistent": true
