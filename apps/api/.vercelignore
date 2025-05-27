@@ -1,5 +1,4 @@
 node_modules
-src
 test
 coverage
 .turbo
@@ -10,6 +9,4 @@ coverage
 .gitignore
 .eslintrc.js
 .prettierrc
-jest.config.js
-tsconfig.json
-nest-cli.json 
+jest.config.js 
