@@ -3,7 +3,8 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "inputs": ["$TURBO_DEFAULT$", ".env"]
     },
     "dev": {
       "cache": false,
@@ -15,5 +16,6 @@
     "start": {
       "dependsOn": ["build"]
     }
-  }
+  },
+  "globalDependencies": [".env"]
 }
