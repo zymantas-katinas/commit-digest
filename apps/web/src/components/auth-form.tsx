@@ -6,6 +6,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useAuthStore } from "@/stores/auth";
 import { GitBranch } from "lucide-react";
@@ -17,7 +24,11 @@ const authSchema = z.object({
 
 type AuthFormData = z.infer<typeof authSchema>;
 
-export function AuthForm() {
+interface AuthFormProps {
+  embedded?: boolean;
+}
+
+export function AuthForm({ embedded = false }: AuthFormProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,24 +59,32 @@ export function AuthForm() {
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8">
-        <div className="text-center">
+  const formContent = (
+    <>
+      {!embedded && (
+        <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <GitBranch className="h-12 w-12 text-primary" />
+            <div className="h-12 w-12 rounded bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center">
+              <GitBranch className="h-7 w-7 text-white" />
+            </div>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">Git Report</h2>
-          <p className="mt-2 text-gray-600">AI-powered Git commit reporting</p>
+          <h2 className="text-3xl font-bold">CommitDigest</h2>
+          <p className="mt-2 text-muted-foreground">
+            AI-powered Git commit reporting
+          </p>
         </div>
+      )}
 
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="mb-6">
-            <h3 className="text-xl font-semibold text-center">
-              {isSignUp ? "Create Account" : "Sign In"}
-            </h3>
-          </div>
-
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle>{isSignUp ? "Create Account" : "Sign In"}</CardTitle>
+          {embedded && (
+            <CardDescription>
+              Start generating AI-powered commit summaries
+            </CardDescription>
+          )}
+        </CardHeader>
+        <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <Input
@@ -75,7 +94,7 @@ export function AuthForm() {
                 disabled={loading}
               />
               {errors.email && (
-                <p className="text-sm text-red-600 mt-1">
+                <p className="text-sm text-destructive mt-1">
                   {errors.email.message}
                 </p>
               )}
@@ -89,14 +108,16 @@ export function AuthForm() {
                 disabled={loading}
               />
               {errors.password && (
-                <p className="text-sm text-red-600 mt-1">
+                <p className="text-sm text-destructive mt-1">
                   {errors.password.message}
                 </p>
               )}
             </div>
 
             {error && (
-              <div className="text-sm text-red-600 text-center">{error}</div>
+              <div className="text-sm text-destructive text-center bg-destructive/10 p-3 rounded-md border border-destructive/20">
+                {error}
+              </div>
             )}
 
             <Button type="submit" className="w-full" disabled={loading}>
@@ -117,8 +138,18 @@ export function AuthForm() {
                 : "Need an account? Sign up"}
             </button>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
+    </>
+  );
+
+  if (embedded) {
+    return <div className="w-full max-w-md">{formContent}</div>;
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="max-w-md w-full space-y-8 p-8">{formContent}</div>
     </div>
   );
 }

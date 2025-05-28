@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Noto_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Noto_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Git Report - AI-Powered Commit Reporting",
-  description: "Automated Git commit reporting with AI-powered summaries",
+  title: "CommitDigest - Automated Git Commit Summaries",
+  description:
+    "CommitDigest uses AI to generate clear, actionable summaries from your GitHub commits. Delivered via webhook, on your schedule.",
 };
 
 export default function RootLayout({
@@ -16,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body className={inter.className}>
         <Providers>{children}</Providers>
       </body>

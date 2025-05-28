@@ -142,11 +142,11 @@ export function ReportConfigurationList({
   const getStatusIcon = (status?: string) => {
     switch (status) {
       case "success":
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
       case "error":
-        return <XCircle className="h-4 w-4 text-red-600" />;
+        return <XCircle className="h-4 w-4 text-red-500" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-400" />;
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -154,21 +154,21 @@ export function ReportConfigurationList({
     switch (status) {
       case "success":
         return (
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-500 border border-green-500/20">
             <CheckCircle className="h-3 w-3 mr-1" />
             Success
           </span>
         );
       case "error":
         return (
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-500 border border-red-500/20">
             <XCircle className="h-3 w-3 mr-1" />
             Failed
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
             <Clock className="h-3 w-3 mr-1" />
             Pending
           </span>
@@ -178,11 +178,9 @@ export function ReportConfigurationList({
 
   if (configurations.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-500">
-        <Settings className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
-          No report configurations
-        </h3>
+      <div className="text-center py-12 text-muted-foreground">
+        <Settings className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+        <h3 className="text-lg font-medium mb-2">No report configurations</h3>
         <p className="text-sm">
           Configure automated reports for your repositories to get started.
         </p>
@@ -198,13 +196,13 @@ export function ReportConfigurationList({
           return (
             <div
               key={config.id}
-              className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+              className="bg-card border border-border rounded-lg p-6 hover:shadow-md transition-shadow"
             >
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold">
                       {config.name || "Unnamed Configuration"}
                     </h3>
                     {config.last_run_at &&
@@ -212,13 +210,13 @@ export function ReportConfigurationList({
                   </div>
 
                   {/* Repository Info */}
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 mb-3">
-                    <GitBranch className="h-4 w-4 text-gray-400" />
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-3">
+                    <GitBranch className="h-4 w-4" />
                     <span className="font-medium">
                       {getRepositoryName(config.repository_id)}
                     </span>
-                    <span className="text-gray-400">•</span>
-                    <span className="bg-gray-100 px-2 py-0.5 rounded-full text-xs">
+                    <span>•</span>
+                    <span className="bg-muted px-2 py-0.5 rounded-full text-xs">
                       {repo?.branch || "unknown"}
                     </span>
                     {repo && (
@@ -226,7 +224,7 @@ export function ReportConfigurationList({
                         href={repo.github_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
                         title="Open in GitHub"
                       >
                         <ExternalLink className="h-3 w-3" />
@@ -244,7 +242,7 @@ export function ReportConfigurationList({
                     disabled={
                       testingId === config.id || deletingId === config.id
                     }
-                    className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                    className="text-blue-400 border-blue-400/20 hover:bg-blue-500/10"
                   >
                     {testingId === config.id ? (
                       <LoadingSpinner size="sm" />
@@ -262,7 +260,7 @@ export function ReportConfigurationList({
                     disabled={
                       testingId === config.id || deletingId === config.id
                     }
-                    className="text-gray-600 hover:bg-gray-50"
+                    className="text-muted-foreground hover:bg-muted"
                   >
                     <Edit className="h-4 w-4 mr-1" />
                     Edit
@@ -274,7 +272,7 @@ export function ReportConfigurationList({
                     disabled={
                       deletingId === config.id || testingId === config.id
                     }
-                    className="text-red-600 border-red-200 hover:bg-red-50"
+                    className="text-red-400 border-red-400/20 hover:bg-red-500/10"
                   >
                     {deletingId === config.id ? (
                       <LoadingSpinner size="sm" />
@@ -290,13 +288,13 @@ export function ReportConfigurationList({
 
               {/* Configuration Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="flex items-center text-sm text-gray-600">
-                  <Clock className="h-4 w-4 mr-2 text-gray-400" />
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4 mr-2" />
                   <span className="font-medium mr-2">Schedule:</span>
                   {getScheduleDisplay(config.schedule)}
                 </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <Webhook className="h-4 w-4 mr-2 text-gray-400" />
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Webhook className="h-4 w-4 mr-2" />
                   <span className="font-medium mr-2">Webhook:</span>
                   <span className="truncate">{config.webhook_url}</span>
                 </div>
@@ -304,14 +302,12 @@ export function ReportConfigurationList({
 
               {/* Last Run Info */}
               {config.last_run_at && (
-                <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                <div className="bg-muted/50 rounded-lg p-3 mb-4">
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center space-x-2">
                       {getStatusIcon(config.last_run_status)}
-                      <span className="font-medium text-gray-700">
-                        Last Run:
-                      </span>
-                      <span className="text-gray-600">
+                      <span className="font-medium">Last Run:</span>
+                      <span className="text-muted-foreground">
                         {new Date(config.last_run_at).toLocaleString()}
                       </span>
                     </div>
@@ -324,8 +320,8 @@ export function ReportConfigurationList({
                 <div
                   className={`p-3 rounded-lg text-sm ${
                     testResult.success
-                      ? "bg-green-50 text-green-700 border border-green-200"
-                      : "bg-red-50 text-red-700 border border-red-200"
+                      ? "bg-green-500/10 text-green-500 border border-green-500/20"
+                      : "bg-red-500/10 text-red-500 border border-red-500/20"
                   }`}
                 >
                   <div className="flex items-center">
@@ -337,7 +333,7 @@ export function ReportConfigurationList({
                     <span className="font-medium">{testResult.message}</span>
                   </div>
                   {testResult.commitsFound !== undefined && (
-                    <div className="text-xs mt-1 ml-6">
+                    <div className="text-xs mt-1 ml-6 opacity-80">
                       Found {testResult.commitsFound} commits in the last 7 days
                     </div>
                   )}
@@ -345,7 +341,7 @@ export function ReportConfigurationList({
               )}
 
               {/* Footer */}
-              <div className="text-xs text-gray-500 mt-4 pt-3 border-t border-gray-100">
+              <div className="text-xs text-muted-foreground mt-4 pt-3 border-t border-border">
                 Created {new Date(config.created_at).toLocaleDateString()}
               </div>
             </div>

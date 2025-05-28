@@ -55,10 +55,12 @@ export function RepositoryList({
 
   if (repositories.length === 0) {
     return (
-      <div className="text-center py-6 text-gray-500">
-        <GitBranch className="h-8 w-8 mx-auto text-gray-300 mb-2" />
+      <div className="text-center py-6 text-muted-foreground">
+        <GitBranch className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />
         <p className="text-sm">No repositories</p>
-        <p className="text-xs mt-1 text-gray-400">Add one to get started</p>
+        <p className="text-xs mt-1 text-muted-foreground/70">
+          Add one to get started
+        </p>
       </div>
     );
   }
@@ -68,25 +70,25 @@ export function RepositoryList({
       {repositories.map((repo) => (
         <div
           key={repo.id}
-          className="group relative p-3 border border-gray-100 rounded-md hover:border-gray-200 hover:bg-gray-50 transition-colors"
+          className="group relative p-3 border border-border rounded-md hover:border-border/80 hover:bg-muted/50 transition-colors"
         >
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
               <div className="flex items-center space-x-1 mb-1">
-                <GitBranch className="h-3 w-3 text-gray-400 flex-shrink-0" />
-                <h3 className="text-sm font-medium text-gray-900 truncate">
+                <GitBranch className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                <h3 className="text-sm font-medium truncate">
                   {getRepoName(repo.github_url)}
                 </h3>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                   {repo.branch}
                 </span>
                 <a
                   href={repo.github_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
                   title="Open in GitHub"
                 >
                   <ExternalLink className="h-3 w-3" />
@@ -98,7 +100,7 @@ export function RepositoryList({
               size="sm"
               onClick={() => handleDelete(repo.id)}
               disabled={deletingId === repo.id}
-              className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 text-gray-400 hover:text-red-600 hover:bg-red-50"
+              className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
               title="Delete repository"
             >
               {deletingId === repo.id ? (
