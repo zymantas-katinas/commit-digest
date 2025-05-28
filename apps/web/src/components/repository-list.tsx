@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { EditRepositoryDialog } from "@/components/edit-repository-dialog";
 import { api } from "@/lib/api";
-import { Trash2, ExternalLink, GitBranch } from "lucide-react";
+import { Trash2, ExternalLink, GitBranch, Edit } from "lucide-react";
 
 interface Repository {
   id: string;
@@ -24,6 +25,9 @@ export function RepositoryList({
   onRefetch,
 }: RepositoryListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingRepository, setEditingRepository] = useState<Repository | null>(
+    null,
+  );
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.deleteRepository(id),
@@ -42,6 +46,10 @@ export function RepositoryList({
       setDeletingId(id);
       deleteMutation.mutate(id);
     }
+  };
+
+  const handleEdit = (repository: Repository) => {
+    setEditingRepository(repository);
   };
 
   const getRepoName = (url: string) => {
@@ -95,23 +103,46 @@ export function RepositoryList({
                 </a>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleDelete(repo.id)}
-              disabled={deletingId === repo.id}
-              className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
-              title="Delete repository"
-            >
-              {deletingId === repo.id ? (
-                <LoadingSpinner size="sm" />
-              ) : (
-                <Trash2 className="h-3 w-3" />
-              )}
-            </Button>
+            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEdit(repo)}
+                disabled={deletingId === repo.id}
+                className="h-6 w-6 p-0 text-muted-foreground hover:text-blue-400 hover:bg-blue-500/10"
+                title="Edit repository"
+              >
+                <Edit className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDelete(repo.id)}
+                disabled={deletingId === repo.id}
+                className="h-6 w-6 p-0 text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
+                title="Delete repository"
+              >
+                {deletingId === repo.id ? (
+                  <LoadingSpinner size="sm" />
+                ) : (
+                  <Trash2 className="h-3 w-3" />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       ))}
+
+      {/* Edit Dialog */}
+      <EditRepositoryDialog
+        open={!!editingRepository}
+        onOpenChange={(open) => !open && setEditingRepository(null)}
+        repository={editingRepository}
+        onSuccess={() => {
+          onRefetch();
+          setEditingRepository(null);
+        }}
+      />
     </div>
   );
 }

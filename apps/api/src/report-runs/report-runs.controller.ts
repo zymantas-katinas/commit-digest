@@ -31,20 +31,25 @@ export class ReportRunsController {
     const userId = req.user.id;
     const monthlyUsage = await this.reportRunsService.getMonthlyUsage(userId);
     const canRun = await this.reportRunsService.checkUsageLimit(userId);
+    const monthlyLimit = 50;
+
+    const usage = monthlyUsage || {
+      user_id: userId,
+      month: new Date().toISOString().slice(0, 7) + "-01",
+      total_runs: 0,
+      successful_runs: 0,
+      failed_runs: 0,
+      total_tokens: 0,
+      total_cost_usd: 0,
+      last_run_at: null,
+    };
 
     return {
-      monthlyUsage: monthlyUsage || {
-        user_id: userId,
-        month: new Date().toISOString().slice(0, 7) + "-01",
-        total_runs: 0,
-        successful_runs: 0,
-        failed_runs: 0,
-        total_tokens: 0,
-        total_cost_usd: 0,
-        last_run_at: null,
-      },
+      monthlyUsage: usage,
       canRunMore: canRun,
-      monthlyLimit: 50,
+      monthlyLimit,
+      runsUsed: usage.successful_runs,
+      runsRemaining: Math.max(0, monthlyLimit - usage.successful_runs),
     };
   }
 

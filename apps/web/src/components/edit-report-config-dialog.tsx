@@ -181,19 +181,6 @@ export function EditReportConfigDialog({
             </p>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="enabled"
-              {...register("enabled")}
-              disabled={updateMutation.isPending}
-              className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-            />
-            <Label htmlFor="enabled" className="text-sm font-medium">
-              Enable automatic reports
-            </Label>
-          </div>
-
           {error && (
             <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
               {error}

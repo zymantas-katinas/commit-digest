@@ -55,6 +55,9 @@ export class GitHubService {
 
       return response.data;
     } catch (error) {
+      console.log({
+        error,
+      });
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
           throw new HttpException(

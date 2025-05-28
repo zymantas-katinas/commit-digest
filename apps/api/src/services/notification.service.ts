@@ -14,6 +14,7 @@ export class NotificationService {
       commitsCount?: number;
       dateRange?: { since: string; until: string };
       isTest?: boolean;
+      isManual?: boolean;
     },
   ): Promise<boolean> {
     const maxRetries = 2;

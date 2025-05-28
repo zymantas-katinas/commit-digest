@@ -33,6 +33,14 @@ export const api = {
     branch: string;
     pat: string;
   }) => apiClient.post("/repositories", data),
+  updateRepository: (
+    id: string,
+    data: {
+      githubUrl?: string;
+      branch?: string;
+      pat?: string;
+    },
+  ) => apiClient.put(`/repositories/${id}`, data),
   deleteRepository: (id: string) => apiClient.delete(`/repositories/${id}`),
 
   // Report Configurations
@@ -59,6 +67,10 @@ export const api = {
     apiClient.delete(`/report-configurations/${id}`),
   testWebhook: (id: string) =>
     apiClient.post(`/report-configurations/${id}/test`),
+  manualTriggerReport: (
+    id: string,
+    data: { fromDate: string; toDate: string },
+  ) => apiClient.post(`/report-configurations/${id}/manual-trigger`, data),
 
   // Report Runs
   getReportRuns: (params?: { limit?: number; offset?: number }) =>

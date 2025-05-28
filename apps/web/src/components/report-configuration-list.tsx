@@ -1,11 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EditReportConfigDialog } from "@/components/edit-report-config-dialog";
+import { ManualTriggerDialog } from "@/components/manual-trigger-dialog";
 import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { api } from "@/lib/api";
 import {
   Trash2,
@@ -18,6 +26,9 @@ import {
   GitBranch,
   ExternalLink,
   Settings,
+  X,
+  Calendar,
+  MoreHorizontal,
 } from "lucide-react";
 
 interface Repository {
@@ -49,16 +60,31 @@ export function ReportConfigurationList({
   repositories,
   onRefetch,
 }: ReportConfigurationListProps) {
+  const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [editingConfig, setEditingConfig] =
     useState<ReportConfiguration | null>(null);
+  const [manualTriggerConfig, setManualTriggerConfig] =
+    useState<ReportConfiguration | null>(null);
   const [testResult, setTestResult] = useState<{
     configId: string;
     success: boolean;
     message: string;
+    errorType?: string;
     commitsFound?: number;
+    tokensUsed?: number;
+    costUsd?: number;
+  } | null>(null);
+  const [manualTriggerResult, setManualTriggerResult] = useState<{
+    configId: string;
+    success: boolean;
+    message: string;
+    errorType?: string;
+    commitsFound?: number;
+    tokensUsed?: number;
+    costUsd?: number;
   } | null>(null);
 
   const deleteMutation = useMutation({
@@ -76,23 +102,30 @@ export function ReportConfigurationList({
   const testMutation = useMutation({
     mutationFn: (id: string) => api.testWebhook(id),
     onSuccess: (data, configId) => {
+      const result = data.data;
       setTestResult({
         configId,
-        success: data.data.success,
-        message: data.data.message,
-        commitsFound: data.data.commitsFound,
+        success: result.success,
+        message: result.message,
+        errorType: result.errorType,
+        commitsFound: result.commitsFound,
+        tokensUsed: result.tokensUsed,
+        costUsd: result.costUsd,
       });
       setTestingId(null);
-      setTimeout(() => setTestResult(null), 10000);
+
+      setTimeout(() => setTestResult(null), result.success ? 20000 : 120000);
     },
     onError: (error, configId) => {
+      console.error("Test webhook error:", error);
       setTestResult({
         configId,
         success: false,
-        message: "Failed to test webhook",
+        message: "Network error: Failed to connect to server",
+        errorType: "NETWORK_ERROR",
       });
       setTestingId(null);
-      setTimeout(() => setTestResult(null), 10000);
+      setTimeout(() => setTestResult(null), 20000);
     },
   });
 
@@ -124,6 +157,34 @@ export function ReportConfigurationList({
 
   const handleEdit = (config: ReportConfiguration) => {
     setEditingConfig(config);
+  };
+
+  const handleManualTrigger = (config: ReportConfiguration) => {
+    setManualTriggerConfig(config);
+  };
+
+  const handleManualTriggerSuccess = (result: any) => {
+    setManualTriggerResult({
+      configId: manualTriggerConfig!.id,
+      success: result.success,
+      message: result.message,
+      errorType: result.errorType,
+      commitsFound: result.commitsFound,
+      tokensUsed: result.tokensUsed,
+      costUsd: result.costUsd,
+    });
+    setManualTriggerConfig(null);
+
+    // Auto-hide success results after 20 seconds, errors after 2 minutes
+    setTimeout(
+      () => setManualTriggerResult(null),
+      result.success ? 20000 : 120000,
+    );
+
+    // Invalidate usage stats query if the manual trigger was successful
+    if (result.success) {
+      queryClient.invalidateQueries({ queryKey: ["usage-stats"] });
+    }
   };
 
   const handleToggle = async (id: string, enabled: boolean) => {
@@ -293,33 +354,62 @@ export function ReportConfigurationList({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleEdit(config)}
+                      onClick={() => handleManualTrigger(config)}
                       disabled={
                         testingId === config.id || deletingId === config.id
                       }
-                      className="text-muted-foreground hover:bg-muted"
+                      className="text-purple-400 border-purple-400/20 hover:bg-purple-500/10"
                     >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit
+                      <Calendar className="h-4 w-4 mr-1" />
+                      Manual
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(config.id)}
-                      disabled={
-                        deletingId === config.id || testingId === config.id
-                      }
-                      className="text-red-400 border-red-400/20 hover:bg-red-500/10"
-                    >
-                      {deletingId === config.id ? (
-                        <LoadingSpinner size="sm" />
-                      ) : (
-                        <>
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Delete
-                        </>
-                      )}
-                    </Button>
+
+                    {/* Actions Dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={
+                            testingId === config.id || deletingId === config.id
+                          }
+                          className="text-muted-foreground hover:bg-muted"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => handleEdit(config)}
+                          disabled={
+                            testingId === config.id || deletingId === config.id
+                          }
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(config.id)}
+                          disabled={
+                            deletingId === config.id || testingId === config.id
+                          }
+                          className="text-red-400 focus:text-red-400"
+                        >
+                          {deletingId === config.id ? (
+                            <>
+                              <LoadingSpinner size="sm" className="mr-2" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </div>
@@ -332,7 +422,7 @@ export function ReportConfigurationList({
                   {getScheduleDisplay(config.schedule)}
                 </div>
                 <div className="flex items-center text-sm text-muted-foreground">
-                  <Webhook className="h-4 w-4 mr-2" />
+                  <Webhook size={16} className="mr-2" />
                   <span className="font-medium mr-2">Webhook:</span>
                   <span className="truncate">{config.webhook_url}</span>
                 </div>
@@ -356,27 +446,243 @@ export function ReportConfigurationList({
               {/* Test Result Display */}
               {testResult && testResult.configId === config.id && (
                 <div
-                  className={`p-3 rounded-lg text-sm ${
+                  className={`p-4 rounded-lg text-sm border relative ${
                     testResult.success
-                      ? "bg-green-500/10 text-green-500 border border-green-500/20"
-                      : "bg-red-500/10 text-red-500 border border-red-500/20"
+                      ? "bg-green-900/20 text-green-100 border-green-700/50"
+                      : "bg-red-900/20 text-red-100 border-red-700/50"
                   }`}
                 >
-                  <div className="flex items-center">
-                    {testResult.success ? (
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                    ) : (
-                      <XCircle className="h-4 w-4 mr-2" />
-                    )}
-                    <span className="font-medium">{testResult.message}</span>
-                  </div>
-                  {testResult.commitsFound !== undefined && (
-                    <div className="text-xs mt-1 ml-6 opacity-80">
-                      Found {testResult.commitsFound} commits in the last 7 days
-                    </div>
+                  {/* Close button for errors */}
+                  {!testResult.success && (
+                    <button
+                      onClick={() => setTestResult(null)}
+                      className="absolute top-2 right-2 p-1 rounded-full hover:bg-red-800/30 transition-colors"
+                      title="Close"
+                    >
+                      <X className="h-4 w-4 text-red-300" />
+                    </button>
                   )}
+
+                  <div className="flex items-start space-x-2 pr-8">
+                    {testResult.success ? (
+                      <CheckCircle className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-400 mt-0.5 flex-shrink-0" />
+                    )}
+                    <div className="flex-1">
+                      <div className="font-medium mb-1">
+                        {testResult.success ? "Test Successful" : "Test Failed"}
+                      </div>
+                      <div className="text-sm mb-2 opacity-90">
+                        {testResult.message}
+                      </div>
+
+                      {/* Additional details for successful tests */}
+                      {testResult.success && (
+                        <div className="grid grid-cols-2 gap-4 text-xs bg-green-950/30 rounded p-2 mt-2">
+                          <div>
+                            <span className="font-medium text-green-300">
+                              Commits found:
+                            </span>{" "}
+                            <span className="text-green-100">
+                              {testResult.commitsFound || 0}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Error-specific help text */}
+                      {!testResult.success && testResult.errorType && (
+                        <div className="mt-2 p-2 bg-red-950/30 rounded text-xs">
+                          {testResult.errorType === "GITHUB_TOKEN_INVALID" && (
+                            <div>
+                              <div className="font-medium text-red-300 mb-1">
+                                💡 How to fix:
+                              </div>
+                              <div className="text-red-100">
+                                Go to your repository settings and update the
+                                GitHub access token with a valid one.
+                              </div>
+                            </div>
+                          )}
+                          {testResult.errorType ===
+                            "GITHUB_REPOSITORY_NOT_FOUND" && (
+                            <div>
+                              <div className="font-medium text-red-300 mb-1">
+                                💡 How to fix:
+                              </div>
+                              <div className="text-red-100">
+                                Check that the repository URL is correct and the
+                                branch exists. Ensure your token has access to
+                                this repository.
+                              </div>
+                            </div>
+                          )}
+                          {testResult.errorType ===
+                            "WEBHOOK_DELIVERY_FAILED" && (
+                            <div>
+                              <div className="font-medium text-red-300 mb-1">
+                                💡 How to fix:
+                              </div>
+                              <div className="text-red-100">
+                                Verify the webhook URL is correct and
+                                accessible. Check if the endpoint is online and
+                                accepts POST requests.
+                              </div>
+                            </div>
+                          )}
+                          {testResult.errorType === "WEBHOOK_ERROR" && (
+                            <div>
+                              <div className="font-medium text-red-300 mb-1">
+                                💡 How to fix:
+                              </div>
+                              <div className="text-red-100">
+                                Check the webhook URL format and ensure the
+                                endpoint can receive JSON payloads.
+                              </div>
+                            </div>
+                          )}
+                          {testResult.errorType === "NETWORK_ERROR" && (
+                            <div>
+                              <div className="font-medium text-red-300 mb-1">
+                                💡 How to fix:
+                              </div>
+                              <div className="text-red-100">
+                                Check your internet connection and try again. If
+                                the problem persists, contact support.
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
+
+              {/* Manual Trigger Result Display */}
+              {manualTriggerResult &&
+                manualTriggerResult.configId === config.id && (
+                  <div
+                    className={`p-4 rounded-lg text-sm border relative ${
+                      manualTriggerResult.success
+                        ? "bg-purple-900/20 text-purple-100 border-purple-700/50"
+                        : "bg-red-900/20 text-red-100 border-red-700/50"
+                    }`}
+                  >
+                    {/* Close button for errors */}
+                    {!manualTriggerResult.success && (
+                      <button
+                        onClick={() => setManualTriggerResult(null)}
+                        className="absolute top-2 right-2 p-1 rounded-full hover:bg-red-800/30 transition-colors"
+                        title="Close"
+                      >
+                        <X className="h-4 w-4 text-red-300" />
+                      </button>
+                    )}
+
+                    <div className="flex items-start space-x-2 pr-8">
+                      {manualTriggerResult.success ? (
+                        <CheckCircle className="h-5 w-5 text-purple-400 mt-0.5 flex-shrink-0" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-red-400 mt-0.5 flex-shrink-0" />
+                      )}
+                      <div className="flex-1">
+                        <div className="font-medium mb-1">
+                          {manualTriggerResult.success
+                            ? "Manual Report Generated"
+                            : "Manual Report Failed"}
+                        </div>
+                        <div className="text-sm mb-2 opacity-90">
+                          {manualTriggerResult.message}
+                        </div>
+
+                        {/* Additional details for successful manual triggers */}
+                        {manualTriggerResult.success && (
+                          <div className="grid grid-cols-2 gap-4 text-xs bg-purple-950/30 rounded p-2 mt-2">
+                            <div>
+                              <span className="font-medium text-purple-300">
+                                Commits found:
+                              </span>{" "}
+                              <span className="text-purple-100">
+                                {manualTriggerResult.commitsFound || 0}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Error-specific help text for manual triggers */}
+                        {!manualTriggerResult.success &&
+                          manualTriggerResult.errorType && (
+                            <div className="mt-2 p-2 bg-red-950/30 rounded text-xs">
+                              {manualTriggerResult.errorType ===
+                                "GITHUB_TOKEN_INVALID" && (
+                                <div>
+                                  <div className="font-medium text-red-300 mb-1">
+                                    💡 How to fix:
+                                  </div>
+                                  <div className="text-red-100">
+                                    Go to your repository settings and update
+                                    the GitHub access token with a valid one.
+                                  </div>
+                                </div>
+                              )}
+                              {manualTriggerResult.errorType ===
+                                "GITHUB_REPOSITORY_NOT_FOUND" && (
+                                <div>
+                                  <div className="font-medium text-red-300 mb-1">
+                                    💡 How to fix:
+                                  </div>
+                                  <div className="text-red-100">
+                                    Check that the repository URL is correct and
+                                    the branch exists. Ensure your token has
+                                    access to this repository.
+                                  </div>
+                                </div>
+                              )}
+                              {manualTriggerResult.errorType ===
+                                "WEBHOOK_DELIVERY_FAILED" && (
+                                <div>
+                                  <div className="font-medium text-red-300 mb-1">
+                                    💡 How to fix:
+                                  </div>
+                                  <div className="text-red-100">
+                                    Verify the webhook URL is correct and
+                                    accessible. Check if the endpoint is online
+                                    and accepts POST requests.
+                                  </div>
+                                </div>
+                              )}
+                              {manualTriggerResult.errorType ===
+                                "USAGE_LIMIT_EXCEEDED" && (
+                                <div>
+                                  <div className="font-medium text-red-300 mb-1">
+                                    💡 How to fix:
+                                  </div>
+                                  <div className="text-red-100">
+                                    You have reached your monthly usage limit.
+                                    Wait until next month or upgrade your plan.
+                                  </div>
+                                </div>
+                              )}
+                              {manualTriggerResult.errorType ===
+                                "INVALID_DATE_RANGE" && (
+                                <div>
+                                  <div className="font-medium text-red-300 mb-1">
+                                    💡 How to fix:
+                                  </div>
+                                  <div className="text-red-100">
+                                    Please select a valid date range (max 31
+                                    days) and try again.
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
               {/* Footer */}
               <div className="text-xs text-muted-foreground mt-4 pt-3 border-t border-border">
@@ -396,6 +702,14 @@ export function ReportConfigurationList({
           onRefetch();
           setEditingConfig(null);
         }}
+      />
+
+      {/* Manual Trigger Dialog */}
+      <ManualTriggerDialog
+        open={!!manualTriggerConfig}
+        onOpenChange={(open) => !open && setManualTriggerConfig(null)}
+        configuration={manualTriggerConfig}
+        onSuccess={handleManualTriggerSuccess}
       />
     </>
   );

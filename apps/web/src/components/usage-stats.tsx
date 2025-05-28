@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -22,25 +22,16 @@ interface UsageStats {
 }
 
 export function UsageStats() {
-  const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchUsageStats();
-  }, []);
-
-  const fetchUsageStats = async () => {
-    try {
-      setLoading(true);
-      const response = await api.getUsageStats();
-      setUsageStats(response.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data: usageStats,
+    isLoading: loading,
+    error,
+  } = useQuery<UsageStats>({
+    queryKey: ["usage-stats"],
+    queryFn: () => api.getUsageStats().then((res) => res.data),
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
+  });
 
   if (loading) {
     return (

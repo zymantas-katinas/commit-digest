@@ -103,7 +103,7 @@ export function AddReportConfigDialog({
   const getRepositoryName = (url: string) => {
     try {
       const match = url.match(/github\.com\/([^\/]+\/[^\/]+)/);
-      return match ? match[1] : url;
+      return match ? `${match[1]}` : url;
     } catch {
       return url;
     }
@@ -148,7 +148,14 @@ export function AddReportConfigDialog({
               <SelectContent>
                 {repositories.map((repo) => (
                   <SelectItem key={repo.id} value={repo.id}>
-                    {getRepositoryName(repo.github_url)}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium truncate">
+                        {getRepositoryName(repo.github_url)}
+                      </span>
+                      <span className="text-xs text-muted-foreground bg-primary/10 px-2 py-0.5 rounded-full">
+                        {repo.branch}
+                      </span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -198,19 +205,6 @@ export function AddReportConfigDialog({
             <p className="text-xs text-gray-500">
               The URL where reports will be sent via POST request.
             </p>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="enabled"
-              {...register("enabled")}
-              disabled={createMutation.isPending}
-              className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-            />
-            <Label htmlFor="enabled" className="text-sm font-medium">
-              Enable automatic reports
-            </Label>
           </div>
 
           {error && (

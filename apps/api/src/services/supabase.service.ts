@@ -91,6 +91,27 @@ export class SupabaseService {
     if (error) throw error;
   }
 
+  async updateRepository(
+    id: string,
+    userId: string,
+    updates: {
+      github_url?: string;
+      branch?: string;
+      encrypted_access_token?: string;
+    },
+  ): Promise<Repository> {
+    const { data, error } = await this.supabase
+      .from("repositories")
+      .update(updates)
+      .eq("id", id)
+      .eq("user_id", userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
   // Report Configuration operations
   async createReportConfiguration(
     userId: string,

@@ -110,20 +110,49 @@ export class ReportRunsService {
       currentMonth.setDate(1);
       currentMonth.setHours(0, 0, 0, 0);
 
-      const { data, error } = await this.supabaseService["supabase"]
-        .from("user_monthly_usage")
-        .select("*")
+      // Query all runs for current month
+      const { data: allRuns, error: allRunsError } = await this.supabaseService[
+        "supabase"
+      ]
+        .from("report_runs")
+        .select("status, tokens_used, cost_usd, started_at")
         .eq("user_id", userId)
-        .eq("month", currentMonth.toISOString())
-        .single();
+        .gte("started_at", currentMonth.toISOString());
 
-      if (error && error.code !== "PGRST116") {
-        // PGRST116 = no rows returned
-        this.logger.error("Error fetching monthly usage:", error);
+      if (allRunsError) {
+        this.logger.error("Error fetching monthly usage:", allRunsError);
         return null;
       }
 
-      return data;
+      const runs = allRuns || [];
+      const successfulRuns = runs.filter((run) => run.status === "success");
+      const failedRuns = runs.filter((run) => run.status === "failed");
+
+      const totalTokens = runs.reduce(
+        (sum, run) => sum + (run.tokens_used || 0),
+        0,
+      );
+      const totalCost = runs.reduce((sum, run) => sum + (run.cost_usd || 0), 0);
+
+      const lastRunAt =
+        runs.length > 0
+          ? runs.sort(
+              (a, b) =>
+                new Date(b.started_at).getTime() -
+                new Date(a.started_at).getTime(),
+            )[0].started_at
+          : null;
+
+      return {
+        user_id: userId,
+        month: currentMonth.toISOString(),
+        total_runs: runs.length,
+        successful_runs: successfulRuns.length,
+        failed_runs: failedRuns.length,
+        total_tokens: totalTokens,
+        total_cost_usd: totalCost,
+        last_run_at: lastRunAt,
+      };
     } catch (error) {
       this.logger.error("Error fetching monthly usage:", error);
       return null;
