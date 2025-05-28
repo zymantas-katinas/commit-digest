@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { EditReportConfigDialog } from "@/components/edit-report-config-dialog";
 import { api } from "@/lib/api";
 import {
   Trash2,
@@ -11,7 +12,11 @@ import {
   Webhook,
   CheckCircle,
   XCircle,
-  TestTube,
+  FlaskConical,
+  Edit,
+  GitBranch,
+  ExternalLink,
+  Settings,
 } from "lucide-react";
 
 interface Repository {
@@ -22,6 +27,7 @@ interface Repository {
 
 interface ReportConfiguration {
   id: string;
+  name?: string;
   repository_id: string;
   schedule: string;
   webhook_url: string;
@@ -43,6 +49,8 @@ export function ReportConfigurationList({
 }: ReportConfigurationListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
+  const [editingConfig, setEditingConfig] =
+    useState<ReportConfiguration | null>(null);
   const [testResult, setTestResult] = useState<{
     configId: string;
     success: boolean;
@@ -72,7 +80,6 @@ export function ReportConfigurationList({
         commitsFound: data.data.commitsFound,
       });
       setTestingId(null);
-      // Clear test result after 5 seconds
       setTimeout(() => setTestResult(null), 10000);
     },
     onError: (error, configId) => {
@@ -99,8 +106,16 @@ export function ReportConfigurationList({
     testMutation.mutate(id);
   };
 
+  const handleEdit = (config: ReportConfiguration) => {
+    setEditingConfig(config);
+  };
+
+  const getRepository = (repositoryId: string) => {
+    return repositories.find((r) => r.id === repositoryId);
+  };
+
   const getRepositoryName = (repositoryId: string) => {
-    const repo = repositories.find((r) => r.id === repositoryId);
+    const repo = getRepository(repositoryId);
     if (!repo) return "Unknown Repository";
 
     try {
@@ -117,6 +132,8 @@ export function ReportConfigurationList({
         return "Daily at 9:00 AM";
       case "0 9 * * 1":
         return "Weekly on Monday at 9:00 AM";
+      case "0 9 1 * *":
+        return "Monthly on the 1st at 9:00 AM";
       default:
         return schedule;
     }
@@ -133,49 +150,179 @@ export function ReportConfigurationList({
     }
   };
 
+  const getStatusBadge = (status?: string) => {
+    switch (status) {
+      case "success":
+        return (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Success
+          </span>
+        );
+      case "error":
+        return (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            <XCircle className="h-3 w-3 mr-1" />
+            Failed
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+            <Clock className="h-3 w-3 mr-1" />
+            Pending
+          </span>
+        );
+    }
+  };
+
   if (configurations.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        <p>No report configurations yet.</p>
-        <p className="text-sm mt-2">
-          Configure automated reports for your repositories.
+      <div className="text-center py-12 text-gray-500">
+        <Settings className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          No report configurations
+        </h3>
+        <p className="text-sm">
+          Configure automated reports for your repositories to get started.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {configurations.map((config) => (
-        <div key={config.id} className="p-4 border rounded-lg hover:bg-gray-50">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h3 className="font-medium text-gray-900">
-                {getRepositoryName(config.repository_id)}
-              </h3>
-              <div className="mt-2 space-y-1">
+    <>
+      <div className="space-y-4">
+        {configurations.map((config) => {
+          const repo = getRepository(config.repository_id);
+          return (
+            <div
+              key={config.id}
+              className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {config.name || "Unnamed Configuration"}
+                    </h3>
+                    {config.last_run_at &&
+                      getStatusBadge(config.last_run_status)}
+                  </div>
+
+                  {/* Repository Info */}
+                  <div className="flex items-center space-x-2 text-sm text-gray-600 mb-3">
+                    <GitBranch className="h-4 w-4 text-gray-400" />
+                    <span className="font-medium">
+                      {getRepositoryName(config.repository_id)}
+                    </span>
+                    <span className="text-gray-400">•</span>
+                    <span className="bg-gray-100 px-2 py-0.5 rounded-full text-xs">
+                      {repo?.branch || "unknown"}
+                    </span>
+                    {repo && (
+                      <a
+                        href={repo.github_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        title="Open in GitHub"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleTest(config.id)}
+                    disabled={
+                      testingId === config.id || deletingId === config.id
+                    }
+                    className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                  >
+                    {testingId === config.id ? (
+                      <LoadingSpinner size="sm" />
+                    ) : (
+                      <>
+                        <FlaskConical className="h-4 w-4 mr-1" />
+                        Test
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(config)}
+                    disabled={
+                      testingId === config.id || deletingId === config.id
+                    }
+                    className="text-gray-600 hover:bg-gray-50"
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDelete(config.id)}
+                    disabled={
+                      deletingId === config.id || testingId === config.id
+                    }
+                    className="text-red-600 border-red-200 hover:bg-red-50"
+                  >
+                    {deletingId === config.id ? (
+                      <LoadingSpinner size="sm" />
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Configuration Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="flex items-center text-sm text-gray-600">
-                  <Clock className="h-4 w-4 mr-2" />
+                  <Clock className="h-4 w-4 mr-2 text-gray-400" />
+                  <span className="font-medium mr-2">Schedule:</span>
                   {getScheduleDisplay(config.schedule)}
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
-                  <Webhook className="h-4 w-4 mr-2" />
-                  {config.webhook_url}
+                  <Webhook className="h-4 w-4 mr-2 text-gray-400" />
+                  <span className="font-medium mr-2">Webhook:</span>
+                  <span className="truncate">{config.webhook_url}</span>
                 </div>
-                {config.last_run_at && (
-                  <div className="flex items-center text-sm text-gray-600">
-                    {getStatusIcon(config.last_run_status)}
-                    <span className="ml-2">
-                      Last run: {new Date(config.last_run_at).toLocaleString()}
-                    </span>
-                  </div>
-                )}
               </div>
+
+              {/* Last Run Info */}
+              {config.last_run_at && (
+                <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center space-x-2">
+                      {getStatusIcon(config.last_run_status)}
+                      <span className="font-medium text-gray-700">
+                        Last Run:
+                      </span>
+                      <span className="text-gray-600">
+                        {new Date(config.last_run_at).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Test Result Display */}
               {testResult && testResult.configId === config.id && (
                 <div
-                  className={`mt-2 p-2 rounded text-sm ${
+                  className={`p-3 rounded-lg text-sm ${
                     testResult.success
                       ? "bg-green-50 text-green-700 border border-green-200"
                       : "bg-red-50 text-red-700 border border-red-200"
@@ -187,53 +334,35 @@ export function ReportConfigurationList({
                     ) : (
                       <XCircle className="h-4 w-4 mr-2" />
                     )}
-                    {testResult.message}
+                    <span className="font-medium">{testResult.message}</span>
                   </div>
                   {testResult.commitsFound !== undefined && (
-                    <div className="text-xs mt-1">
+                    <div className="text-xs mt-1 ml-6">
                       Found {testResult.commitsFound} commits in the last 7 days
                     </div>
                   )}
                 </div>
               )}
 
-              <p className="text-xs text-gray-500 mt-2">
+              {/* Footer */}
+              <div className="text-xs text-gray-500 mt-4 pt-3 border-t border-gray-100">
                 Created {new Date(config.created_at).toLocaleDateString()}
-              </p>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleTest(config.id)}
-                disabled={testingId === config.id || deletingId === config.id}
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                title="Test webhook"
-              >
-                {testingId === config.id ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <TestTube className="h-4 w-4" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDelete(config.id)}
-                disabled={deletingId === config.id || testingId === config.id}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                title="Delete configuration"
-              >
-                {deletingId === config.id ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <Trash2 className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
+          );
+        })}
+      </div>
+
+      {/* Edit Dialog */}
+      <EditReportConfigDialog
+        open={!!editingConfig}
+        onOpenChange={(open) => !open && setEditingConfig(null)}
+        configuration={editingConfig}
+        onSuccess={() => {
+          onRefetch();
+          setEditingConfig(null);
+        }}
+      />
+    </>
   );
 }

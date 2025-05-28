@@ -38,15 +38,16 @@ export const api = {
   // Report Configurations
   getReportConfigurations: () => apiClient.get("/report-configurations"),
   createReportConfiguration: (data: {
+    name: string;
     repositoryId: string;
     schedule: string;
-    webhookUrl: string;
+    webhook_url: string;
   }) => apiClient.post("/report-configurations", data),
   getReportConfiguration: (id: string) =>
     apiClient.get(`/report-configurations/${id}`),
   updateReportConfiguration: (
     id: string,
-    data: { schedule?: string; webhookUrl?: string },
+    data: { name?: string; schedule?: string; webhook_url?: string },
   ) => apiClient.put(`/report-configurations/${id}`, data),
   deleteReportConfiguration: (id: string) =>
     apiClient.delete(`/report-configurations/${id}`),

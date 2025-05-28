@@ -53,7 +53,8 @@ export class ReportConfigurationsController {
           userId,
           createReportConfigurationDto.repositoryId,
           createReportConfigurationDto.schedule,
-          createReportConfigurationDto.webhookUrl,
+          createReportConfigurationDto.webhook_url,
+          createReportConfigurationDto.name,
         );
 
       return reportConfiguration;
@@ -127,6 +128,7 @@ export class ReportConfigurationsController {
 
       return reportConfiguration;
     } catch (error) {
+      console.error("Update report configuration error:", error);
       throw new HttpException(
         "Failed to update report configuration",
         HttpStatus.INTERNAL_SERVER_ERROR,

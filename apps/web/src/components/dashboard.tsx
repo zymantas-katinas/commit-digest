@@ -73,69 +73,78 @@ export function Dashboard() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Repositories Section */}
-          <div className="bg-white rounded-lg shadow-sm border">
-            <div className="p-6 border-b">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Repositories
-                </h2>
-                <Button
-                  onClick={() => setShowAddRepo(true)}
-                  size="sm"
-                  className="flex items-center"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Repository
-                </Button>
-              </div>
-            </div>
-            <div className="p-6">
-              {reposLoading ? (
-                <div className="flex justify-center py-8">
-                  <LoadingSpinner />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Repositories Section - Compact Sidebar */}
+          <div className="lg:col-span-1 order-2 lg:order-1">
+            <div className="bg-white rounded-lg shadow-sm border border-l-4 border-l-blue-500">
+              <div className="p-4 border-b bg-blue-50/50">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-sm font-medium text-blue-700 uppercase tracking-wide">
+                    Repositories
+                  </h2>
+                  <Button
+                    onClick={() => setShowAddRepo(true)}
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 w-6 p-0 text-blue-500 hover:text-blue-700 hover:bg-blue-100"
+                    title="Add Repository"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
-              ) : (
-                <RepositoryList
-                  repositories={repositories || []}
-                  onRefetch={refetchRepos}
-                />
-              )}
+              </div>
+              <div className="p-3">
+                {reposLoading ? (
+                  <div className="flex justify-center py-4">
+                    <LoadingSpinner size="sm" />
+                  </div>
+                ) : (
+                  <RepositoryList
+                    repositories={repositories || []}
+                    onRefetch={refetchRepos}
+                  />
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Report Configurations Section */}
-          <div className="bg-white rounded-lg shadow-sm border">
-            <div className="p-6 border-b">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Report Configurations
-                </h2>
-                <Button
-                  onClick={() => setShowAddConfig(true)}
-                  size="sm"
-                  variant="outline"
-                  className="flex items-center"
-                  disabled={!repositories || repositories.length === 0}
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Add Configuration
-                </Button>
-              </div>
-            </div>
-            <div className="p-6">
-              {configsLoading ? (
-                <div className="flex justify-center py-8">
-                  <LoadingSpinner />
+          {/* Report Configurations Section - Main Content */}
+          <div className="lg:col-span-3 order-1 lg:order-2">
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6 border-b">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Report Configurations
+                    </h2>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Manage automated report schedules and webhooks
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => setShowAddConfig(true)}
+                    size="sm"
+                    className="flex items-center self-start sm:self-auto"
+                    disabled={!repositories || repositories.length === 0}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Add Configuration
+                  </Button>
                 </div>
-              ) : (
-                <ReportConfigurationList
-                  configurations={reportConfigs || []}
-                  repositories={repositories || []}
-                  onRefetch={refetchConfigs}
-                />
-              )}
+              </div>
+              <div className="p-6">
+                {configsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <LoadingSpinner />
+                  </div>
+                ) : (
+                  <ReportConfigurationList
+                    configurations={reportConfigs || []}
+                    repositories={repositories || []}
+                    onRefetch={refetchConfigs}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>

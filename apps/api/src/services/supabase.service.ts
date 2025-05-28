@@ -16,11 +16,12 @@ export interface ReportConfiguration {
   id: string;
   user_id: string;
   repository_id: string;
+  name?: string;
   schedule: string;
   webhook_url: string;
   last_run_status?: string;
-  last_run_timestamp?: string;
-  last_report_content?: string;
+  last_run_at?: string;
+  last_run_content?: string;
   created_at: string;
   updated_at: string;
 }
@@ -95,12 +96,14 @@ export class SupabaseService {
     repositoryId: string,
     schedule: string,
     webhookUrl: string,
+    name?: string,
   ): Promise<ReportConfiguration> {
     const { data, error } = await this.supabase
       .from("report_configurations")
       .insert({
         user_id: userId,
         repository_id: repositoryId,
+        name: name,
         schedule: schedule,
         webhook_url: webhookUrl,
       })
@@ -149,7 +152,10 @@ export class SupabaseService {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase update error:", error);
+      throw error;
+    }
     return data;
   }
 
@@ -172,8 +178,8 @@ export class SupabaseService {
       .from("report_configurations")
       .select("*")
       .or(
-        `and(schedule.eq.daily,or(last_run_timestamp.is.null,last_run_timestamp.lt.${oneDayAgo.toISOString()})),` +
-          `and(schedule.eq.weekly,or(last_run_timestamp.is.null,last_run_timestamp.lt.${oneWeekAgo.toISOString()}))`,
+        `and(schedule.eq.daily,or(last_run_at.is.null,last_run_at.lt.${oneDayAgo.toISOString()})),` +
+          `and(schedule.eq.weekly,or(last_run_at.is.null,last_run_at.lt.${oneWeekAgo.toISOString()}))`,
       );
 
     if (error) throw error;

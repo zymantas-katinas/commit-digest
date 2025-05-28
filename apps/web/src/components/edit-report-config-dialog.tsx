@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,36 +25,40 @@ import {
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { api } from "@/lib/api";
 
-const reportConfigSchema = z.object({
+const editReportConfigSchema = z.object({
   name: z.string().min(1, "Configuration name is required"),
-  repositoryId: z.string().min(1, "Repository is required"),
   schedule: z.string().min(1, "Schedule is required"),
   webhook_url: z
     .string()
     .regex(/^https?:\/\/.+/, "Must be a valid HTTP or HTTPS URL"),
 });
 
-type ReportConfigFormData = z.infer<typeof reportConfigSchema>;
+type EditReportConfigFormData = z.infer<typeof editReportConfigSchema>;
 
-interface Repository {
+interface ReportConfiguration {
   id: string;
-  github_url: string;
-  branch: string;
+  name?: string;
+  repository_id: string;
+  schedule: string;
+  webhook_url: string;
+  last_run_at?: string;
+  last_run_status?: string;
+  created_at: string;
 }
 
-interface AddReportConfigDialogProps {
+interface EditReportConfigDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  repositories: Repository[];
+  configuration: ReportConfiguration | null;
   onSuccess: () => void;
 }
 
-export function AddReportConfigDialog({
+export function EditReportConfigDialog({
   open,
   onOpenChange,
-  repositories,
+  configuration,
   onSuccess,
-}: AddReportConfigDialogProps) {
+}: EditReportConfigDialogProps) {
   const [error, setError] = useState<string | null>(null);
 
   const {
@@ -63,14 +67,13 @@ export function AddReportConfigDialog({
     formState: { errors },
     reset,
     setValue,
-    watch,
-  } = useForm<ReportConfigFormData>({
-    resolver: zodResolver(reportConfigSchema),
+  } = useForm<EditReportConfigFormData>({
+    resolver: zodResolver(editReportConfigSchema),
   });
 
-  const createMutation = useMutation({
-    mutationFn: (data: ReportConfigFormData) =>
-      api.createReportConfiguration(data),
+  const updateMutation = useMutation({
+    mutationFn: (data: EditReportConfigFormData) =>
+      api.updateReportConfiguration(configuration!.id, data),
     onSuccess: () => {
       onSuccess();
       reset();
@@ -78,14 +81,23 @@ export function AddReportConfigDialog({
     },
     onError: (error: any) => {
       setError(
-        error.response?.data?.message || "Failed to create configuration",
+        error.response?.data?.message || "Failed to update configuration",
       );
     },
   });
 
-  const onSubmit = (data: ReportConfigFormData) => {
+  // Populate form when configuration changes
+  useEffect(() => {
+    if (configuration && open) {
+      setValue("name", configuration.name || "");
+      setValue("schedule", configuration.schedule);
+      setValue("webhook_url", configuration.webhook_url);
+    }
+  }, [configuration, open, setValue]);
+
+  const onSubmit = (data: EditReportConfigFormData) => {
     setError(null);
-    createMutation.mutate(data);
+    updateMutation.mutate(data);
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -96,26 +108,19 @@ export function AddReportConfigDialog({
     onOpenChange(newOpen);
   };
 
-  const getRepositoryName = (url: string) => {
-    try {
-      const match = url.match(/github\.com\/([^\/]+\/[^\/]+)/);
-      return match ? match[1] : url;
-    } catch {
-      return url;
-    }
-  };
-
   const scheduleOptions = [
     { value: "0 9 * * *", label: "Daily at 9:00 AM" },
     { value: "0 9 * * 1", label: "Weekly on Monday at 9:00 AM" },
     { value: "0 9 1 * *", label: "Monthly on the 1st at 9:00 AM" },
   ];
 
+  if (!configuration) return null;
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Report Configuration</DialogTitle>
+          <DialogTitle>Edit Report Configuration</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -125,7 +130,7 @@ export function AddReportConfigDialog({
               id="name"
               placeholder="e.g., Weekly Team Report"
               {...register("name")}
-              disabled={createMutation.isPending}
+              disabled={updateMutation.isPending}
             />
             {errors.name && (
               <p className="text-sm text-red-600">{errors.name.message}</p>
@@ -133,34 +138,11 @@ export function AddReportConfigDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="repositoryId">Repository</Label>
-            <Select
-              onValueChange={(value) => setValue("repositoryId", value)}
-              disabled={createMutation.isPending}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a repository" />
-              </SelectTrigger>
-              <SelectContent>
-                {repositories.map((repo) => (
-                  <SelectItem key={repo.id} value={repo.id}>
-                    {getRepositoryName(repo.github_url)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.repositoryId && (
-              <p className="text-sm text-red-600">
-                {errors.repositoryId.message}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="schedule">Schedule</Label>
             <Select
               onValueChange={(value) => setValue("schedule", value)}
-              disabled={createMutation.isPending}
+              disabled={updateMutation.isPending}
+              value={configuration.schedule}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select schedule" />
@@ -184,7 +166,7 @@ export function AddReportConfigDialog({
               id="webhook_url"
               placeholder="http://localhost:3002/webhook"
               {...register("webhook_url")}
-              disabled={createMutation.isPending}
+              disabled={updateMutation.isPending}
             />
             {errors.webhook_url && (
               <p className="text-sm text-red-600">
@@ -207,15 +189,15 @@ export function AddReportConfigDialog({
               type="button"
               variant="outline"
               onClick={() => handleOpenChange(false)}
-              disabled={createMutation.isPending}
+              disabled={updateMutation.isPending}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? (
+            <Button type="submit" disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? (
                 <LoadingSpinner size="sm" className="mr-2" />
               ) : null}
-              Create Configuration
+              Update Configuration
             </Button>
           </DialogFooter>
         </form>

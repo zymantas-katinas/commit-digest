@@ -1,6 +1,16 @@
-import { IsString, IsUrl, IsNotEmpty, Matches } from "class-validator";
+import {
+  IsString,
+  IsUrl,
+  IsNotEmpty,
+  Matches,
+  IsOptional,
+} from "class-validator";
 
 export class CreateReportConfigurationDto {
+  @IsString()
+  @IsOptional()
+  name?: string;
+
   @IsString()
   @IsNotEmpty()
   repositoryId: string;
@@ -19,7 +29,7 @@ export class CreateReportConfigurationDto {
   @IsString()
   @IsNotEmpty()
   @Matches(/^https?:\/\/.+/, {
-    message: "webhookUrl must be a valid HTTP or HTTPS URL",
+    message: "webhook_url must be a valid HTTP or HTTPS URL",
   })
-  webhookUrl: string;
+  webhook_url: string;
 }

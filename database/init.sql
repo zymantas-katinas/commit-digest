@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS report_configurations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   repository_id UUID REFERENCES repositories(id) ON DELETE CASCADE NOT NULL,
+  name TEXT,
   schedule TEXT NOT NULL,
   webhook_url TEXT NOT NULL,
   last_run_at TIMESTAMP WITH TIME ZONE,
