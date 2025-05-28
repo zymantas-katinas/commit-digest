@@ -4,6 +4,13 @@ import { ChatOpenAI } from "@langchain/openai";
 import { PromptTemplate } from "langchain/prompts";
 import { GitHubCommit } from "./github.service";
 
+export interface LLMSummaryResult {
+  summary: string;
+  tokensUsed: number;
+  costUsd: number;
+  model: string;
+}
+
 @Injectable()
 export class LLMService {
   private llm: ChatOpenAI;
@@ -19,9 +26,14 @@ export class LLMService {
   async generateCommitSummary(
     commits: GitHubCommit[],
     timeframe: string,
-  ): Promise<string> {
+  ): Promise<LLMSummaryResult> {
     if (commits.length === 0) {
-      return `# Git Commit Report (${timeframe})\n\nNo commits found for this period.`;
+      return {
+        summary: `# Git Commit Report (${timeframe})\n\nNo commits found for this period.`,
+        tokensUsed: 0,
+        costUsd: 0,
+        model: "gpt-4o-mini",
+      };
     }
 
     const commitMessages = commits
@@ -57,10 +69,41 @@ Please generate a well-structured Markdown report with appropriate headings and 
       });
 
       const response = await this.llm.invoke(prompt);
-      return response.content as string;
+
+      // Calculate approximate token usage and cost
+      // Note: This is an approximation. For exact usage, you'd need to use the OpenAI API directly
+      // or access the usage information from the response if available
+      const inputTokens = this.estimateTokens(prompt);
+      const outputTokens = this.estimateTokens(response.content as string);
+      const totalTokens = inputTokens + outputTokens;
+
+      // GPT-4o-mini pricing (as of 2024): $0.00015 per 1K input tokens, $0.0006 per 1K output tokens
+      const inputCost = (inputTokens / 1000) * 0.00015;
+      const outputCost = (outputTokens / 1000) * 0.0006;
+      const totalCost = inputCost + outputCost;
+
+      return {
+        summary: response.content as string,
+        tokensUsed: totalTokens,
+        costUsd: totalCost,
+        model: "gpt-4o-mini",
+      };
     } catch (error) {
       console.error("Error generating commit summary:", error);
-      return `# Git Commit Report (${timeframe})\n\n## Error\n\nFailed to generate AI summary. Raw commits:\n\n${commitMessages}`;
+      return {
+        summary: `# Git Commit Report (${timeframe})\n\n## Error\n\nFailed to generate AI summary. Raw commits:\n\n${commitMessages}`,
+        tokensUsed: 0,
+        costUsd: 0,
+        model: "gpt-4o-mini",
+      };
     }
+  }
+
+  /**
+   * Estimate token count for a given text
+   * This is a rough approximation: 1 token ≈ 4 characters for English text
+   */
+  private estimateTokens(text: string): number {
+    return Math.ceil(text.length / 4);
   }
 }

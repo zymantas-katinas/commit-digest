@@ -59,4 +59,10 @@ export const api = {
     apiClient.delete(`/report-configurations/${id}`),
   testWebhook: (id: string) =>
     apiClient.post(`/report-configurations/${id}/test`),
+
+  // Report Runs
+  getReportRuns: (params?: { limit?: number; offset?: number }) =>
+    apiClient.get("/report-runs", { params }),
+  getReportRun: (id: string) => apiClient.get(`/report-runs/${id}`),
+  getUsageStats: () => apiClient.get("/report-runs/usage"),
 };

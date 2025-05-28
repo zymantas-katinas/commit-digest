@@ -5,6 +5,7 @@ import { GitHubService } from "./github.service";
 import { LLMService } from "./llm.service";
 import { NotificationService } from "./notification.service";
 import { EncryptionService } from "./encryption.service";
+import { ReportRunsService } from "./report-runs.service";
 
 @Injectable()
 export class SchedulerService {
@@ -16,6 +17,7 @@ export class SchedulerService {
     private llmService: LLMService,
     private notificationService: NotificationService,
     private encryptionService: EncryptionService,
+    private reportRunsService: ReportRunsService,
   ) {}
 
   @Cron(CronExpression.EVERY_HOUR)
@@ -41,6 +43,45 @@ export class SchedulerService {
     const configId = config.id;
     this.logger.log(`Processing report configuration ${configId}`);
 
+    // Check usage limits first
+    const canRun = await this.reportRunsService.checkUsageLimit(config.user_id);
+    if (!canRun) {
+      this.logger.warn(
+        `User ${config.user_id} has exceeded monthly usage limit`,
+      );
+      await this.updateConfigurationStatus(
+        config,
+        "failed",
+        "Monthly usage limit exceeded",
+      );
+      return;
+    }
+
+    // Create report run record
+    let reportRun;
+    try {
+      reportRun = await this.reportRunsService.createReportRun({
+        user_id: config.user_id,
+        repository_id: config.repository_id,
+        report_configuration_id: config.id,
+        configuration_snapshot: {
+          schedule: config.schedule,
+          webhook_url: config.webhook_url,
+          name: config.name,
+        },
+        model_used: "gpt-4o-mini", // Default model
+      });
+      this.logger.log(
+        `Created report run ${reportRun.id} for config ${configId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to create report run for config ${configId}:`,
+        error,
+      );
+      return;
+    }
+
     try {
       // Get repository details
       const repository = await this.supabaseService.getRepositoryById(
@@ -48,6 +89,12 @@ export class SchedulerService {
       );
       if (!repository) {
         this.logger.error(`Repository not found for config ${configId}`);
+        await this.reportRunsService.markRunAsFailed(
+          reportRun.id,
+          config.user_id,
+          "Repository not found",
+          "REPOSITORY_NOT_FOUND",
+        );
         return;
       }
 
@@ -72,6 +119,18 @@ export class SchedulerService {
 
       if (commits.length === 0) {
         this.logger.log(`No new commits found for config ${configId}`);
+        await this.reportRunsService.markRunAsSuccess(
+          reportRun.id,
+          config.user_id,
+          {
+            tokens_used: 0,
+            cost_usd: 0,
+            commits_processed: 0,
+            commit_range_from: sinceDate.toISOString(),
+            commit_range_to: new Date().toISOString(),
+            report_content: "No new commits found",
+          },
+        );
         await this.updateConfigurationStatus(
           config,
           "success",
@@ -82,10 +141,15 @@ export class SchedulerService {
 
       // Generate summary
       const timeframe = this.isDailySchedule(config.schedule) ? "day" : "week";
-      const summary = await this.llmService.generateCommitSummary(
+      const summaryResult = await this.llmService.generateCommitSummary(
         commits,
         timeframe,
       );
+
+      // Extract tokens and cost information
+      const tokensUsed = summaryResult.tokensUsed;
+      const costUsd = summaryResult.costUsd;
+      const summary = summaryResult.summary;
 
       // Send webhook with metadata
       const webhookSuccess = await this.notificationService.sendWebhook(
@@ -103,18 +167,50 @@ export class SchedulerService {
         },
       );
 
+      // Update webhook delivery status
+      await this.reportRunsService.updateWebhookDelivery(
+        reportRun.id,
+        config.user_id,
+        webhookSuccess,
+        webhookSuccess ? 200 : 500,
+      );
+
+      // Mark run as successful
+      await this.reportRunsService.markRunAsSuccess(
+        reportRun.id,
+        config.user_id,
+        {
+          tokens_used: tokensUsed,
+          cost_usd: costUsd,
+          commits_processed: commits.length,
+          commit_range_from:
+            commits[commits.length - 1]?.sha || sinceDate.toISOString(),
+          commit_range_to: commits[0]?.sha || new Date().toISOString(),
+          report_content: summary,
+        },
+      );
+
       // Update configuration
       const status = webhookSuccess ? "success" : "failed";
       await this.updateConfigurationStatus(config, status, summary);
 
       this.logger.log(
-        `Report configuration ${configId} processed successfully`,
+        `Report configuration ${configId} processed successfully. Tokens used: ${tokensUsed}, Cost: $${costUsd}`,
       );
     } catch (error) {
       this.logger.error(
         `Error processing report configuration ${configId}:`,
         error,
       );
+
+      // Mark run as failed
+      await this.reportRunsService.markRunAsFailed(
+        reportRun.id,
+        config.user_id,
+        error.message || "Unknown error",
+        error.code || "UNKNOWN_ERROR",
+      );
+
       await this.updateConfigurationStatus(config, "failed", null);
     }
   }

@@ -63,6 +63,17 @@ ORDER BY table_name;
 - `created_at` (Timestamp)
 - `updated_at` (Timestamp)
 
+### `report_runs` Table
+
+- `id` (UUID, Primary Key)
+- `user_id` (UUID, Foreign Key to auth.users)
+- `repository_id` (UUID, Foreign Key to repositories)
+- `status` (Text)
+- `error_details` (Text, Nullable)
+- `webhook_delivery_status` (Text)
+- `created_at` (Timestamp)
+- `updated_at` (Timestamp)
+
 ## Security Features
 
 - **Row Level Security (RLS)**: Users can only access their own data
@@ -86,7 +97,128 @@ If you need to start fresh:
 -- WARNING: This will delete all data!
 DROP TABLE IF EXISTS report_configurations CASCADE;
 DROP TABLE IF EXISTS repositories CASCADE;
+DROP TABLE IF EXISTS report_runs CASCADE;
 DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
 ```
 
 Then run the `init.sql` script again.
+
+## Git Report Database
+
+This directory contains the database schema and migrations for the Git Report application.
+
+### Database Schema
+
+The application uses Supabase (PostgreSQL) with the following main tables:
+
+#### Core Tables
+
+1. **repositories** - Stores GitHub repository connections
+
+   - User's connected repositories with encrypted access tokens
+   - Branch information and metadata
+
+2. **report_configurations** - Stores report generation settings
+
+   - Scheduling configuration (cron expressions)
+   - Webhook URLs for delivery
+   - Last run status and content
+
+3. **report_runs** - Tracks each report generation execution
+   - Detailed logging of each report run
+   - Usage tracking (tokens, cost, processing time)
+   - Success/failure status and error details
+   - Webhook delivery status
+
+#### Usage Tracking & Billing
+
+The `report_runs` table enables comprehensive usage tracking:
+
+- **Tokens Used**: Tracks AI/LLM token consumption per run
+- **Cost Tracking**: Calculates cost in USD based on model pricing
+- **Monthly Limits**: Built-in function to check if user has exceeded monthly limits (default: 50 successful runs/month)
+- **Historical Data**: Complete audit trail of all report generations
+
+#### Views and Functions
+
+- **user_monthly_usage** - Aggregated monthly statistics per user
+- **check_monthly_usage_limit()** - Function to verify if user can run more reports
+
+### Setup Instructions
+
+1. **Initial Setup**
+
+   ```sql
+   -- Run in Supabase SQL Editor
+   \i database/init.sql
+   ```
+
+2. **Apply Migrations**
+
+   ```sql
+   -- Add enabled field to report configurations
+   \i database/migration_add_enabled_to_report_configurations.sql
+
+   -- Add name field to report configurations
+   \i database/migration_add_name_to_report_configurations.sql
+
+   -- Add report runs tracking (REQUIRED for usage limits)
+   \i database/migration_add_report_runs_table.sql
+   ```
+
+### Usage Tracking Features
+
+#### Monthly Usage Limits
+
+- Free tier users are limited to 50 successful report runs per month
+- Usage is tracked automatically when reports are generated
+- Failed runs don't count against the limit
+- Test webhook runs don't count against the limit (currently)
+
+#### API Endpoints
+
+- `GET /report-runs` - List user's report runs with pagination
+- `GET /report-runs/usage` - Get current month's usage statistics
+- `GET /report-runs/:id` - Get details of a specific report run
+
+#### Usage Statistics Include:
+
+- Total runs this month
+- Successful vs failed runs
+- Total tokens consumed
+- Total cost in USD
+- Last run timestamp
+- Whether user can run more reports
+
+### Row Level Security (RLS)
+
+All tables have RLS enabled with policies ensuring users can only access their own data:
+
+- Users can only see their own repositories
+- Users can only see their own report configurations
+- Users can only see their own report runs
+- Monthly usage view is filtered by user
+
+### Indexes
+
+Performance indexes are created for:
+
+- User-based queries
+- Date-based queries (for usage tracking)
+- Status-based queries
+- Monthly aggregation queries
+
+### Environment Variables
+
+Make sure these are set in your environment:
+
+- `SUPABASE_URL` - Your Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY` - Service role key for server-side operations
+- `OPENAI_API_KEY` - For AI-powered commit summarization
+
+### Migration History
+
+1. `init.sql` - Initial schema with repositories and report_configurations
+2. `migration_add_enabled_to_report_configurations.sql` - Added enabled field
+3. `migration_add_name_to_report_configurations.sql` - Added name field
+4. `migration_add_report_runs_table.sql` - Added comprehensive usage tracking

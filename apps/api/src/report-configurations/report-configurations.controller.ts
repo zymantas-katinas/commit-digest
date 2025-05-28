@@ -195,11 +195,13 @@ export class ReportConfigurationsController {
           message: "Test completed - No commits found in the last 7 days",
           commitsFound: 0,
           webhookSent: false,
+          tokensUsed: 0,
+          costUsd: 0,
         };
       }
 
       // Generate summary
-      const summary = await this.llmService.generateCommitSummary(
+      const summaryResult = await this.llmService.generateCommitSummary(
         commits,
         "week",
       );
@@ -207,7 +209,7 @@ export class ReportConfigurationsController {
       // Send test webhook with metadata
       const webhookSuccess = await this.notificationService.sendWebhook(
         config.webhook_url,
-        `[TEST] ${summary}`,
+        `[TEST] ${summaryResult.summary}`,
         {
           repository: repository.github_url,
           branch: repository.branch,
@@ -227,6 +229,8 @@ export class ReportConfigurationsController {
           : "Test webhook failed to send",
         commitsFound: commits.length,
         webhookSent: webhookSuccess,
+        tokensUsed: summaryResult.tokensUsed,
+        costUsd: summaryResult.costUsd,
         dateRange: {
           since: sinceDate.toISOString(),
           until: new Date().toISOString(),

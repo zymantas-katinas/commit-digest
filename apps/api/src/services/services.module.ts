@@ -5,6 +5,7 @@ import { LLMService } from "./llm.service";
 import { NotificationService } from "./notification.service";
 import { EncryptionService } from "./encryption.service";
 import { SchedulerService } from "./scheduler.service";
+import { ReportRunsService } from "./report-runs.service";
 
 @Module({
   providers: [
@@ -14,6 +15,7 @@ import { SchedulerService } from "./scheduler.service";
     NotificationService,
     EncryptionService,
     SchedulerService,
+    ReportRunsService,
   ],
   exports: [
     SupabaseService,
@@ -22,6 +24,7 @@ import { SchedulerService } from "./scheduler.service";
     NotificationService,
     EncryptionService,
     SchedulerService,
+    ReportRunsService,
   ],
 })
 export class ServicesModule {}
