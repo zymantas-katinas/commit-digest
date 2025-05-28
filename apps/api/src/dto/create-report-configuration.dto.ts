@@ -4,6 +4,7 @@ import {
   IsNotEmpty,
   Matches,
   IsOptional,
+  IsBoolean,
 } from "class-validator";
 
 export class CreateReportConfigurationDto {
@@ -32,4 +33,8 @@ export class CreateReportConfigurationDto {
     message: "webhook_url must be a valid HTTP or HTTPS URL",
   })
   webhook_url: string;
+
+  @IsBoolean()
+  @IsOptional()
+  enabled?: boolean;
 }

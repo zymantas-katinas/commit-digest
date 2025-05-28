@@ -1,4 +1,4 @@
-import { IsString, IsOptional, Matches } from "class-validator";
+import { IsString, IsOptional, Matches, IsBoolean } from "class-validator";
 
 export class UpdateReportConfigurationDto {
   @IsString()
@@ -22,4 +22,8 @@ export class UpdateReportConfigurationDto {
     message: "webhook_url must be a valid HTTP or HTTPS URL",
   })
   webhook_url?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  enabled?: boolean;
 }

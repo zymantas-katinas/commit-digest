@@ -32,6 +32,7 @@ const reportConfigSchema = z.object({
   webhook_url: z
     .string()
     .regex(/^https?:\/\/.+/, "Must be a valid HTTP or HTTPS URL"),
+  enabled: z.boolean().default(true),
 });
 
 type ReportConfigFormData = z.infer<typeof reportConfigSchema>;
@@ -66,6 +67,9 @@ export function AddReportConfigDialog({
     watch,
   } = useForm<ReportConfigFormData>({
     resolver: zodResolver(reportConfigSchema),
+    defaultValues: {
+      enabled: true,
+    },
   });
 
   const createMutation = useMutation({
@@ -194,6 +198,19 @@ export function AddReportConfigDialog({
             <p className="text-xs text-gray-500">
               The URL where reports will be sent via POST request.
             </p>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="enabled"
+              {...register("enabled")}
+              disabled={createMutation.isPending}
+              className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+            />
+            <Label htmlFor="enabled" className="text-sm font-medium">
+              Enable automatic reports
+            </Label>
           </div>
 
           {error && (

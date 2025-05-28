@@ -7,6 +7,7 @@ An automated Git commit reporting tool that uses AI to generate intelligent summ
 - **Repository Management**: Connect GitHub repositories with Personal Access Tokens
 - **AI-Powered Summaries**: Uses OpenAI GPT-4o Mini to generate intelligent commit summaries
 - **Automated Scheduling**: Configure daily or weekly reports with smart date range detection
+- **Enable/Disable Reports**: Toggle report configurations on/off without deleting them
 - **Webhook Testing**: Manual webhook testing with detailed feedback and commit analysis
 - **Webhook Delivery**: Send reports to any webhook endpoint with retry logic and rich metadata
 - **Secure Storage**: Encrypted storage of GitHub Personal Access Tokens
@@ -64,6 +65,7 @@ git-report/
 - `repository_id` (UUID, Foreign Key to repositories)
 - `schedule` (Text) - Cron expression
 - `webhook_url` (Text)
+- `enabled` (Boolean) - Whether the configuration is active
 - `last_run_at` (Timestamp, Nullable)
 - `last_run_status` (Text, Nullable)
 - `last_run_content` (Text, Nullable)
@@ -116,6 +118,7 @@ CREATE TABLE report_configurations (
   repository_id UUID REFERENCES repositories(id) ON DELETE CASCADE,
   schedule TEXT NOT NULL,
   webhook_url TEXT NOT NULL,
+  enabled BOOLEAN NOT NULL DEFAULT TRUE,
   last_run_at TIMESTAMP WITH TIME ZONE,
   last_run_status TEXT,
   last_run_content TEXT,

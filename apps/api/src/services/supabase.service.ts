@@ -19,6 +19,7 @@ export interface ReportConfiguration {
   name?: string;
   schedule: string;
   webhook_url: string;
+  enabled: boolean;
   last_run_status?: string;
   last_run_at?: string;
   last_run_content?: string;
@@ -97,6 +98,7 @@ export class SupabaseService {
     schedule: string,
     webhookUrl: string,
     name?: string,
+    enabled: boolean = true,
   ): Promise<ReportConfiguration> {
     const { data, error } = await this.supabase
       .from("report_configurations")
@@ -106,6 +108,7 @@ export class SupabaseService {
         name: name,
         schedule: schedule,
         webhook_url: webhookUrl,
+        enabled: enabled,
       })
       .select()
       .single();
@@ -177,6 +180,7 @@ export class SupabaseService {
     const { data, error } = await this.supabase
       .from("report_configurations")
       .select("*")
+      .eq("enabled", true)
       .or(
         `and(schedule.eq.daily,or(last_run_at.is.null,last_run_at.lt.${oneDayAgo.toISOString()})),` +
           `and(schedule.eq.weekly,or(last_run_at.is.null,last_run_at.lt.${oneWeekAgo.toISOString()}))`,

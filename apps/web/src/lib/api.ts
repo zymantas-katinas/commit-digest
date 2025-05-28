@@ -42,12 +42,18 @@ export const api = {
     repositoryId: string;
     schedule: string;
     webhook_url: string;
+    enabled?: boolean;
   }) => apiClient.post("/report-configurations", data),
   getReportConfiguration: (id: string) =>
     apiClient.get(`/report-configurations/${id}`),
   updateReportConfiguration: (
     id: string,
-    data: { name?: string; schedule?: string; webhook_url?: string },
+    data: {
+      name?: string;
+      schedule?: string;
+      webhook_url?: string;
+      enabled?: boolean;
+    },
   ) => apiClient.put(`/report-configurations/${id}`, data),
   deleteReportConfiguration: (id: string) =>
     apiClient.delete(`/report-configurations/${id}`),

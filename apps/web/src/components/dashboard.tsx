@@ -112,9 +112,7 @@ export function Dashboard() {
               <div className="p-6 border-b border-border">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                   <div>
-                    <h2 className="text-xl font-semibold">
-                      Report Configurations
-                    </h2>
+                    <h2 className="text-xl font-semibold">Scheduled Reports</h2>
                     <p className="text-sm text-muted-foreground mt-1">
                       Manage automated report schedules and webhooks
                     </p>
@@ -126,7 +124,7 @@ export function Dashboard() {
                     disabled={!repositories || repositories.length === 0}
                   >
                     <Settings className="h-4 w-4 mr-2" />
-                    Add Configuration
+                    Add New Report
                   </Button>
                 </div>
               </div>

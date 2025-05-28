@@ -55,6 +55,7 @@ export class ReportConfigurationsController {
           createReportConfigurationDto.schedule,
           createReportConfigurationDto.webhook_url,
           createReportConfigurationDto.name,
+          createReportConfigurationDto.enabled,
         );
 
       return reportConfiguration;

@@ -31,6 +31,7 @@ const editReportConfigSchema = z.object({
   webhook_url: z
     .string()
     .regex(/^https?:\/\/.+/, "Must be a valid HTTP or HTTPS URL"),
+  enabled: z.boolean(),
 });
 
 type EditReportConfigFormData = z.infer<typeof editReportConfigSchema>;
@@ -41,6 +42,7 @@ interface ReportConfiguration {
   repository_id: string;
   schedule: string;
   webhook_url: string;
+  enabled: boolean;
   last_run_at?: string;
   last_run_status?: string;
   created_at: string;
@@ -92,6 +94,7 @@ export function EditReportConfigDialog({
       setValue("name", configuration.name || "");
       setValue("schedule", configuration.schedule);
       setValue("webhook_url", configuration.webhook_url);
+      setValue("enabled", configuration.enabled);
     }
   }, [configuration, open, setValue]);
 
@@ -176,6 +179,19 @@ export function EditReportConfigDialog({
             <p className="text-xs text-gray-500">
               The URL where reports will be sent via POST request.
             </p>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="enabled"
+              {...register("enabled")}
+              disabled={updateMutation.isPending}
+              className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+            />
+            <Label htmlFor="enabled" className="text-sm font-medium">
+              Enable automatic reports
+            </Label>
           </div>
 
           {error && (
