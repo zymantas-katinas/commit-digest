@@ -1,12 +1,4 @@
-import {
-  GitBranch,
-  ExternalLink,
-  AlertCircle,
-  CheckCircle,
-  Info,
-  Zap,
-} from "lucide-react";
-import Link from "next/link";
+import { AlertCircle, CheckCircle, Info, Zap } from "lucide-react";
 import { AppHeader } from "@/components/app-header";
 
 export default function DocsPage() {
@@ -847,8 +839,8 @@ Brief overview of the period's activity
                     <h4 className="font-semibold mb-2">Slack</h4>
                     <ul className="list-disc list-inside space-y-1 text-muted-foreground text-sm">
                       <li>
-                        Markdown converted to Slack's format (headers become
-                        bold, bullets become •)
+                        Markdown converted to Slack&apos;s format (headers
+                        become bold, bullets become •)
                       </li>
                       <li>
                         Rich blocks format with metadata displayed in context
