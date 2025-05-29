@@ -30,8 +30,8 @@ export class ReportRunsController {
   async getUsageStats(@Request() req) {
     const userId = req.user.id;
     const monthlyUsage = await this.reportRunsService.getMonthlyUsage(userId);
+    const userLimits = await this.reportRunsService.getUserLimits(userId);
     const canRun = await this.reportRunsService.checkUsageLimit(userId);
-    const monthlyLimit = 50;
 
     const usage = monthlyUsage || {
       user_id: userId,
@@ -40,16 +40,30 @@ export class ReportRunsController {
       successful_runs: 0,
       failed_runs: 0,
       total_tokens: 0,
-      total_cost_usd: 0,
       last_run_at: null,
     };
 
+    // Remove cost information from response - users don't need to see operational costs
+    const usageWithoutCost = {
+      user_id: usage.user_id,
+      month: usage.month,
+      total_runs: usage.total_runs,
+      successful_runs: usage.successful_runs,
+      failed_runs: usage.failed_runs,
+      total_tokens: usage.total_tokens,
+      last_run_at: usage.last_run_at,
+    };
+
     return {
-      monthlyUsage: usage,
+      monthlyUsage: usageWithoutCost,
       canRunMore: canRun,
-      monthlyLimit,
+      limits: userLimits,
+      monthlyLimit: userLimits.monthly_runs_limit,
       runsUsed: usage.successful_runs,
-      runsRemaining: Math.max(0, monthlyLimit - usage.successful_runs),
+      runsRemaining: Math.max(
+        0,
+        userLimits.monthly_runs_limit - usage.successful_runs,
+      ),
     };
   }
 

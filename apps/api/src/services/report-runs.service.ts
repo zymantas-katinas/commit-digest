@@ -39,6 +39,13 @@ export interface MonthlyUsage {
   last_run_at: string;
 }
 
+export interface UserLimits {
+  monthly_runs_limit: number;
+  max_repositories: number;
+  max_reports: number;
+  plan_name: string;
+}
+
 export interface CreateReportRunData {
   user_id: string;
   repository_id: string;
@@ -71,10 +78,53 @@ export class ReportRunsService {
   constructor(private supabaseService: SupabaseService) {}
 
   /**
+   * Get user's effective limits based on their subscription plan
+   */
+  async getUserLimits(userId: string): Promise<UserLimits> {
+    try {
+      const { data, error } = await this.supabaseService["supabase"].rpc(
+        "get_user_limits",
+        { p_user_id: userId },
+      );
+
+      if (error) {
+        this.logger.error("Error fetching user limits:", error);
+        // Return default free tier limits if error
+        return {
+          monthly_runs_limit: 50,
+          max_repositories: 1,
+          max_reports: 5,
+          plan_name: "Free",
+        };
+      }
+
+      return (
+        data[0] || {
+          monthly_runs_limit: 50,
+          max_repositories: 1,
+          max_reports: 5,
+          plan_name: "Free",
+        }
+      );
+    } catch (error) {
+      this.logger.error("Error fetching user limits:", error);
+      return {
+        monthly_runs_limit: 50,
+        max_repositories: 1,
+        max_reports: 5,
+        plan_name: "Free",
+      };
+    }
+  }
+
+  /**
    * Check if user has exceeded their monthly usage limit
    */
-  async checkUsageLimit(userId: string, limit: number = 50): Promise<boolean> {
+  async checkUsageLimit(userId: string): Promise<boolean> {
     try {
+      // Get user's current limits
+      const limits = await this.getUserLimits(userId);
+
       // Get current month's start date
       const currentMonth = new Date();
       currentMonth.setDate(1);
@@ -94,7 +144,7 @@ export class ReportRunsService {
       }
 
       const currentMonthRuns = data?.length || 0;
-      return currentMonthRuns < limit;
+      return currentMonthRuns < limits.monthly_runs_limit;
     } catch (error) {
       this.logger.error("Error checking usage limit:", error);
       return false;

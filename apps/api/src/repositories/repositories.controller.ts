@@ -32,6 +32,27 @@ export class RepositoriesController {
   ) {
     try {
       const userId = req.user.id;
+
+      // Check if user can create more repositories based on their subscription plan
+      const { data: canCreate, error: limitError } = await this.supabaseService[
+        "supabase"
+      ].rpc("can_user_create_repository", { p_user_id: userId });
+
+      if (limitError) {
+        console.error("Error checking repository limit:", limitError);
+        throw new HttpException(
+          "Unable to verify subscription limits",
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      if (!canCreate) {
+        throw new HttpException(
+          "Repository limit reached for your current plan. Upgrade to add more repositories.",
+          HttpStatus.FORBIDDEN,
+        );
+      }
+
       const encryptedPat = this.encryptionService.encrypt(
         createRepositoryDto.pat,
       );
@@ -47,6 +68,9 @@ export class RepositoriesController {
       const { encrypted_access_token, ...repositoryResponse } = repository;
       return repositoryResponse;
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new HttpException(
         "Failed to create repository",
         HttpStatus.INTERNAL_SERVER_ERROR,

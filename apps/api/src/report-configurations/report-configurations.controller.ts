@@ -51,6 +51,29 @@ export class ReportConfigurationsController {
         throw new HttpException("Repository not found", HttpStatus.NOT_FOUND);
       }
 
+      // Check if user can create more report configurations for this repository
+      const { data: canCreate, error: limitError } = await this.supabaseService[
+        "supabase"
+      ].rpc("can_user_create_report_config", {
+        p_user_id: userId,
+        p_repository_id: createReportConfigurationDto.repositoryId,
+      });
+
+      if (limitError) {
+        console.error("Error checking report config limit:", limitError);
+        throw new HttpException(
+          "Unable to verify subscription limits",
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      if (!canCreate) {
+        throw new HttpException(
+          "Report configuration limit reached for this repository. Upgrade to add more report configurations.",
+          HttpStatus.FORBIDDEN,
+        );
+      }
+
       const reportConfiguration =
         await this.supabaseService.createReportConfiguration(
           userId,
@@ -438,8 +461,6 @@ export class ReportConfigurationsController {
               "Manual report completed - No commits found in the specified date range",
             commitsFound: 0,
             webhookSent: false,
-            tokensUsed: 0,
-            costUsd: 0,
           };
         }
 
@@ -556,8 +577,6 @@ export class ReportConfigurationsController {
         errorType: webhookSuccess ? null : errorType,
         commitsFound: commits.length,
         webhookSent: webhookSuccess,
-        tokensUsed: summaryResult?.tokensUsed || 0,
-        costUsd: summaryResult?.costUsd || 0,
         dateRange: {
           since: fromDate.toISOString(),
           until: toDate.toISOString(),

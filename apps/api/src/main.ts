@@ -3,7 +3,9 @@ import { ValidationPipe } from "@nestjs/common";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    rawBody: true,
+  });
 
   // Enable CORS for frontend communication
   app.enableCors({
@@ -28,7 +30,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3003;
   await app.listen(port);
-  console.log(`API server  running on port ${port}`);
+  console.log(`API server running on port ${port}`);
 }
 
 bootstrap();

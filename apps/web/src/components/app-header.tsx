@@ -52,6 +52,16 @@ export function AppHeader() {
             >
               Docs
             </Link>
+            <Link
+              className={`transition-colors hover:text-foreground/80 ${
+                pathname === "/pricing"
+                  ? "text-foreground"
+                  : "text-foreground/60"
+              }`}
+              href="/pricing"
+            >
+              Pricing
+            </Link>
             {!user && (
               <Link
                 className={`transition-colors hover:text-foreground/80 ${
@@ -122,6 +132,17 @@ export function AppHeader() {
                       onClick={closeMobileMenu}
                     >
                       Docs
+                    </Link>
+                    <Link
+                      className={`text-lg transition-colors hover:text-foreground/80 ${
+                        pathname === "/pricing"
+                          ? "text-foreground font-medium"
+                          : "text-foreground/60"
+                      }`}
+                      href="/pricing"
+                      onClick={closeMobileMenu}
+                    >
+                      Pricing
                     </Link>
                     {user && (
                       <Link

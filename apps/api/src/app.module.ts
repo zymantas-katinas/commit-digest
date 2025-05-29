@@ -7,6 +7,7 @@ import { ReportConfigurationsModule } from "./report-configurations/report-confi
 import { ReportRunsModule } from "./report-runs/report-runs.module";
 import { ServicesModule } from "./services/services.module";
 import { HealthModule } from "./health/health.module";
+import { SubscriptionsModule } from "./subscriptions/subscriptions.module";
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { HealthModule } from "./health/health.module";
     ReportRunsModule,
     ServicesModule,
     HealthModule,
+    SubscriptionsModule,
   ],
 })
 export class AppModule {}
