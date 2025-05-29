@@ -7,7 +7,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Configure middleware for webhook endpoints to receive raw body
-  app.use("/subscriptions/webhook", express.raw({ type: "application/json" }));
+  // Use exact path matching to avoid conflicts
+  app.use(
+    "/subscriptions/webhook",
+    express.raw({ type: "application/json", limit: "1mb" }),
+  );
 
   // Enable CORS for frontend communication
   app.enableCors({

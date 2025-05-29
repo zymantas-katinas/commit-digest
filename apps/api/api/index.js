@@ -10,12 +10,6 @@ async function createApp() {
   if (!app) {
     app = await NestFactory.create(AppModule);
 
-    // Configure middleware for webhook endpoints to receive raw body
-    app.use(
-      "/subscriptions/webhook",
-      express.raw({ type: "application/json" }),
-    );
-
     // Enable CORS for frontend communication
     app.enableCors({
       origin: [
@@ -43,6 +37,23 @@ async function createApp() {
 }
 
 module.exports = async (req, res) => {
+  // Handle raw body specifically for Stripe webhook
+  if (req.url === "/subscriptions/webhook" && req.method === "POST") {
+    let body = "";
+    req.setEncoding("utf8");
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+    req.on("end", async () => {
+      req.body = Buffer.from(body, "utf8");
+      const app = await createApp();
+      const expressApp = app.getHttpAdapter().getInstance();
+      return expressApp(req, res);
+    });
+    return;
+  }
+
+  // For all other routes, use normal processing
   const app = await createApp();
   const expressApp = app.getHttpAdapter().getInstance();
   return expressApp(req, res);
