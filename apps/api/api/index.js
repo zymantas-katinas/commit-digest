@@ -2,12 +2,19 @@
 const { NestFactory } = require("@nestjs/core");
 const { AppModule } = require("../dist/app.module");
 const { ValidationPipe } = require("@nestjs/common");
+const express = require("express");
 
 let app;
 
 async function createApp() {
   if (!app) {
     app = await NestFactory.create(AppModule);
+
+    // Configure middleware for webhook endpoints to receive raw body
+    app.use(
+      "/subscriptions/webhook",
+      express.raw({ type: "application/json" }),
+    );
 
     // Enable CORS for frontend communication
     app.enableCors({

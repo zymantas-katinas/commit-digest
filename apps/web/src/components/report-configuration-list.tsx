@@ -439,7 +439,7 @@ export function ReportConfigurationList({
                   </div>
 
                   {/* Action Buttons - Responsive Layout */}
-                  <div className="flex flex-wrap gap-2 md:flex-nowrap">
+                  <div className="flex flex-wrap gap-2 md:flex-nowrap md:space-x-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -535,7 +535,11 @@ export function ReportConfigurationList({
                   <span className="font-medium mr-2 flex-shrink-0">
                     Webhook:
                   </span>
-                  <span className="break-all">{config.webhook_url}</span>
+                  <span className="truncate" title={config.webhook_url}>
+                    {config.webhook_url.length > 40
+                      ? `${config.webhook_url.substring(0, 40)}...`
+                      : config.webhook_url}
+                  </span>
                 </div>
               </div>
 

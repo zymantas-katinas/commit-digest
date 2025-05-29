@@ -44,16 +44,14 @@ export function Dashboard() {
 
       {/* Main Content */}
       <main className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Usage Statistics - Top on mobile, sidebar on desktop */}
-          <div className="lg:col-span-1 order-1 lg:order-1">
-            <div className="lg:hidden mb-6">
-              <UsageStats />
-            </div>
-          </div>
+        {/* Usage Statistics - Top on mobile only */}
+        <div className="lg:hidden mb-6">
+          <UsageStats />
+        </div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Repositories Section - Compact Sidebar */}
-          <div className="lg:col-span-1 order-3 lg:order-1 space-y-4">
+          <div className="lg:col-span-1 order-2 lg:order-1 space-y-4">
             <div className="bg-card rounded-lg border border-l-4 border-l-blue-500">
               <div className="p-4 border-b bg-muted/30">
                 <div className="flex justify-between items-center">
@@ -92,7 +90,7 @@ export function Dashboard() {
           </div>
 
           {/* Main Content Area */}
-          <div className="lg:col-span-3 order-2 lg:order-2">
+          <div className="lg:col-span-3 order-1 lg:order-2">
             {/* Email Verification Notice */}
             {!user?.email_confirmed_at && (
               <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
