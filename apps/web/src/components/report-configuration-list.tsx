@@ -382,11 +382,11 @@ export function ReportConfigurationList({
           return (
             <div
               key={config.id}
-              className="bg-card border border-border rounded-lg p-6 hover:shadow-md transition-shadow"
+              className="bg-card border border-border rounded-lg p-4 sm:p-6 hover:shadow-md transition-shadow"
             >
               {/* Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1 min-w-0 pr-4">
+              <div className="flex flex-col space-y-4 md:flex-row md:items-start md:justify-between md:space-y-0 mb-4">
+                <div className="flex-1 min-w-0 md:pr-4">
                   <div className="flex items-center space-x-3 mb-2">
                     <h3 className="text-lg font-semibold truncate">
                       {config.name || "Unnamed Configuration"}
@@ -419,24 +419,27 @@ export function ReportConfigurationList({
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex flex-col items-end space-y-3">
+                {/* Action Buttons - Mobile Optimized */}
+                <div className="flex flex-col space-y-3 md:items-end">
                   {/* Enable/Disable Toggle */}
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={config.enabled}
-                      onCheckedChange={(enabled) =>
-                        handleToggle(config.id, enabled)
-                      }
-                      disabled={togglingId === config.id}
-                    />
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                  <div className="flex items-center justify-between md:justify-end space-x-2">
+                    <span className="text-sm text-muted-foreground md:order-2">
                       {config.enabled ? "Active" : "Paused"}
                     </span>
-                    {togglingId === config.id && <LoadingSpinner size="sm" />}
+                    <div className="flex items-center space-x-2 md:order-1">
+                      <Switch
+                        checked={config.enabled}
+                        onCheckedChange={(enabled) =>
+                          handleToggle(config.id, enabled)
+                        }
+                        disabled={togglingId === config.id}
+                      />
+                      {togglingId === config.id && <LoadingSpinner size="sm" />}
+                    </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  {/* Action Buttons - Responsive Layout */}
+                  <div className="flex flex-wrap gap-2 md:flex-nowrap">
                     <Button
                       variant="outline"
                       size="sm"
@@ -444,14 +447,14 @@ export function ReportConfigurationList({
                       disabled={
                         testingId === config.id || deletingId === config.id
                       }
-                      className="text-blue-400 border-blue-400/20 hover:bg-blue-500/10"
+                      className="flex-1 md:flex-none text-blue-400 border-blue-400/20 hover:bg-blue-500/10"
                     >
                       {testingId === config.id ? (
                         <LoadingSpinner size="sm" />
                       ) : (
                         <>
                           <FlaskConical className="h-4 w-4 mr-1" />
-                          Test
+                          <span className="hidden sm:inline">Test</span>
                         </>
                       )}
                     </Button>
@@ -462,10 +465,10 @@ export function ReportConfigurationList({
                       disabled={
                         testingId === config.id || deletingId === config.id
                       }
-                      className="text-purple-400 border-purple-400/20 hover:bg-purple-500/10"
+                      className="flex-1 md:flex-none text-purple-400 border-purple-400/20 hover:bg-purple-500/10"
                     >
                       <Calendar className="h-4 w-4 mr-1" />
-                      Manual
+                      <span className="hidden sm:inline">Manual</span>
                     </Button>
 
                     {/* Actions Dropdown */}
@@ -477,7 +480,7 @@ export function ReportConfigurationList({
                           disabled={
                             testingId === config.id || deletingId === config.id
                           }
-                          className="text-muted-foreground hover:bg-muted"
+                          className="flex-1 md:flex-none text-muted-foreground hover:bg-muted"
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
@@ -519,16 +522,20 @@ export function ReportConfigurationList({
               </div>
 
               {/* Configuration Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                 <div className="flex items-center text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4 mr-2" />
+                  <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
                   <span className="font-medium mr-2">Schedule:</span>
-                  {getScheduleDisplay(config.schedule)}
+                  <span className="truncate">
+                    {getScheduleDisplay(config.schedule)}
+                  </span>
                 </div>
-                <div className="flex items-center text-sm text-muted-foreground">
+                <div className="flex items-start text-sm text-muted-foreground">
                   {getWebhookIcon(config.webhook_url)}
-                  <span className="font-medium mr-2">Webhook:</span>
-                  <span className="truncate">{config.webhook_url}</span>
+                  <span className="font-medium mr-2 flex-shrink-0">
+                    Webhook:
+                  </span>
+                  <span className="break-all">{config.webhook_url}</span>
                 </div>
               </div>
 
@@ -790,12 +797,12 @@ export function ReportConfigurationList({
 
               {/* Footer */}
               <div className="text-xs text-muted-foreground mt-4 pt-3 border-t border-border">
-                <div className="flex justify-between items-center">
-                  <span>
+                <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
+                  <span className="font-medium">
                     Next run in:{" "}
                     {getNextRunTime(config.schedule, config.enabled)}
                   </span>
-                  <div className="flex items-center space-x-4">
+                  <div className="flex flex-col space-y-1 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
                     <span>
                       Created {new Date(config.created_at).toLocaleDateString()}
                     </span>

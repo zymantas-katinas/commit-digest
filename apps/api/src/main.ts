@@ -1,11 +1,13 @@
 import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { AppModule } from "./app.module";
+import * as express from "express";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    rawBody: true, // Enable raw body globally but we'll handle it properly
-  });
+  const app = await NestFactory.create(AppModule);
+
+  // Configure middleware for webhook endpoints to receive raw body
+  app.use("/subscriptions/webhook", express.raw({ type: "application/json" }));
 
   // Enable CORS for frontend communication
   app.enableCors({
