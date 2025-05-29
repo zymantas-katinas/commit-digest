@@ -548,7 +548,7 @@ Brief overview of the period's activity
                   <li>Mention issue numbers or ticket references</li>
                 </ul>
 
-                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
                   <div className="flex items-start space-x-3">
                     <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                     <div>
@@ -630,14 +630,65 @@ Brief overview of the period's activity
                 <div className="bg-muted rounded-lg p-4 mb-6">
                   <pre className="text-sm overflow-x-auto">
                     {`{
-  "reportTitle": "Commit Digest for user/repo - Jan 1-7, 2024",
-  "repositoryUrl": "https://github.com/user/repo",
+  "content": "AI-generated commit summary...",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "repository": "https://github.com/user/repo",
   "branch": "main",
-  "generatedAt": "2024-01-08T09:00:00Z",
-  "summaryMarkdown": "# Commit Digest for user/repo\\n\\n## New Features\\n- Added X feature (commit: abc1234)\\n\\n## Bug Fixes\\n- Fixed Y bug (commit: def5678)\\n..."
+  "commitsCount": 15,
+  "dateRange": {
+    "since": "2024-01-08T10:30:00.000Z",
+    "until": "2024-01-15T10:30:00.000Z"
+  },
+  "isTest": false,
+  "isManual": false
 }`}
                   </pre>
                 </div>
+
+                <h3 className="text-xl font-semibold mb-3">Payload Fields</h3>
+                <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-6">
+                  <li>
+                    <strong>content</strong> (string) - The AI-generated commit
+                    summary/report
+                  </li>
+                  <li>
+                    <strong>timestamp</strong> (string) - ISO timestamp when the
+                    webhook was sent
+                  </li>
+                  <li>
+                    <strong>repository</strong> (string, optional) - Repository
+                    URL
+                  </li>
+                  <li>
+                    <strong>branch</strong> (string, optional) - Branch name
+                  </li>
+                  <li>
+                    <strong>commitsCount</strong> (number, optional) - Number of
+                    commits included in the report
+                  </li>
+                  <li>
+                    <strong>dateRange</strong> (object, optional) - Date range
+                    used for commit fetching
+                    <ul className="list-disc list-inside ml-6 mt-1">
+                      <li>
+                        <strong>since</strong> (string) - ISO timestamp of start
+                        date
+                      </li>
+                      <li>
+                        <strong>until</strong> (string) - ISO timestamp of end
+                        date
+                      </li>
+                    </ul>
+                  </li>
+                  <li>
+                    <strong>isTest</strong> (boolean, optional) - true if this
+                    was triggered by manual testing
+                  </li>
+                  <li>
+                    <strong>isManual</strong> (boolean, optional) - true if this
+                    was triggered manually (outside of scheduled runs)
+                  </li>
+                </ul>
 
                 <h3 className="text-xl font-semibold mb-3">
                   Expected Endpoint Behavior
@@ -661,38 +712,178 @@ Brief overview of the period's activity
                   Platform Integration Examples
                 </h2>
 
+                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                  <div className="flex items-start space-x-3">
+                    <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                        Automatic Platform Detection
+                      </h3>
+                      <p className="text-blue-800 dark:text-blue-200 mb-0">
+                        CommitDigest automatically detects your platform based
+                        on the webhook URL and formats the payload accordingly.
+                        Slack receives optimized blocks format with markdown
+                        conversion, Discord gets standard markdown in the
+                        content field, and generic endpoints receive a clean
+                        content field with full metadata.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <h3 className="text-xl font-semibold mb-3">
                   Slack Integration
                 </h3>
                 <p className="text-muted-foreground mb-4">
-                  To receive reports in Slack:
+                  For Slack webhooks (detected automatically when URL contains
+                  `hooks.slack.com`):
                 </p>
-                <ol className="list-decimal list-inside space-y-2 text-muted-foreground mb-6">
+                <ol className="list-decimal list-inside space-y-2 text-muted-foreground mb-4">
                   <li>Create a Slack app in your workspace</li>
                   <li>Add an incoming webhook to your desired channel</li>
                   <li>
-                    Use the webhook URL in your CommitDigest configuration
-                  </li>
-                  <li>
-                    Create a simple endpoint that formats the Markdown for Slack
+                    Use the webhook URL directly in your CommitDigest
+                    configuration
                   </li>
                 </ol>
+
+                <div className="bg-muted rounded-lg p-4 mb-6">
+                  <h4 className="font-semibold mb-2">Slack Payload Example:</h4>
+                  <pre className="text-sm overflow-x-auto">
+                    {`{
+  "text": "Formatted markdown content...",
+  "blocks": [
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "# Weekly Report\\n\\n## Features\\n• Added user authentication\\n• Fixed bug in payments"
+      }
+    },
+    {
+      "type": "context", 
+      "elements": [
+        {
+          "type": "mrkdwn",
+          "text": "*Repository:* <https://github.com/user/repo|user/repo>"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*Branch:* main"
+        },
+        {
+          "type": "mrkdwn", 
+          "text": "*Commits:* 15"
+        }
+      ]
+    }
+  ],
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}`}
+                  </pre>
+                </div>
 
                 <h3 className="text-xl font-semibold mb-3">
                   Discord Integration
                 </h3>
                 <p className="text-muted-foreground mb-4">
-                  For Discord notifications:
+                  For Discord webhooks (detected automatically when URL contains
+                  `discord.com/api/webhooks`):
                 </p>
-                <ol className="list-decimal list-inside space-y-2 text-muted-foreground mb-6">
+                <ol className="list-decimal list-inside space-y-2 text-muted-foreground mb-4">
                   <li>Create a webhook in your Discord server settings</li>
                   <li>
-                    Use a service like Zapier or create a simple proxy endpoint
-                  </li>
-                  <li>
-                    Format the Markdown content for Discord's message format
+                    Use the webhook URL directly in your CommitDigest
+                    configuration
                   </li>
                 </ol>
+
+                <div className="bg-muted rounded-lg p-4 mb-6">
+                  <h4 className="font-semibold mb-2">
+                    Discord Payload Example:
+                  </h4>
+                  <pre className="text-sm overflow-x-auto">
+                    {`{
+  "content": "# Weekly Report\\n\\n## Features\\n- Added user authentication\\n- Fixed bug in payments\\n\\n**Repository:** https://github.com/user/repo\\n**Branch:** main\\n**Commits:** 15",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "repository": "https://github.com/user/repo",
+  "branch": "main",
+  "commitsCount": 15
+}`}
+                  </pre>
+                </div>
+
+                <h3 className="text-xl font-semibold mb-3">
+                  Generic/Custom Endpoints
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  For custom endpoints or other platforms:
+                </p>
+
+                <div className="bg-muted rounded-lg p-4 mb-6">
+                  <h4 className="font-semibold mb-2">
+                    Generic Payload Example:
+                  </h4>
+                  <pre className="text-sm overflow-x-auto">
+                    {`{
+  "content": "AI-generated commit summary...",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "repository": "https://github.com/user/repo", 
+  "branch": "main",
+  "commitsCount": 15,
+  "dateRange": {
+    "since": "2024-01-08T10:30:00.000Z",
+    "until": "2024-01-15T10:30:00.000Z"
+  }
+}`}
+                  </pre>
+                </div>
+
+                <h3 className="text-xl font-semibold mb-3">
+                  Platform-Specific Features
+                </h3>
+                <div className="space-y-4">
+                  <div className="border border-border rounded-lg p-4">
+                    <h4 className="font-semibold mb-2">Slack</h4>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground text-sm">
+                      <li>
+                        Markdown converted to Slack's format (headers become
+                        bold, bullets become •)
+                      </li>
+                      <li>
+                        Rich blocks format with metadata displayed in context
+                        section
+                      </li>
+                      <li>Repository links become clickable</li>
+                      <li>
+                        Content limited to 4000 characters for Slack limits
+                      </li>
+                      <li>
+                        Uses both `text` field (fallback) and `blocks` format
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="border border-border rounded-lg p-4">
+                    <h4 className="font-semibold mb-2">Discord</h4>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground text-sm">
+                      <li>Full markdown support preserved</li>
+                      <li>Uses `content` field as expected by Discord</li>
+                      <li>Metadata included as separate fields</li>
+                      <li>No character limits imposed</li>
+                    </ul>
+                  </div>
+
+                  <div className="border border-border rounded-lg p-4">
+                    <h4 className="font-semibold mb-2">Generic</h4>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground text-sm">
+                      <li>Clean `content` field with raw markdown</li>
+                      <li>Full metadata object included</li>
+                      <li>No platform-specific formatting applied</li>
+                      <li>Ideal for custom integrations and processing</li>
+                    </ul>
+                  </div>
+                </div>
               </section>
 
               {/* Delivery & Retries */}

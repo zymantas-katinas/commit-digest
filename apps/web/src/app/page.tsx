@@ -25,8 +25,11 @@ import {
   Calendar,
 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState("summary");
+
   return (
     <div className="dark">
       <AuthRedirect />
@@ -83,7 +86,7 @@ export default function Home() {
                 </div>
 
                 {/* Schedule Icon - positioned between AI and outputs */}
-                <div className="flex items-center space-x-2 px-4 py-2 rounded-full bg-muted/30 border">
+                {/* <div className="flex items-center space-x-2 px-4 py-2 rounded-full bg-muted/30 border">
                   <svg
                     width="20"
                     height="20"
@@ -98,6 +101,16 @@ export default function Home() {
                   <span className="text-sm font-medium text-muted-foreground">
                     Scheduled Webhook Delivery
                   </span>
+                </div> */}
+
+                {/* Webhook Icon */}
+                <div className="flex justify-center">
+                  <div className="flex items-center space-x-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+                    <Webhook className="h-5 w-5 text-primary" />
+                    <span className="text-sm font-medium text-primary">
+                      Scheduled Webhook Delivery
+                    </span>
+                  </div>
                 </div>
 
                 {/* Arrow down */}
@@ -108,13 +121,16 @@ export default function Home() {
                 </div>
 
                 {/* Output Icons Grid */}
-                <div className="grid grid-cols-3 md:grid-cols-6 gap-4 w-full max-w-2xl">
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-4 w-full max-w-3xl">
                   {/* Discord */}
-                  <div className="flex flex-col items-center space-y-2">
-                    <div className="p-3 rounded-lg bg-muted/50 border">
+                  <Link
+                    href="/integrations/discord"
+                    className="flex flex-col items-center space-y-2 hover:scale-105 transition-transform cursor-pointer"
+                  >
+                    <div className="p-4 rounded-lg bg-muted/50 border hover:border-[#5865F2]/50">
                       <svg
-                        width="24"
-                        height="24"
+                        width="28"
+                        height="28"
                         viewBox="0 -28.5 256 256"
                         className="text-[#5865F2]"
                       >
@@ -125,12 +141,15 @@ export default function Home() {
                       </svg>
                     </div>
                     <span className="text-xs font-medium">Discord</span>
-                  </div>
+                  </Link>
 
                   {/* Slack */}
-                  <div className="flex flex-col items-center space-y-2">
-                    <div className="p-3 rounded-lg bg-muted/50 border">
-                      <svg width="24" height="24" viewBox="0 0 16 16">
+                  <Link
+                    href="/integrations/slack"
+                    className="flex flex-col items-center space-y-2 hover:scale-105 transition-transform cursor-pointer"
+                  >
+                    <div className="p-4 rounded-lg bg-muted/50 border hover:border-green-500/50">
+                      <svg width="28" height="28" viewBox="0 0 16 16">
                         <path
                           fill="#E01E5A"
                           d="M2.471 11.318a1.474 1.474 0 001.47-1.471v-1.47h-1.47A1.474 1.474 0 001 9.846c.001.811.659 1.469 1.47 1.47zm3.682-2.942a1.474 1.474 0 00-1.47 1.471v3.683c.002.811.66 1.468 1.47 1.47a1.474 1.474 0 001.47-1.47V9.846a1.474 1.474 0 00-1.47-1.47z"
@@ -150,10 +169,10 @@ export default function Home() {
                       </svg>
                     </div>
                     <span className="text-xs font-medium">Slack</span>
-                  </div>
+                  </Link>
 
                   {/* Teams */}
-                  <div className="flex flex-col items-center space-y-2">
+                  {/* <div className="flex flex-col items-center space-y-2">
                     <div className="p-3 rounded-lg bg-muted/50 border">
                       <svg width="24" height="24" viewBox="0 0 32 32">
                         <path
@@ -176,12 +195,12 @@ export default function Home() {
                       </svg>
                     </div>
                     <span className="text-xs font-medium">Teams</span>
-                  </div>
+                  </div> */}
 
                   {/* Gmail */}
                   <div className="flex flex-col items-center space-y-2">
-                    <div className="p-3 rounded-lg bg-muted/50 border">
-                      <svg width="24" height="24" viewBox="0 0 32 32">
+                    <div className="p-4 rounded-lg bg-muted/50 border">
+                      <svg width="28" height="28" viewBox="0 0 32 32">
                         <path
                           d="M22.0515 8.52295L16.0644 13.1954L9.94043 8.52295V8.52421L9.94783 8.53053V15.0732L15.9954 19.8466L22.0515 15.2575V8.52295Z"
                           fill="#EA4335"
@@ -203,12 +222,32 @@ export default function Home() {
                     <span className="text-xs font-medium">Gmail</span>
                   </div>
 
+                  {/* JSON */}
+                  <div className="flex flex-col items-center space-y-2">
+                    <div className="p-4 rounded-lg bg-muted/50 border">
+                      <svg
+                        width="28"
+                        height="28"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <title>language_json</title>
+                        <rect width="24" height="24" fill="none"></rect>
+                        <path
+                          fill="currentColor"
+                          d="M5,3H7V5H5v5a2,2,0,0,1-2,2,2,2,0,0,1,2,2v5H7v2H5c-1.07-.27-2-.9-2-2V15a2,2,0,0,0-2-2H0V11H1A2,2,0,0,0,3,9V5A2,2,0,0,1,5,3M19,3a2,2,0,0,1,2,2V9a2,2,0,0,0,2,2h1v2H23a2,2,0,0,0-2,2v4a2,2,0,0,1-2,2H17V19h2V14a2,2,0,0,1,2-2,2,2,0,0,1-2-2V5H17V3h2M12,15a1,1,0,1,1-1,1,1,1,0,0,1,1-1M8,15a1,1,0,1,1-1,1,1,1,0,0,1,1-1m8,0a1,1,0,1,1-1,1A1,1,0,0,1,16,15Z"
+                        />
+                      </svg>
+                    </div>
+                    <span className="text-xs font-medium">JSON</span>
+                  </div>
+
                   {/* Zapier */}
                   <div className="flex flex-col items-center space-y-2">
-                    <div className="p-3 rounded-lg bg-muted/50 border">
+                    <div className="p-4 rounded-lg bg-muted/50 border">
                       <svg
-                        width="24"
-                        height="24"
+                        width="28"
+                        height="28"
                         viewBox="0 0 256 256"
                         className="text-[#FF4A00]"
                       >
@@ -223,10 +262,10 @@ export default function Home() {
 
                   {/* Database */}
                   <div className="flex flex-col items-center space-y-2">
-                    <div className="p-3 rounded-lg bg-muted/50 border">
+                    <div className="p-4 rounded-lg bg-muted/50 border">
                       <svg
-                        width="24"
-                        height="24"
+                        width="28"
+                        height="28"
                         viewBox="0 0 1024 1024"
                         className="text-[#1B9BDB]"
                       >
@@ -271,7 +310,7 @@ export default function Home() {
               </Button>
               <Link href="#product-showcase">
                 <Button variant="outline" size="lg">
-                  View Demo
+                  View Example
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -401,41 +440,227 @@ export default function Home() {
                   <div className="h-3 w-3 rounded-full bg-green-500"></div>
                   <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
                   <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                  <span className="ml-4 text-sm font-mono text-muted-foreground">
-                    CommitDigest Report
-                  </span>
                 </CardTitle>
+
+                {/* Tab Navigation */}
+                <div className="flex border-b border-border">
+                  <button
+                    onClick={() => setActiveTab("summary")}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                      activeTab === "summary"
+                        ? "border-primary text-primary"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Summary
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("raw")}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                      activeTab === "raw"
+                        ? "border-primary text-primary"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Webhook Payload
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("commits")}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                      activeTab === "commits"
+                        ? "border-primary text-primary"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Source Commits
+                  </button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="rounded-lg bg-muted p-4 font-mono text-sm">
-                  <div className="text-green-400">
-                    # Weekly Development Summary
-                  </div>
-                  <div className="mt-2 text-muted-foreground">
-                    **Repository:** my-awesome-project
-                    <br />
-                    **Period:** Dec 1-7, 2024
-                    <br />
-                    **Total Commits:** 23
-                  </div>
-                  <div className="mt-4">
-                    <div className="text-blue-400">## Key Highlights</div>
-                    <div className="mt-2 space-y-1 text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span>Implemented user authentication system</span>
+                {/* Summary Tab */}
+                {activeTab === "summary" && (
+                  <div className="rounded-lg bg-muted p-4 font-mono text-sm">
+                    <div className="text-green-400">
+                      # Weekly Development Summary
+                    </div>
+                    <div className="mt-2 text-muted-foreground">
+                      **Repository:** my-awesome-project
+                      <br />
+                      **Period:** Dec 1-7, 2024
+                      <br />
+                      **Total Commits:** 23
+                    </div>
+                    <div className="mt-4">
+                      <div className="text-blue-400">## Key Highlights</div>
+                      <div className="mt-2 space-y-1 text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span>Implemented user authentication system</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span>Added comprehensive test coverage</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span>
+                            Optimized database queries for performance
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span>Added comprehensive test coverage</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span>Optimized database queries for performance</span>
+                    </div>
+                    <div className="mt-4">
+                      <div className="text-blue-400">## Breaking Changes</div>
+                      <div className="mt-2 text-orange-400">
+                        • Updated API endpoints for authentication
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
+
+                {/* Raw Response Tab */}
+                {activeTab === "raw" && (
+                  <div className="rounded-lg bg-muted p-4 font-mono text-sm">
+                    <div className="text-yellow-400">
+                      # Webhook Payload (JSON)
+                    </div>
+                    <div className="mt-2 text-xs text-muted-foreground mb-4">
+                      This is the actual JSON payload delivered to your webhook
+                      endpoint
+                    </div>
+                    <div className="bg-black/50 rounded p-3 overflow-x-auto">
+                      <pre className="text-xs text-muted-foreground">
+                        {`{
+  "content": "# Weekly Development Summary\\n\\n**Repository:** my-awesome-project\\n**Period:** Dec 1-7, 2024\\n**Total Commits:** 23\\n\\n## Key Highlights\\n\\n✅ Implemented user authentication system\\n✅ Added comprehensive test coverage\\n✅ Optimized database queries for performance\\n\\n## Breaking Changes\\n\\n• Updated API endpoints for authentication\\n\\n## Next Week Focus\\n\\n• Deploy authentication to staging\\n• Performance testing and optimization",
+  "timestamp": "2024-12-07T15:30:00.000Z",
+  "repository": "https://github.com/mycompany/my-awesome-project",
+  "branch": "main",
+  "commitsCount": 23,
+  "dateRange": {
+    "since": "2024-12-01T00:00:00.000Z",
+    "until": "2024-12-07T23:59:59.000Z"
+  },
+  "isTest": false,
+  "isManual": false
+}`}
+                      </pre>
+                    </div>
+                    <div className="mt-4 text-xs text-muted-foreground">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <div className="text-blue-400 font-medium">
+                            Key Fields:
+                          </div>
+                          <div className="mt-1 space-y-1">
+                            <div>
+                              <span className="text-green-400">content</span> -
+                              Markdown report
+                            </div>
+                            <div>
+                              <span className="text-green-400">timestamp</span>{" "}
+                              - When sent
+                            </div>
+                            <div>
+                              <span className="text-green-400">repository</span>{" "}
+                              - GitHub URL
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-blue-400 font-medium">
+                            Metadata:
+                          </div>
+                          <div className="mt-1 space-y-1">
+                            <div>
+                              <span className="text-green-400">branch</span> -
+                              Git branch
+                            </div>
+                            <div>
+                              <span className="text-green-400">
+                                commitsCount
+                              </span>{" "}
+                              - # of commits
+                            </div>
+                            <div>
+                              <span className="text-green-400">dateRange</span>{" "}
+                              - Time period
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Source Commits Tab */}
+                {activeTab === "commits" && (
+                  <div className="rounded-lg bg-muted p-4 font-mono text-sm max-h-96 overflow-y-auto">
+                    <div className="text-purple-400">
+                      # Original Commit History
+                    </div>
+                    <div className="mt-4 space-y-3 text-muted-foreground">
+                      <div className="border-l-2 border-green-500 pl-3">
+                        <div className="text-white">
+                          feat: implement JWT authentication system
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          abc123d • john.doe@company.com • 2 hours ago
+                        </div>
+                      </div>
+                      <div className="border-l-2 border-blue-500 pl-3">
+                        <div className="text-white">
+                          test: add comprehensive auth service tests
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          def456e • jane.smith@company.com • 4 hours ago
+                        </div>
+                      </div>
+                      <div className="border-l-2 border-yellow-500 pl-3">
+                        <div className="text-white">
+                          perf: optimize database connection pooling
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          ghi789f • mike.wilson@company.com • 6 hours ago
+                        </div>
+                      </div>
+                      <div className="border-l-2 border-green-500 pl-3">
+                        <div className="text-white">
+                          feat: add password reset functionality
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          jkl012g • sarah.johnson@company.com • 8 hours ago
+                        </div>
+                      </div>
+                      <div className="border-l-2 border-red-500 pl-3">
+                        <div className="text-white">
+                          fix: resolve session timeout edge case
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          mno345h • david.brown@company.com • 10 hours ago
+                        </div>
+                      </div>
+                      <div className="border-l-2 border-blue-500 pl-3">
+                        <div className="text-white">
+                          test: integration tests for login endpoints
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          pqr678i • lisa.garcia@company.com • 12 hours ago
+                        </div>
+                      </div>
+                      <div className="border-l-2 border-yellow-500 pl-3">
+                        <div className="text-white">
+                          perf: improve query performance in user lookup
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          stu901j • alex.kim@company.com • 14 hours ago
+                        </div>
+                      </div>
+                      <div className="text-center text-xs text-muted-foreground pt-2 border-t">
+                        ... and 16 more commits
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
