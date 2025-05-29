@@ -79,7 +79,20 @@ export class ReportConfigurationsController {
       const userId = req.user.id;
       const reportConfigurations =
         await this.supabaseService.getReportConfigurationsByUserId(userId);
-      return reportConfigurations;
+
+      // Add total_runs count for each configuration
+      const configurationsWithCounts = await Promise.all(
+        reportConfigurations.map(async (config) => {
+          const totalRuns =
+            await this.reportRunsService.getConfigurationRunCount(config.id);
+          return {
+            ...config,
+            total_runs: totalRuns,
+          };
+        }),
+      );
+
+      return configurationsWithCounts;
     } catch (error) {
       throw new HttpException(
         "Failed to fetch report configurations",

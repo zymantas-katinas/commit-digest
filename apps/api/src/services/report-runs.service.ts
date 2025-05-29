@@ -326,15 +326,41 @@ export class ReportRunsService {
         .eq("user_id", userId)
         .single();
 
-      if (error && error.code !== "PGRST116") {
+      if (error) {
+        if (error.code === "PGRST116") {
+          // No rows found
+          return null;
+        }
         this.logger.error("Error fetching report run:", error);
-        return null;
+        throw error;
       }
 
       return data;
     } catch (error) {
       this.logger.error("Error fetching report run:", error);
-      return null;
+      throw error;
+    }
+  }
+
+  /**
+   * Get total count of runs for a specific report configuration
+   */
+  async getConfigurationRunCount(configurationId: string): Promise<number> {
+    try {
+      const { count, error } = await this.supabaseService["supabase"]
+        .from("report_runs")
+        .select("id", { count: "exact" })
+        .eq("report_configuration_id", configurationId);
+
+      if (error) {
+        this.logger.error("Error fetching configuration run count:", error);
+        return 0;
+      }
+
+      return count || 0;
+    } catch (error) {
+      this.logger.error("Error fetching configuration run count:", error);
+      return 0;
     }
   }
 }

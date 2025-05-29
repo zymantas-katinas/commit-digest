@@ -47,6 +47,7 @@ interface ReportConfiguration {
   last_run_at?: string;
   last_run_status?: string;
   created_at: string;
+  total_runs?: number;
 }
 
 interface ReportConfigurationListProps {
@@ -184,6 +185,7 @@ export function ReportConfigurationList({
     // Invalidate usage stats query if the manual trigger was successful
     if (result.success) {
       queryClient.invalidateQueries({ queryKey: ["usage-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["report-configurations"] });
     }
   };
 
@@ -219,6 +221,108 @@ export function ReportConfigurationList({
       default:
         return schedule;
     }
+  };
+
+  const getNextRunTime = (schedule: string, enabled: boolean) => {
+    if (!enabled) {
+      return "Paused";
+    }
+
+    const now = new Date();
+    let nextRun: Date;
+
+    switch (schedule) {
+      case "0 9 * * *": // Daily at 9:00 AM
+        nextRun = new Date(now);
+        nextRun.setHours(9, 0, 0, 0);
+        if (nextRun <= now) {
+          nextRun.setDate(nextRun.getDate() + 1);
+        }
+        break;
+      case "0 9 * * 1": // Weekly on Monday at 9:00 AM
+        nextRun = new Date(now);
+        nextRun.setHours(9, 0, 0, 0);
+        const daysUntilMonday = (1 - now.getDay() + 7) % 7;
+        if (daysUntilMonday === 0 && nextRun <= now) {
+          nextRun.setDate(nextRun.getDate() + 7);
+        } else {
+          nextRun.setDate(nextRun.getDate() + daysUntilMonday);
+        }
+        break;
+      case "0 9 1 * *": // Monthly on the 1st at 9:00 AM
+        nextRun = new Date(now);
+        nextRun.setDate(1);
+        nextRun.setHours(9, 0, 0, 0);
+        if (nextRun <= now) {
+          nextRun.setMonth(nextRun.getMonth() + 1);
+        }
+        break;
+      default:
+        return "Unknown schedule";
+    }
+
+    const timeDiff = nextRun.getTime() - now.getTime();
+    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor(
+      (timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+    );
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (days > 0) {
+      return `${days}d ${hours}h`;
+    } else if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    } else if (minutes > 0) {
+      return `${minutes}m`;
+    } else {
+      return "Soon";
+    }
+  };
+
+  const getWebhookIcon = (webhookUrl: string) => {
+    if (webhookUrl.includes("hooks.slack.com")) {
+      return (
+        <div className="w-4 h-4 mr-2 flex items-center justify-center">
+          <svg width="16" height="16" viewBox="0 0 16 16">
+            <path
+              fill="#E01E5A"
+              d="M2.471 11.318a1.474 1.474 0 001.47-1.471v-1.47h-1.47A1.474 1.474 0 001 9.846c.001.811.659 1.469 1.47 1.47zm3.682-2.942a1.474 1.474 0 00-1.47 1.471v3.683c.002.811.66 1.468 1.47 1.47a1.474 1.474 0 001.47-1.47V9.846a1.474 1.474 0 00-1.47-1.47z"
+            />
+            <path
+              fill="#36C5F0"
+              d="M4.683 2.471c.001.811.659 1.469 1.47 1.47h1.47v-1.47A1.474 1.474 0 006.154 1a1.474 1.474 0 00-1.47 1.47zm2.94 3.682a1.474 1.474 0 00-1.47-1.47H2.47A1.474 1.474 0 001 6.153c.002.812.66 1.469 1.47 1.47h3.684a1.474 1.474 0 001.47-1.47z"
+            />
+            <path
+              fill="#2EB67D"
+              d="M9.847 7.624a1.474 1.474 0 001.47-1.47V2.47A1.474 1.474 0 009.848 1a1.474 1.474 0 00-1.47 1.47v3.684c.002.81.659 1.468 1.47 1.47zm3.682-2.941a1.474 1.474 0 00-1.47 1.47v1.47h1.47A1.474 1.474 0 0015 6.154a1.474 1.474 0 00-1.47-1.47z"
+            />
+            <path
+              fill="#ECB22E"
+              d="M8.377 9.847c.002.811.659 1.469 1.47 1.47h3.683A1.474 1.474 0 0015 9.848a1.474 1.474 0 00-1.47-1.47H9.847a1.474 1.474 0 00-1.47 1.47zm2.94 3.682a1.474 1.474 0 00-1.47-1.47h-1.47v1.47c.002.812.659 1.469 1.47 1.47a1.474 1.474 0 001.47-1.47z"
+            />
+          </svg>
+        </div>
+      );
+    }
+    if (webhookUrl.includes("discord.com/api/webhooks")) {
+      return (
+        <div className="w-4 h-4 mr-2 flex items-center justify-center">
+          <svg
+            width="14"
+            height="16"
+            viewBox="0 0 256 199"
+            className="text-[#5865F2]"
+          >
+            <path
+              fill="currentColor"
+              d="M216.856 16.597C200.285 8.843 182.566 3.208 164.042 0c-1.275 4.113-3.933 9.646-5.766 14.046-20.308-2.961-40.636-2.961-60.256 0-1.832-4.4-4.55-9.933-5.825-14.046C73.65 3.208 55.93 8.864 39.42 16.637 5.618 67.147-3.443 116.4 1.087 164.956c22.169 16.555 43.653 26.612 64.775 33.193C71.33 190.97 75.97 183.34 79.977 175.3c-7.631-2.9-15.272-6.477-22.178-10.632 1.832-1.357 3.624-2.777 5.356-4.237C105.367 180.133 151.135 180.133 192.755 160.43c1.752 1.46 3.544 2.88 5.376 4.238-6.927 4.175-14.256 7.754-21.887 10.653 4.006 8.041 8.638 15.67 13.873 22.848 21.142-6.58 42.646-16.637 64.815-33.213 5.315-56.288-9.081-105.09-38.056-148.36ZM85.474 135.095c-12.645 0-23.015-11.805-23.015-26.18s10.149-26.2 23.015-26.2c12.867 0 23.236 11.804 23.015 26.18.221 14.375-10.148 26.2-23.015 26.2Zm85.051 0c-12.645 0-23.014-11.805-23.014-26.18s10.148-26.2 23.014-26.2c12.867 0 23.236 11.804 23.015 26.18 0 14.375-10.148 26.2-23.015 26.2Z"
+            />
+          </svg>
+        </div>
+      );
+    }
+    // Generic webhook icon
+    return <Webhook className="h-4 w-4 mr-2" />;
   };
 
   const getStatusIcon = (status?: string) => {
@@ -422,7 +526,7 @@ export function ReportConfigurationList({
                   {getScheduleDisplay(config.schedule)}
                 </div>
                 <div className="flex items-center text-sm text-muted-foreground">
-                  <Webhook size={16} className="mr-2" />
+                  {getWebhookIcon(config.webhook_url)}
                   <span className="font-medium mr-2">Webhook:</span>
                   <span className="truncate">{config.webhook_url}</span>
                 </div>
@@ -686,7 +790,26 @@ export function ReportConfigurationList({
 
               {/* Footer */}
               <div className="text-xs text-muted-foreground mt-4 pt-3 border-t border-border">
-                Created {new Date(config.created_at).toLocaleDateString()}
+                <div className="flex justify-between items-center">
+                  <span>
+                    Next run in:{" "}
+                    {getNextRunTime(config.schedule, config.enabled)}
+                  </span>
+                  <div className="flex items-center space-x-4">
+                    <span>
+                      Created {new Date(config.created_at).toLocaleDateString()}
+                    </span>
+                    {config.last_run_at && (
+                      <span>
+                        Last run:{" "}
+                        {new Date(config.last_run_at).toLocaleDateString()}
+                      </span>
+                    )}
+                    {config.total_runs !== undefined && (
+                      <span>Total runs: {config.total_runs}</span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           );
