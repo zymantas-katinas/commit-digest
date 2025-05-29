@@ -1,11 +1,10 @@
 import axios from "axios";
 import { supabase } from "./supabase";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3003";
-
+// Use the /api proxy instead of direct API calls
+// The Next.js rewrite in next.config.js will handle routing to the actual API
 export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: "/api",
 });
 
 // Add auth token to requests
