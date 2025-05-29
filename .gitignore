@@ -29,4 +29,18 @@ yarn-error.log*
 !.env.example
 
 # turbo
-.turbo 
+.turbo
+
+# vercel
+.vercel
+
+# Prevent npm lockfiles in pnpm project
+package-lock.json
+
+# OS generated files
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db 
