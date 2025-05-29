@@ -9,14 +9,15 @@ import { ReportConfigurationList } from "@/components/report-configuration-list"
 import { AddRepositoryDialog } from "@/components/add-repository-dialog";
 import { AddReportConfigDialog } from "@/components/add-report-config-dialog";
 import { UsageStats } from "@/components/usage-stats";
+import { AppHeader } from "@/components/app-header";
 import { useAuthStore } from "@/stores/auth";
 import { api } from "@/lib/api";
-import { GitBranch, Settings, LogOut, Plus, AlertCircle } from "lucide-react";
+import { Settings, Plus, AlertCircle } from "lucide-react";
 
 export function Dashboard() {
   const [showAddRepo, setShowAddRepo] = useState(false);
   const [showAddConfig, setShowAddConfig] = useState(false);
-  const { user, signOut } = useAuthStore();
+  const { user } = useAuthStore();
 
   const {
     data: repositories,
@@ -36,39 +37,10 @@ export function Dashboard() {
     queryFn: () => api.getReportConfigurations().then((res) => res.data),
   });
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error("Sign out error:", error);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 max-w-screen-2xl items-center">
-          <div className="flex items-center">
-            <div className="h-8 w-8 rounded bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center mr-3">
-              <GitBranch className="h-5 w-5 text-white" />
-            </div>
-            <h1 className="text-xl font-bold">CommitDigest</h1>
-          </div>
-          <div className="flex flex-1 items-center justify-end space-x-4">
-            <span className="text-sm text-muted-foreground">{user?.email}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSignOut}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
+      <AppHeader />
 
       {/* Main Content */}
       <main className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-8">

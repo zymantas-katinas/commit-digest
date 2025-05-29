@@ -11,6 +11,7 @@ import {
 import { AuthRedirect } from "@/components/auth-redirect";
 import { AuthLoading } from "@/components/auth-loading";
 import { StatusIndicator } from "@/components/status-indicator";
+import { AppHeader } from "@/components/app-header";
 import {
   GitBranch,
   Clock,
@@ -32,60 +33,7 @@ export default function Home() {
       <AuthLoading />
       <div className="min-h-screen bg-background text-foreground">
         {/* Navigation Bar */}
-        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container flex h-14 max-w-screen-2xl items-center">
-            <div className="mr-4 hidden md:flex">
-              <a className="mr-6 flex items-center space-x-2" href="/">
-                <div className="h-8 w-8 rounded bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center">
-                  <GitBranch className="h-5 w-5 text-white" />
-                </div>
-                <span className="hidden font-bold sm:inline-block">
-                  CommitDigest
-                </span>
-              </a>
-              <nav className="flex items-center gap-6 text-sm">
-                <a
-                  className="transition-colors hover:text-foreground/80 text-foreground/60"
-                  href="#features"
-                >
-                  Features
-                </a>
-                <a
-                  className="transition-colors hover:text-foreground/80 text-foreground/60"
-                  href="#docs"
-                >
-                  Docs
-                </a>
-                <a
-                  className="transition-colors hover:text-foreground/80 text-foreground/60"
-                  href="#pricing"
-                >
-                  Pricing
-                </a>
-              </nav>
-            </div>
-            <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-              <div className="w-full flex-1 md:w-auto md:flex-none">
-                <div className="md:hidden">
-                  <a className="flex items-center space-x-2" href="/">
-                    <div className="h-8 w-8 rounded bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center">
-                      <GitBranch className="h-5 w-5 text-white" />
-                    </div>
-                    <span className="font-bold">CommitDigest</span>
-                  </a>
-                </div>
-              </div>
-              <nav className="flex items-center gap-2">
-                <Button variant="ghost" asChild>
-                  <Link href="/login">Sign In</Link>
-                </Button>
-                <Button asChild>
-                  <Link href="/login">Get Started Free</Link>
-                </Button>
-              </nav>
-            </div>
-          </div>
-        </header>
+        <AppHeader />
 
         {/* Hero Section */}
         <section className="container space-y-6 pb-8 pt-6 md:pb-12 md:pt-10 lg:py-24">

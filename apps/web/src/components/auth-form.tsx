@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { AppHeader } from "@/components/app-header";
 import { useAuthStore } from "@/stores/auth";
 import { GitBranch } from "lucide-react";
 
@@ -148,8 +149,11 @@ export function AuthForm({ embedded = false }: AuthFormProps) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="max-w-md w-full space-y-8 p-8">{formContent}</div>
+    <div className="min-h-screen bg-background">
+      <AppHeader />
+      <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
+        <div className="max-w-md w-full space-y-8 p-8">{formContent}</div>
+      </div>
     </div>
   );
 }
