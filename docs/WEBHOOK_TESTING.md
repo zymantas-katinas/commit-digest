@@ -38,9 +38,23 @@ When a webhook is sent (both for tests and scheduled reports), it includes:
     "since": "2024-01-08T10:30:00.000Z",
     "until": "2024-01-15T10:30:00.000Z"
   },
-  "isTest": false
+  "isTest": false,
+  "isManual": false
 }
 ```
+
+**Payload Fields:**
+
+- `content` (string): The AI-generated commit summary/report
+- `timestamp` (string): ISO timestamp when the webhook was sent
+- `repository` (string, optional): Repository URL
+- `branch` (string, optional): Branch name
+- `commitsCount` (number, optional): Number of commits included in the report
+- `dateRange` (object, optional): Date range used for commit fetching
+  - `since` (string): ISO timestamp of start date
+  - `until` (string): ISO timestamp of end date
+- `isTest` (boolean, optional): `true` if this was triggered by manual testing
+- `isManual` (boolean, optional): `true` if this was triggered manually (outside of scheduled runs)
 
 ## Date Range Logic for Commit Fetching
 

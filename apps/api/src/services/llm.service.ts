@@ -58,7 +58,7 @@ Commit Messages:
 {commitMessages}
 ---
 
-Please generate a well-structured Markdown report with appropriate headings and bullet points.`,
+Please generate a well-structured Markdown report with appropriate headings and bullet points. Return ONLY the report content - do not include any meta-commentary, explanations about the summary, or concluding statements about the report itself.`,
       inputVariables: ["timeframe", "commitMessages"],
     });
 

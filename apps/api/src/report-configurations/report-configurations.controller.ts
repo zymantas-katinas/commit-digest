@@ -253,7 +253,7 @@ export class ReportConfigurationsController {
       try {
         webhookSuccess = await this.notificationService.sendWebhook(
           config.webhook_url,
-          `[TEST] ${summaryResult.summary}`,
+          `# [TEST] ${summaryResult.summary}`,
           {
             repository: repository.github_url,
             branch: repository.branch,
@@ -491,7 +491,7 @@ export class ReportConfigurationsController {
       try {
         webhookSuccess = await this.notificationService.sendWebhook(
           config.webhook_url,
-          `[MANUAL] ${summaryResult.summary}`,
+          `# [MANUAL] ${summaryResult.summary}`,
           {
             repository: repository.github_url,
             branch: repository.branch,
