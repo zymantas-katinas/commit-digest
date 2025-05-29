@@ -8,7 +8,6 @@ import {
   HttpCode,
   HttpStatus,
   Headers,
-  RawBodyRequest,
   BadRequestException,
   UnauthorizedException,
 } from "@nestjs/common";
@@ -88,7 +87,7 @@ export class SubscriptionsController {
   @HttpCode(HttpStatus.OK)
   async handleWebhook(
     @Headers("stripe-signature") signature: string,
-    @Request() req: RawBodyRequest<Request>,
+    @Request() req: any,
   ) {
     if (!signature) {
       throw new BadRequestException("Missing stripe-signature header");
@@ -102,8 +101,14 @@ export class SubscriptionsController {
     let event: Stripe.Event;
 
     try {
+      const body = req.body;
+
+      if (!body) {
+        throw new BadRequestException("No webhook payload was provided");
+      }
+
       event = this.stripe.webhooks.constructEvent(
-        req.rawBody,
+        body,
         signature,
         webhookSecret,
       );

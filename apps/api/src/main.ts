@@ -1,11 +1,13 @@
 import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
+import * as express from "express";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    rawBody: true,
-  });
+  const app = await NestFactory.create(AppModule);
+
+  // Configure raw body parsing ONLY for Stripe webhook endpoint
+  app.use("/subscriptions/webhook", express.raw({ type: "application/json" }));
 
   // Enable CORS for frontend communication
   app.enableCors({
