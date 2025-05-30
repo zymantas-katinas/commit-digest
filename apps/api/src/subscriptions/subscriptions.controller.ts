@@ -91,37 +91,63 @@ export class SubscriptionsController {
     @Headers("stripe-signature") signature: string,
     @Req() req: any,
   ) {
+    // Debug logging
+    console.log("=== STRIPE WEBHOOK DEBUG ===");
+    console.log("Headers:", {
+      "stripe-signature": signature,
+      "content-type": req.headers["content-type"],
+      "user-agent": req.headers["user-agent"],
+    });
+    console.log("Body type:", typeof req.body);
+    console.log("Body instanceof Buffer:", req.body instanceof Buffer);
+    console.log("Body length:", req.body?.length);
+    console.log("Request URL:", req.url);
+    console.log("Request method:", req.method);
+
     if (!signature) {
+      console.log("ERROR: Missing stripe-signature header");
       throw new BadRequestException("Missing stripe-signature header");
     }
 
     const webhookSecret = this.configService.get("STRIPE_WEBHOOK_SECRET");
     if (!webhookSecret) {
+      console.log("ERROR: Webhook secret not configured");
       throw new BadRequestException("Webhook secret not configured");
     }
 
     let event: Stripe.Event;
 
     try {
-      // The raw body is now available in req.body thanks to express.raw() middleware
-      const body = req.body;
+      // Use the raw body stored during parsing for signature verification
+      const body = req.rawBody || req.body;
 
       if (!body) {
+        console.log("ERROR: No webhook payload was provided");
         throw new BadRequestException("No webhook payload was provided");
       }
 
+      console.log("Attempting to construct Stripe event...");
       event = this.stripe.webhooks.constructEvent(
         body,
         signature,
         webhookSecret,
       );
+      console.log("SUCCESS: Stripe event constructed:", event.type);
     } catch (err) {
+      console.log("ERROR: Webhook signature verification failed:", err.message);
       throw new BadRequestException(
         `Webhook signature verification failed: ${err.message}`,
       );
     }
 
-    await this.subscriptionsService.handleWebhook(event);
+    try {
+      console.log("Processing webhook event:", event.type);
+      await this.subscriptionsService.handleWebhook(event);
+      console.log("SUCCESS: Webhook processed successfully");
+    } catch (error) {
+      console.log("ERROR: Failed to process webhook:", error.message);
+      throw error;
+    }
 
     return { received: true };
   }

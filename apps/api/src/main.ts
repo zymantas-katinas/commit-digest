@@ -1,17 +1,20 @@
 import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { AppModule } from "./app.module";
-import * as express from "express";
+import { NestExpressApplication } from "@nestjs/platform-express";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Configure middleware for webhook endpoints to receive raw body
-  // Use exact path matching to avoid conflicts
-  app.use(
-    "/subscriptions/webhook",
-    express.raw({ type: "application/json", limit: "1mb" }),
-  );
+  // Configure raw body parsing for webhook endpoint only
+  app.useBodyParser("json", {
+    verify: (req: any, res, buf) => {
+      // Store raw body for webhook signature verification
+      if (req.originalUrl === "/subscriptions/webhook") {
+        req.rawBody = buf;
+      }
+    },
+  });
 
   // Enable CORS for frontend communication
   app.enableCors({
