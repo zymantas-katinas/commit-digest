@@ -1,0 +1,33 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://commitdigest.com/sitemap.xml
+
+# Allow crawling of important pages
+Allow: /features
+Allow: /pricing
+Allow: /blog
+Allow: /docs
+Allow: /integrations
+
+# Disallow crawling of private/admin areas
+Disallow: /dashboard
+Disallow: /login
+Disallow: /admin
+Disallow: /api
+Disallow: /_next
+Disallow: /private
+
+# Allow common crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+# Crawl delay for respectful crawling
+Crawl-delay: 1 

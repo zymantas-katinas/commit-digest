@@ -21,8 +21,38 @@ import {
   Webhook,
   Bot,
   Calendar,
+  Users,
+  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Understand Your Code's Progress, Effortlessly - CommitDigest",
+  description:
+    "Transform Git commit logs into clear summaries with AI. CommitDigest automatically analyzes your GitHub repositories and delivers human-readable progress reports to Slack, Discord, or webhooks. Save time and improve team communication.",
+  keywords: [
+    "AI git analysis",
+    "automated commit summary",
+    "GitHub digest",
+    "git commit summarizer",
+    "developer productivity tools",
+    "git workflow automation",
+    "team code progress",
+    "Slack git integration",
+    "Discord git updates",
+    "webhook git notifications",
+  ],
+  openGraph: {
+    title: "Understand Your Code's Progress, Effortlessly - CommitDigest",
+    description:
+      "AI-powered Git commit summaries that save developer time. Get intelligent, human-readable code progress reports automatically.",
+    url: "https://commitdigest.com",
+  },
+  alternates: {
+    canonical: "https://commitdigest.com",
+  },
+};
 
 export default function Home() {
   return (
@@ -36,13 +66,14 @@ export default function Home() {
         {/* Hero Section */}
         <section className="container space-y-6 pb-8 pt-6 md:pb-12 md:pt-10 lg:py-24">
           <div className="mx-auto flex max-w-[980px] flex-col items-center gap-2 text-center">
-            <h1 className="text-3xl font-bold leading-tight tracking-tighter md:text-4xl lg:text-5xl lg:leading-[1.1]">
-              Automated Git Commit{" "}
-              <span className="text-gradient">Summaries</span>
+            <h1 className="text-3xl font-bold leading-tight mb-4 tracking-tighter md:text-4xl lg:text-5xl lg:leading-[1.1]">
+              Code Progress, Simplified: <br /> Get Your{" "}
+              <span className="text-gradient">Scheduled AI Summaries</span>
             </h1>
             <p className="max-w-[750px] text-lg text-muted-foreground sm:text-xl">
-              CommitDigest uses AI to generate clear, actionable summaries from
-              your GitHub commits. Delivered via webhook, on your schedule.
+              Stop deciphering endless Git logs. CommitDigest delivers clear,
+              human-readable reports from your GitHub activity, automatically,
+              on your schedule.
             </p>
 
             {/* Flowchart Section */}
@@ -55,7 +86,7 @@ export default function Home() {
                     <div className="p-4 rounded-lg bg-muted/50 border">
                       <Github className="h-8 w-8 text-foreground" />
                     </div>
-                    <span className="text-sm font-medium">GitHub</span>
+                    <span className="text-sm font-medium">GitHub Commits</span>
                   </div>
 
                   {/* Arrow */}
@@ -76,34 +107,16 @@ export default function Home() {
                         />
                       </svg>
                     </div>
-                    <span className="text-sm font-medium">AI Processing</span>
+                    <span className="text-sm font-medium">AI Analysis</span>
                   </div>
                 </div>
 
-                {/* Schedule Icon - positioned between AI and outputs */}
-                {/* <div className="flex items-center space-x-2 px-4 py-2 rounded-full bg-muted/30 border">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 1000 1000"
-                    className="text-muted-foreground"
-                  >
-                    <path
-                      fill="currentColor"
-                      d="M531 624l-88-1q18-44 51.5-76.5T572 500q55-18 110.5-3.5T778 554q4 5 10.5 5t11.5-4l26-24q5-5 5.5-12t-4.5-12q-53-58-127-77.5T553 433q-65 21-112.5 71.5T373 623h-93q-4 0-5 3t1 6l126 144q1 1 3 1t4-1l126-143q2-3 1-6t-5-3zm451 143L857 623q-2-2-4-2t-3 2L724 766q-3 2-1.5 5.5t4.5 3.5h88q-17 45-51 77.5T686 899q-55 18-110 3t-95-57q-5-5-11-5.5t-11 4.5l-26 23q-5 5-5.5 12t4.5 13q38 41 88.5 63.5T626 978q41 0 80-13 65-21 112.5-71T885 776h94q3 0 4.5-3.5T982 767zM70 252v447q0 14 9.5 23.5T103 732h127q6 0 11-4.5t5-11.5v-22q0-7-5-12t-11-5H125V296h568v56q0 7 4.5 12t11.5 5h21q7 0 12-5t5-12V252H70zm677-32v-55q0-13-9.5-23T714 132H613v-13q0-12-6-23t-16.5-17-22.5-6-22.5 6T529 96t-6 23v13H293v-13q0-19-13-32t-31.5-13T217 87t-13 32v13H103q-14 0-23.5 10T70 165v55h677z"
-                    />
-                  </svg>
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Scheduled Webhook Delivery
-                  </span>
-                </div> */}
-
                 {/* Webhook Icon */}
                 <div className="flex justify-center">
-                  <div className="flex items-center space-x-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+                  <div className="flex items-center space-x-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/20">
                     <Webhook className="h-5 w-5 text-primary" />
-                    <span className="text-sm font-medium text-primary">
-                      Scheduled Webhook Delivery
+                    <span className="text-sm font-medium text-primary/70">
+                      Automated Delivery
                     </span>
                   </div>
                 </div>
@@ -166,32 +179,6 @@ export default function Home() {
                     <span className="text-xs font-medium">Slack</span>
                   </Link>
 
-                  {/* Teams */}
-                  {/* <div className="flex flex-col items-center space-y-2">
-                    <div className="p-3 rounded-lg bg-muted/50 border">
-                      <svg width="24" height="24" viewBox="0 0 32 32">
-                        <path
-                          d="M19 13.9032C19 13.4044 19.4044 13 19.9032 13H31.0968C31.5956 13 32 13.4044 32 13.9032V20.5C32 24.0899 29.0899 27 25.5 27C21.9101 27 19 24.0899 19 20.5V13.9032Z"
-                          fill="#364088"
-                        />
-                        <circle cx="27" cy="8" r="3" fill="#34439E" />
-                        <circle cx="18" cy="6" r="4" fill="#4858AE" />
-                        <rect
-                          y="7"
-                          width="18"
-                          height="18"
-                          rx="2"
-                          fill="#2A3887"
-                        />
-                        <path
-                          d="M13 11H5V12.8347H7.99494V21H10.0051V12.8347H13V11Z"
-                          fill="white"
-                        />
-                      </svg>
-                    </div>
-                    <span className="text-xs font-medium">Teams</span>
-                  </div> */}
-
                   {/* Gmail */}
                   <div className="flex flex-col items-center space-y-2">
                     <div className="p-4 rounded-lg bg-muted/50 border">
@@ -214,7 +201,7 @@ export default function Home() {
                         />
                       </svg>
                     </div>
-                    <span className="text-xs font-medium">Gmail</span>
+                    <span className="text-xs font-medium">Email</span>
                   </div>
 
                   {/* JSON */}
@@ -313,20 +300,63 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Why CommitDigest Section */}
+        {/* Problem Elaboration Section */}
+        <section className="container space-y-6 py-8 md:py-12 lg:py-16 bg-muted/30">
+          <div className="mx-auto flex max-w-[980px] flex-col items-center gap-4 text-center">
+            <h2 className="text-2xl font-bold leading-tight tracking-tighter md:text-4xl">
+              Stop Losing Time to Manual Git Reviews
+            </h2>
+            <p className="max-w-[700px] text-lg text-muted-foreground sm:text-xl">
+              Development teams waste hours scanning commit histories to
+              understand what happened. Managers struggle to communicate
+              progress to stakeholders while developers lose focus explaining
+              their work.
+            </p>
+            <div className="grid gap-6 md:grid-cols-3 mt-8 w-full max-w-4xl">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-destructive/10">
+                  <Clock className="h-6 w-6 text-destructive" />
+                </div>
+                <h3 className="font-semibold">Time Drain</h3>
+                <p className="text-sm text-muted-foreground">
+                  Hours lost weekly reviewing and explaining commit activity
+                </p>
+              </div>
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-500/10">
+                  <Users className="h-6 w-6 text-yellow-600" />
+                </div>
+                <h3 className="font-semibold">Communication Gap</h3>
+                <p className="text-sm text-muted-foreground">
+                  Difficulty keeping non-technical stakeholders informed
+                </p>
+              </div>
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-500/10">
+                  <TrendingUp className="h-6 w-6 text-orange-600" />
+                </div>
+                <h3 className="font-semibold">Lost Momentum</h3>
+                <p className="text-sm text-muted-foreground">
+                  Context switching between development and reporting tasks
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Solution Features Section */}
         <section
           id="features"
           className="container space-y-6 py-8 md:py-12 lg:py-20 border-t border-border/60"
         >
           <div className="mx-auto flex max-w-[980px] flex-col items-center gap-4 text-center">
             <h2 className="text-2xl font-bold leading-tight tracking-tighter md:text-4xl">
-              Stop Scanning. Start Understanding.
+              How CommitDigest Saves Your Time
             </h2>
             <p className="max-w-[700px] text-lg text-muted-foreground sm:text-xl">
-              Manually reviewing Git logs is time-consuming and often
-              inefficient. CommitDigest automates this by providing AI-generated
-              summaries, helping your team stay informed and focused on
-              development.
+              Our AI automatically processes your GitHub commits and creates
+              clear summaries. Stop scanning logs manually and start
+              understanding your progress effortlessly.
             </p>
           </div>
           <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3">
@@ -335,10 +365,10 @@ export default function Home() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
                   <Clock className="h-6 w-6" />
                 </div>
-                <CardTitle className="text-xl">Save Time</CardTitle>
+                <CardTitle className="text-xl">Save Developer Time</CardTitle>
                 <CardDescription>
-                  Automated daily/weekly digests eliminate manual commit review
-                  overhead.
+                  Get automated daily and weekly commit summaries instead of
+                  reviewing git logs manually. Focus on coding, not reporting.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -347,10 +377,10 @@ export default function Home() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
                   <Zap className="h-6 w-6" />
                 </div>
-                <CardTitle className="text-xl">Improve Clarity</CardTitle>
+                <CardTitle className="text-xl">Understand Changes</CardTitle>
                 <CardDescription>
-                  AI summaries highlight key changes and development progress
-                  patterns.
+                  AI explains what happened in your code using plain English
+                  that everyone on your team can understand.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -359,9 +389,10 @@ export default function Home() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
                   <Shield className="h-6 w-6" />
                 </div>
-                <CardTitle className="text-xl">Stay Aligned</CardTitle>
+                <CardTitle className="text-xl">Keep Teams Aligned</CardTitle>
                 <CardDescription>
-                  Keep your team informed effortlessly with automated delivery.
+                  Automatic delivery to Slack, Discord, or webhooks keeps
+                  everyone informed without manual updates.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -372,10 +403,11 @@ export default function Home() {
         <section className="container space-y-6 py-8 md:py-12 lg:py-20 bg-muted/30">
           <div className="mx-auto flex max-w-[980px] flex-col items-center gap-4 text-center">
             <h2 className="text-2xl font-bold leading-tight tracking-tighter md:text-4xl">
-              Simple to Use. Powerful Results.
+              Get Started in Minutes
             </h2>
             <p className="max-w-[700px] text-lg text-muted-foreground sm:text-xl">
-              Get started in minutes with our streamlined four-step process.
+              Set up your team in under 5 minutes. No complex configurations
+              required.
             </p>
           </div>
           <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-4">
@@ -383,38 +415,86 @@ export default function Home() {
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
                 <Github className="h-8 w-8" />
               </div>
-              <h3 className="text-lg font-bold">Connect GitHub</h3>
+              <h3 className="text-lg font-bold">Connect GitHub Repositories</h3>
               <p className="text-sm text-muted-foreground">
-                Securely link your repositories using personal access tokens.
+                Link your repositories using GitHub tokens. Your code stays
+                private and secure.
               </p>
             </div>
             <div className="relative flex flex-col items-center space-y-2 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
                 <Calendar className="h-8 w-8" />
               </div>
-              <h3 className="text-lg font-bold">Configure</h3>
+              <h3 className="text-lg font-bold">Configure Schedule</h3>
               <p className="text-sm text-muted-foreground">
-                Set report frequency and webhook URL for delivery.
+                Choose when and where you want to receive your summaries.
               </p>
             </div>
             <div className="relative flex flex-col items-center space-y-2 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
                 <Bot className="h-8 w-8" />
               </div>
-              <h3 className="text-lg font-bold">AI Summarization</h3>
+              <h3 className="text-lg font-bold">AI Analyzes Commits</h3>
               <p className="text-sm text-muted-foreground">
-                Powered by Langchain for intelligent Markdown reports.
+                Our AI processes your commits and creates clear reports
+                automatically.
               </p>
             </div>
             <div className="relative flex flex-col items-center space-y-2 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
                 <Webhook className="h-8 w-8" />
               </div>
-              <h3 className="text-lg font-bold">Automated Delivery</h3>
+              <h3 className="text-lg font-bold">Receive Summaries</h3>
               <p className="text-sm text-muted-foreground">
-                Receive reports directly via your chosen webhook.
+                Get readable reports delivered to your team's communication
+                channels.
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* Target Audience Section */}
+        <section className="container space-y-6 py-8 md:py-12 lg:py-16">
+          <div className="mx-auto flex max-w-[980px] flex-col items-center gap-4 text-center">
+            <h2 className="text-2xl font-bold leading-tight tracking-tighter md:text-4xl">
+              Built for Modern Development Teams
+            </h2>
+            <p className="max-w-[700px] text-lg text-muted-foreground sm:text-xl">
+              Whether you're a development team looking to save time, an
+              engineering manager needing better visibility, or a project
+              manager tracking progress, CommitDigest provides the insights you
+              need.
+            </p>
+          </div>
+          <div className="mx-auto grid justify-center gap-6 md:grid-cols-3 max-w-5xl">
+            <Card className="relative overflow-hidden">
+              <CardHeader>
+                <CardTitle className="text-xl">Development Teams</CardTitle>
+                <CardDescription>
+                  Focus on coding instead of explaining what you built.
+                  Automated summaries keep everyone informed without disrupting
+                  your workflow.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+            <Card className="relative overflow-hidden">
+              <CardHeader>
+                <CardTitle className="text-xl">Engineering Managers</CardTitle>
+                <CardDescription>
+                  Track team progress and communicate updates effortlessly. Get
+                  clear insights without micromanaging your developers.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+            <Card className="relative overflow-hidden">
+              <CardHeader>
+                <CardTitle className="text-xl">Project Managers</CardTitle>
+                <CardDescription>
+                  Understand development progress in plain language. No more
+                  deciphering technical commits or waiting for status updates.
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </div>
         </section>
 
@@ -425,10 +505,11 @@ export default function Home() {
         <section className="container space-y-6 py-8 md:py-12 lg:py-20">
           <div className="mx-auto flex max-w-[980px] flex-col items-center gap-4 text-center">
             <h2 className="text-2xl font-bold leading-tight tracking-tighter md:text-4xl">
-              Get Started with CommitDigest
+              Start Understanding Your Progress Today
             </h2>
             <p className="max-w-[600px] text-lg text-muted-foreground sm:text-xl">
-              Automate your commit summaries today. Free plan available.
+              Join teams already saving hours weekly with automated git
+              summaries. Start free and see the difference.
             </p>
             <div className="flex w-full items-center justify-center space-x-4 py-4">
               <Button size="lg" asChild>
@@ -437,6 +518,12 @@ export default function Home() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
+              <Link href="/features">
+                <Button variant="outline" size="lg">
+                  Explore Features
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
@@ -458,24 +545,42 @@ export default function Home() {
             <div className="flex flex-col items-center gap-4 md:flex-row md:gap-6">
               {/* Menu Items */}
               <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                <a
+                <Link
                   href="/docs"
                   className="hover:text-foreground transition-colors"
                 >
-                  Docs
-                </a>
-                <a
+                  Documentation
+                </Link>
+                <Link
+                  href="/integrations"
+                  className="hover:text-foreground transition-colors"
+                >
+                  Integrations
+                </Link>
+                {/* <Link
+                  href="/blog"
+                  className="hover:text-foreground transition-colors"
+                >
+                  Blog
+                </Link> */}
+                <Link
+                  href="/pricing"
+                  className="hover:text-foreground transition-colors"
+                >
+                  Pricing
+                </Link>
+                <Link
                   href="#privacy"
                   className="hover:text-foreground transition-colors"
                 >
                   Privacy Policy
-                </a>
-                <a
+                </Link>
+                <Link
                   href="#terms"
                   className="hover:text-foreground transition-colors"
                 >
                   Terms of Service
-                </a>
+                </Link>
               </div>
               {/* Status Indicator - Separated */}
               <div className="border-l border-border/40 pl-4 md:pl-6">
