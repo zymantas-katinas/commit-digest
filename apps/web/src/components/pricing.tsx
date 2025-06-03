@@ -28,7 +28,6 @@ export function Pricing({ showHeader = true, embedded = false }: PricingProps) {
   const { data: plans, isLoading } = useQuery({
     queryKey: ["subscription-plans"],
     queryFn: subscriptionService.getPlans,
-    enabled: !!user,
   });
 
   const { data: currentSubscription } = useQuery({

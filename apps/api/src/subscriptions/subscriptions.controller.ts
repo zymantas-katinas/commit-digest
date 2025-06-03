@@ -33,7 +33,6 @@ export class SubscriptionsController {
   }
 
   @Get("plans")
-  @UseGuards(SupabaseAuthGuard)
   async getPlans() {
     return this.subscriptionsService.getPlans();
   }
