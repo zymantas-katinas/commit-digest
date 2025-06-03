@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/auth";
+import { PostHogProvider } from "./PostHogProvider";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +28,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <PostHogProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    </PostHogProvider>
   );
 }

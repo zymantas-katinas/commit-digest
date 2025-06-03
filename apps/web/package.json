@@ -27,6 +27,8 @@
     "clsx": "^2.0.0",
     "lucide-react": "^0.294.0",
     "next": "^15.3.2",
+    "posthog-js": "^1.249.1",
+    "posthog-node": "^4.18.0",
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.47.0",
