@@ -14,6 +14,15 @@ export class HealthController {
     return this.healthService.getHealthStatus();
   }
 
+  @Get("keepalive")
+  async keepalive() {
+    return {
+      status: "awake",
+      timestamp: new Date().toISOString(),
+      message: "Function is awake and ready",
+    };
+  }
+
   @Post("trigger-scheduler")
   async triggerScheduler() {
     const result = await this.schedulerService.triggerManualRun();
