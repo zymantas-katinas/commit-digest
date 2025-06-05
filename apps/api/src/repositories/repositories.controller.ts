@@ -53,9 +53,9 @@ export class RepositoriesController {
         );
       }
 
-      const encryptedPat = this.encryptionService.encrypt(
-        createRepositoryDto.pat,
-      );
+      const encryptedPat = createRepositoryDto.pat
+        ? this.encryptionService.encrypt(createRepositoryDto.pat)
+        : null;
 
       const repository = await this.supabaseService.createRepository(
         userId,

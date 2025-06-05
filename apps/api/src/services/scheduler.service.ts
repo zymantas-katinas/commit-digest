@@ -229,9 +229,9 @@ export class SchedulerService {
       }
 
       // Decrypt PAT
-      const pat = this.encryptionService.decrypt(
-        repository.encrypted_access_token,
-      );
+      const pat = repository.encrypted_access_token
+        ? this.encryptionService.decrypt(repository.encrypted_access_token)
+        : null;
 
       // Calculate since date
       const sinceDate = this.calculateSinceDate(

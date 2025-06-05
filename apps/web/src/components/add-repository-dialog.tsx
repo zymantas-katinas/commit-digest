@@ -27,7 +27,7 @@ const repositorySchema = z.object({
       "Must be a GitHub repository URL",
     ),
   branch: z.string().min(1, "Branch is required"),
-  pat: z.string().min(1, "Personal Access Token is required"),
+  pat: z.string().optional(),
 });
 
 type RepositoryFormData = z.infer<typeof repositorySchema>;
@@ -117,11 +117,13 @@ export function AddRepositoryDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="pat">Personal Access Token</Label>
+            <Label htmlFor="pat">
+              Personal Access Token (Optional for public repos)
+            </Label>
             <Input
               id="pat"
               type="password"
-              placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+              placeholder="ghp_xxxxxxxxxxxxxxxxxxxx (optional for public repos)"
               {...register("pat")}
               disabled={createMutation.isPending}
             />
@@ -129,7 +131,8 @@ export function AddRepositoryDialog({
               <p className="text-sm text-red-600">{errors.pat.message}</p>
             )}
             <p className="text-xs text-gray-500">
-              Create a token at{" "}
+              Optional for public repositories. Required for private
+              repositories. Create a token at{" "}
               <a
                 href="https://github.com/settings/tokens"
                 target="_blank"

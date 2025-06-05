@@ -30,7 +30,7 @@ export const api = {
   createRepository: (data: {
     githubUrl: string;
     branch: string;
-    pat: string;
+    pat?: string;
   }) => apiClient.post("/repositories", data),
   updateRepository: (
     id: string,

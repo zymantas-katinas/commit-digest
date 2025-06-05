@@ -21,7 +21,7 @@ export class GitHubService {
   async fetchCommits(
     githubUrl: string,
     branch: string,
-    pat: string,
+    pat?: string,
     since?: Date,
   ): Promise<GitHubCommit[]> {
     try {
@@ -44,12 +44,17 @@ export class GitHubService {
         params.since = since.toISOString();
       }
 
+      const headers: any = {
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "CommitDigest",
+      };
+
+      if (pat && pat.trim()) {
+        headers.Authorization = `token ${pat}`;
+      }
+
       const response = await axios.get(apiUrl, {
-        headers: {
-          Authorization: `token ${pat}`,
-          Accept: "application/vnd.github.v3+json",
-          "User-Agent": "Git-Report-AI",
-        },
+        headers,
         params,
       });
 
@@ -60,10 +65,17 @@ export class GitHubService {
       });
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
-          throw new HttpException(
-            "Invalid GitHub token",
-            HttpStatus.UNAUTHORIZED,
-          );
+          if (pat && pat.trim()) {
+            throw new HttpException(
+              "Invalid GitHub token",
+              HttpStatus.UNAUTHORIZED,
+            );
+          } else {
+            throw new HttpException(
+              "This repository is private and requires a Personal Access Token",
+              HttpStatus.UNAUTHORIZED,
+            );
+          }
         }
         if (error.response?.status === 404) {
           throw new HttpException("Repository not found", HttpStatus.NOT_FOUND);

@@ -1,4 +1,4 @@
-import { IsString, IsUrl, IsNotEmpty } from "class-validator";
+import { IsString, IsUrl, IsNotEmpty, IsOptional } from "class-validator";
 
 export class CreateRepositoryDto {
   @IsUrl()
@@ -10,6 +10,6 @@ export class CreateRepositoryDto {
   branch: string;
 
   @IsString()
-  @IsNotEmpty()
-  pat: string; // Personal Access Token
+  @IsOptional()
+  pat?: string;
 }

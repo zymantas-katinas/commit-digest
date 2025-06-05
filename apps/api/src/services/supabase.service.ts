@@ -44,7 +44,7 @@ export class SupabaseService {
     userId: string,
     githubUrl: string,
     branch: string,
-    encryptedPat: string,
+    encryptedPat: string | null,
   ): Promise<Repository> {
     const { data, error } = await this.supabase
       .from("repositories")

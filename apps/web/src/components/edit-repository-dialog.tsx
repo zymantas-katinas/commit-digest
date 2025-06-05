@@ -148,11 +148,13 @@ export function EditRepositoryDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="pat">Personal Access Token</Label>
+            <Label htmlFor="pat">
+              Personal Access Token (Optional for public repos)
+            </Label>
             <Input
               id="pat"
               type="password"
-              placeholder="Leave empty to keep current token"
+              placeholder="Leave empty to keep current or if public repo"
               {...register("pat")}
               disabled={updateMutation.isPending}
             />
@@ -160,7 +162,8 @@ export function EditRepositoryDialog({
               <p className="text-sm text-red-600">{errors.pat.message}</p>
             )}
             <p className="text-xs text-gray-500">
-              Create a new token at{" "}
+              Optional for public repositories. Required for private
+              repositories. Create a new token at{" "}
               <a
                 href="https://github.com/settings/tokens"
                 target="_blank"

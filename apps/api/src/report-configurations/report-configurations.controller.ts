@@ -225,9 +225,9 @@ export class ReportConfigurationsController {
 
       try {
         // Decrypt PAT
-        const pat = this.encryptionService.decrypt(
-          repository.encrypted_access_token,
-        );
+        const pat = repository.encrypted_access_token
+          ? this.encryptionService.decrypt(repository.encrypted_access_token)
+          : null;
 
         // Calculate since date for testing (last 7 days for more commits)
         const sinceDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -433,9 +433,9 @@ export class ReportConfigurationsController {
 
       try {
         // Decrypt PAT
-        const pat = this.encryptionService.decrypt(
-          repository.encrypted_access_token,
-        );
+        const pat = repository.encrypted_access_token
+          ? this.encryptionService.decrypt(repository.encrypted_access_token)
+          : null;
 
         // Fetch commits for the specified date range
         commits = await this.githubService.fetchCommits(

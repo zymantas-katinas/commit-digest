@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS repositories (
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   github_url TEXT NOT NULL,
   branch TEXT NOT NULL DEFAULT 'main',
-  encrypted_access_token TEXT NOT NULL,
+  encrypted_access_token TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
