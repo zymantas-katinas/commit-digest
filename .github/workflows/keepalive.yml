@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Ping keepalive endpoint
         run: |
-          curl -f https://commit-digest-api.vercel.app/health/keepalive || exit 1
+          curl -f https://commit-digest.onrender.com/health/keepalive || exit 1
 
       - name: Log response
         run: |
