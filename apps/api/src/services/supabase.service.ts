@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { isScheduleDue } from "../utils/cron-utils";
 
 export interface Repository {
   id: string;
@@ -194,20 +195,47 @@ export class SupabaseService {
   }
 
   async getDueReportConfigurations(): Promise<ReportConfiguration[]> {
-    const now = new Date();
-    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
+    // Get all enabled configurations and check them individually
+    // This approach is more reliable than trying to parse cron in SQL
     const { data, error } = await this.supabase
       .from("report_configurations")
       .select("*")
-      .eq("enabled", true)
-      .or(
-        `and(schedule.eq.daily,or(last_run_at.is.null,last_run_at.lt.${oneDayAgo.toISOString()})),` +
-          `and(schedule.eq.weekly,or(last_run_at.is.null,last_run_at.lt.${oneWeekAgo.toISOString()}))`,
-      );
+      .eq("enabled", true);
 
     if (error) throw error;
-    return data || [];
+
+    if (!data) return [];
+
+    // Filter configurations that are due to run using proper cron parsing
+    const now = new Date();
+    const dueConfigurations = data.filter((config) => {
+      try {
+        // If never run before, it's due
+        if (!config.last_run_at) {
+          return true;
+        }
+
+        const lastRun = new Date(config.last_run_at);
+
+        // Use the new cron utility function
+        return isScheduleDue(config.schedule, config.last_run_at);
+      } catch (error) {
+        // If cron parsing fails, log the error and use fallback logic
+        console.error(
+          `Invalid cron expression for config ${config.id}: ${config.schedule}`,
+          error,
+        );
+
+        // Fallback: treat as daily and run if it's been more than 23 hours
+        if (config.last_run_at) {
+          const lastRun = new Date(config.last_run_at);
+          const timeSinceLastRun = now.getTime() - lastRun.getTime();
+          return timeSinceLastRun > 23 * 60 * 60 * 1000;
+        }
+        return true; // Never run before
+      }
+    });
+
+    return dueConfigurations;
   }
 }

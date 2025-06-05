@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { api } from "@/lib/api";
+import { getScheduleDisplay, getNextRunTime } from "@/lib/cron-utils";
 import {
   Trash2,
   Clock,
@@ -210,75 +211,6 @@ export function ReportConfigurationList({
     }
   };
 
-  const getScheduleDisplay = (schedule: string) => {
-    switch (schedule) {
-      case "0 9 * * *":
-        return "Daily at 9:00 AM";
-      case "0 9 * * 1":
-        return "Weekly on Monday at 9:00 AM";
-      case "0 9 1 * *":
-        return "Monthly on the 1st at 9:00 AM";
-      default:
-        return schedule;
-    }
-  };
-
-  const getNextRunTime = (schedule: string, enabled: boolean) => {
-    if (!enabled) {
-      return "Paused";
-    }
-
-    const now = new Date();
-    let nextRun: Date;
-
-    switch (schedule) {
-      case "0 9 * * *": // Daily at 9:00 AM
-        nextRun = new Date(now);
-        nextRun.setHours(9, 0, 0, 0);
-        if (nextRun <= now) {
-          nextRun.setDate(nextRun.getDate() + 1);
-        }
-        break;
-      case "0 9 * * 1": // Weekly on Monday at 9:00 AM
-        nextRun = new Date(now);
-        nextRun.setHours(9, 0, 0, 0);
-        const daysUntilMonday = (1 - now.getDay() + 7) % 7;
-        if (daysUntilMonday === 0 && nextRun <= now) {
-          nextRun.setDate(nextRun.getDate() + 7);
-        } else {
-          nextRun.setDate(nextRun.getDate() + daysUntilMonday);
-        }
-        break;
-      case "0 9 1 * *": // Monthly on the 1st at 9:00 AM
-        nextRun = new Date(now);
-        nextRun.setDate(1);
-        nextRun.setHours(9, 0, 0, 0);
-        if (nextRun <= now) {
-          nextRun.setMonth(nextRun.getMonth() + 1);
-        }
-        break;
-      default:
-        return "Unknown schedule";
-    }
-
-    const timeDiff = nextRun.getTime() - now.getTime();
-    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor(
-      (timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-    );
-    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-
-    if (days > 0) {
-      return `${days}d ${hours}h`;
-    } else if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    } else if (minutes > 0) {
-      return `${minutes}m`;
-    } else {
-      return "Soon";
-    }
-  };
-
   const getWebhookIcon = (webhookUrl: string) => {
     if (webhookUrl.includes("hooks.slack.com")) {
       return (
@@ -391,8 +323,6 @@ export function ReportConfigurationList({
                     <h3 className="text-lg font-semibold truncate">
                       {config.name || "Unnamed Configuration"}
                     </h3>
-                    {config.last_run_at &&
-                      getStatusBadge(config.last_run_status)}
                   </div>
 
                   {/* Repository Info */}
@@ -422,7 +352,7 @@ export function ReportConfigurationList({
                 {/* Action Buttons - Mobile Optimized */}
                 <div className="flex flex-col space-y-3 md:items-end">
                   {/* Enable/Disable Toggle */}
-                  <div className="flex items-center justify-between md:justify-end space-x-2">
+                  <div className="flex items-center justify-between md:justify-end space-x-2 gap-2">
                     <span className="text-sm text-muted-foreground md:order-2">
                       {config.enabled ? "Active" : "Paused"}
                     </span>
@@ -530,7 +460,7 @@ export function ReportConfigurationList({
                     {getScheduleDisplay(config.schedule)}
                   </span>
                 </div>
-                <div className="flex items-start text-sm text-muted-foreground">
+                <div className="flex items-center text-sm text-muted-foreground">
                   {getWebhookIcon(config.webhook_url)}
                   <span className="font-medium mr-2 flex-shrink-0">
                     Webhook:
@@ -544,7 +474,7 @@ export function ReportConfigurationList({
               </div>
 
               {/* Last Run Info */}
-              {config.last_run_at && (
+              {/* {config.last_run_at && (
                 <div className="bg-muted/50 rounded-lg p-3 mb-4">
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center space-x-2">
@@ -556,7 +486,7 @@ export function ReportConfigurationList({
                     </div>
                   </div>
                 </div>
-              )}
+              )} */}
 
               {/* Test Result Display */}
               {testResult && testResult.configId === config.id && (

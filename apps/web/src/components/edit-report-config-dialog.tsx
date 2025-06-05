@@ -24,17 +24,35 @@ import {
 } from "@/components/ui/select";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { api } from "@/lib/api";
+import { isValidCronExpression } from "@/lib/cron-utils";
 
-const editReportConfigSchema = z.object({
+// Predefined cron expressions with display names
+const PRESET_SCHEDULES = [
+  { value: "0 9 * * *", label: "Daily at 9:00 AM" },
+  { value: "0 7 * * *", label: "Daily at 7:00 AM" },
+  { value: "0 9 * * 1", label: "Weekly on Monday at 9:00 AM" },
+  { value: "0 9 1 * *", label: "Monthly on the 1st at 9:00 AM" },
+  { value: "0 */6 * * *", label: "Every 6 hours" },
+  { value: "0 9 * * 1-5", label: "Weekdays at 9:00 AM" },
+  { value: "custom", label: "🔧 Custom cron expression" },
+];
+
+const reportConfigSchema = z.object({
   name: z.string().min(1, "Configuration name is required"),
-  schedule: z.string().min(1, "Schedule is required"),
+  schedule: z
+    .string()
+    .min(1, "Schedule is required")
+    .refine((val) => isValidCronExpression(val), {
+      message:
+        "Must be a valid cron expression (e.g., '0 9 * * *' for daily at 9 AM)",
+    }),
   webhook_url: z
     .string()
     .regex(/^https?:\/\/.+/, "Must be a valid HTTP or HTTPS URL"),
-  enabled: z.boolean(),
+  enabled: z.boolean().default(true),
 });
 
-type EditReportConfigFormData = z.infer<typeof editReportConfigSchema>;
+type EditReportConfigFormData = z.infer<typeof reportConfigSchema>;
 
 interface ReportConfiguration {
   id: string;
@@ -62,6 +80,8 @@ export function EditReportConfigDialog({
   onSuccess,
 }: EditReportConfigDialogProps) {
   const [error, setError] = useState<string | null>(null);
+  const [isCustomSchedule, setIsCustomSchedule] = useState(false);
+  const [customSchedule, setCustomSchedule] = useState("");
 
   const {
     register,
@@ -69,9 +89,13 @@ export function EditReportConfigDialog({
     formState: { errors },
     reset,
     setValue,
+    watch,
   } = useForm<EditReportConfigFormData>({
-    resolver: zodResolver(editReportConfigSchema),
+    resolver: zodResolver(reportConfigSchema),
   });
+
+  // Watch the schedule field to keep Select in sync
+  const watchedSchedule = watch("schedule");
 
   const updateMutation = useMutation({
     mutationFn: (data: EditReportConfigFormData) =>
@@ -80,6 +104,8 @@ export function EditReportConfigDialog({
       onSuccess();
       reset();
       setError(null);
+      setIsCustomSchedule(false);
+      setCustomSchedule("");
     },
     onError: (error: any) => {
       setError(
@@ -92,9 +118,22 @@ export function EditReportConfigDialog({
   useEffect(() => {
     if (configuration && open) {
       setValue("name", configuration.name || "");
-      setValue("schedule", configuration.schedule);
       setValue("webhook_url", configuration.webhook_url);
       setValue("enabled", configuration.enabled);
+
+      // Check if the current schedule is one of the predefined options
+      const isPredefined = PRESET_SCHEDULES.some(
+        (option) => option.value === configuration.schedule,
+      );
+
+      if (isPredefined) {
+        setIsCustomSchedule(false);
+        setValue("schedule", configuration.schedule);
+      } else {
+        setIsCustomSchedule(true);
+        setCustomSchedule(configuration.schedule);
+        setValue("schedule", configuration.schedule);
+      }
     }
   }, [configuration, open, setValue]);
 
@@ -107,21 +146,32 @@ export function EditReportConfigDialog({
     if (!newOpen) {
       reset();
       setError(null);
+      setIsCustomSchedule(false);
+      setCustomSchedule("");
     }
     onOpenChange(newOpen);
   };
 
-  const scheduleOptions = [
-    { value: "0 9 * * *", label: "Daily at 9:00 AM" },
-    { value: "0 9 * * 1", label: "Weekly on Monday at 9:00 AM" },
-    { value: "0 9 1 * *", label: "Monthly on the 1st at 9:00 AM" },
-  ];
+  const handleScheduleTypeChange = (value: string) => {
+    if (value === "custom") {
+      setIsCustomSchedule(true);
+      setValue("schedule", customSchedule);
+    } else {
+      setIsCustomSchedule(false);
+      setValue("schedule", value);
+    }
+  };
+
+  const handleCustomScheduleChange = (value: string) => {
+    setCustomSchedule(value);
+    setValue("schedule", value);
+  };
 
   if (!configuration) return null;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>Edit Report Configuration</DialogTitle>
         </DialogHeader>
@@ -142,22 +192,66 @@ export function EditReportConfigDialog({
 
           <div className="space-y-2">
             <Label htmlFor="schedule">Schedule</Label>
-            <Select
-              onValueChange={(value) => setValue("schedule", value)}
-              disabled={updateMutation.isPending}
-              value={configuration.schedule}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select schedule" />
-              </SelectTrigger>
-              <SelectContent>
-                {scheduleOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {!isCustomSchedule ? (
+              <Select
+                onValueChange={handleScheduleTypeChange}
+                disabled={updateMutation.isPending}
+                value={isCustomSchedule ? "custom" : watchedSchedule}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select schedule" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRESET_SCHEDULES.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="0 9 * * *"
+                    value={customSchedule}
+                    onChange={(e) => handleCustomScheduleChange(e.target.value)}
+                    disabled={updateMutation.isPending}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleScheduleTypeChange("")}
+                    disabled={updateMutation.isPending}
+                  >
+                    Use Preset
+                  </Button>
+                </div>
+                <div className="text-xs text-gray-600 space-y-1">
+                  <p>
+                    <strong>Cron format:</strong> minute hour day month weekday
+                  </p>
+                  <p>
+                    <strong>Examples:</strong>
+                  </p>
+                  <ul className="ml-4 space-y-0.5">
+                    <li>
+                      • <code>0 9 * * *</code> - Daily at 9:00 AM
+                    </li>
+                    <li>
+                      • <code>0 9 * * 1</code> - Weekly on Monday at 9:00 AM
+                    </li>
+                    <li>
+                      • <code>0 */6 * * *</code> - Every 6 hours
+                    </li>
+                    <li>
+                      • <code>30 8 1 * *</code> - Monthly on 1st at 8:30 AM
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            )}
             {errors.schedule && (
               <p className="text-sm text-red-600">{errors.schedule.message}</p>
             )}

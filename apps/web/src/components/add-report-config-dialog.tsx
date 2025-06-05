@@ -24,11 +24,22 @@ import {
 } from "@/components/ui/select";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { api } from "@/lib/api";
+import { isValidCronExpression } from "@/lib/cron-utils";
+
+// Cron expression validation regex
+const cronRegex =
+  /^(\*|([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])|\*\/([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])) (\*|([0-9]|1[0-9]|2[0-3])|\*\/([0-9]|1[0-9]|2[0-3])) (\*|([1-9]|1[0-9]|2[0-9]|3[0-1])|\*\/([1-9]|1[0-9]|2[0-9]|3[0-1])) (\*|([1-9]|1[0-2])|\*\/([1-9]|1[0-2])) (\*|([0-6])|\*\/([0-6]))$/;
 
 const reportConfigSchema = z.object({
   name: z.string().min(1, "Configuration name is required"),
   repositoryId: z.string().min(1, "Repository is required"),
-  schedule: z.string().min(1, "Schedule is required"),
+  schedule: z
+    .string()
+    .min(1, "Schedule is required")
+    .refine((val) => isValidCronExpression(val), {
+      message:
+        "Must be a valid cron expression (e.g., '0 9 * * *' for daily at 9 AM)",
+    }),
   webhook_url: z
     .string()
     .regex(/^https?:\/\/.+/, "Must be a valid HTTP or HTTPS URL"),
@@ -57,6 +68,8 @@ export function AddReportConfigDialog({
   onSuccess,
 }: AddReportConfigDialogProps) {
   const [error, setError] = useState<string | null>(null);
+  const [isCustomSchedule, setIsCustomSchedule] = useState(false);
+  const [customSchedule, setCustomSchedule] = useState("");
 
   const {
     register,
@@ -79,6 +92,8 @@ export function AddReportConfigDialog({
       onSuccess();
       reset();
       setError(null);
+      setIsCustomSchedule(false);
+      setCustomSchedule("");
     },
     onError: (error: any) => {
       setError(
@@ -96,6 +111,8 @@ export function AddReportConfigDialog({
     if (!newOpen) {
       reset();
       setError(null);
+      setIsCustomSchedule(false);
+      setCustomSchedule("");
     }
     onOpenChange(newOpen);
   };
@@ -113,11 +130,29 @@ export function AddReportConfigDialog({
     { value: "0 9 * * *", label: "Daily at 9:00 AM" },
     { value: "0 9 * * 1", label: "Weekly on Monday at 9:00 AM" },
     { value: "0 9 1 * *", label: "Monthly on the 1st at 9:00 AM" },
+    { value: "0 7 * * *", label: "Daily at 7:00 AM" },
+    { value: "0 */6 * * *", label: "Every 6 hours" },
+    { value: "0 9 * * 1-5", label: "Weekdays at 9:00 AM" },
   ];
+
+  const handleScheduleTypeChange = (value: string) => {
+    if (value === "custom") {
+      setIsCustomSchedule(true);
+      setValue("schedule", customSchedule);
+    } else {
+      setIsCustomSchedule(false);
+      setValue("schedule", value);
+    }
+  };
+
+  const handleCustomScheduleChange = (value: string) => {
+    setCustomSchedule(value);
+    setValue("schedule", value);
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>Add Report Configuration</DialogTitle>
         </DialogHeader>
@@ -169,21 +204,68 @@ export function AddReportConfigDialog({
 
           <div className="space-y-2">
             <Label htmlFor="schedule">Schedule</Label>
-            <Select
-              onValueChange={(value) => setValue("schedule", value)}
-              disabled={createMutation.isPending}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select schedule" />
-              </SelectTrigger>
-              <SelectContent>
-                {scheduleOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+            {!isCustomSchedule ? (
+              <Select
+                onValueChange={handleScheduleTypeChange}
+                disabled={createMutation.isPending}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select schedule" />
+                </SelectTrigger>
+                <SelectContent>
+                  {scheduleOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="custom">
+                    🔧 Custom cron expression
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="0 9 * * * (daily at 9 AM)"
+                    value={customSchedule}
+                    onChange={(e) => handleCustomScheduleChange(e.target.value)}
+                    disabled={createMutation.isPending}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleScheduleTypeChange("")}
+                    disabled={createMutation.isPending}
+                  >
+                    Use Preset
+                  </Button>
+                </div>
+                <div className="text-xs text-gray-600 space-y-1">
+                  <p>
+                    <strong>Cron format:</strong> minute hour day month weekday
+                  </p>
+                  <p>
+                    <strong>Examples:</strong>
+                  </p>
+                  <ul className="ml-4 space-y-0.5">
+                    <li>
+                      • <code>0 9 * * *</code> - Daily at 9:00 AM
+                    </li>
+                    <li>
+                      • <code>0 9 * * 1</code> - Weekly on Monday at 9:00 AM
+                    </li>
+                    <li>
+                      • <code>0 */6 * * *</code> - Every 6 hours
+                    </li>
+                    <li>
+                      • <code>30 8 1 * *</code> - Monthly on 1st at 8:30 AM
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            )}
             {errors.schedule && (
               <p className="text-sm text-red-600">{errors.schedule.message}</p>
             )}

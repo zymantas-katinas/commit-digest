@@ -6,10 +6,15 @@ import { LLMService } from "./llm.service";
 import { NotificationService } from "./notification.service";
 import { EncryptionService } from "./encryption.service";
 import { ReportRunsService } from "./report-runs.service";
+import { isScheduleDue, parseNextRunTime } from "../utils/cron-utils";
 
 @Injectable()
 export class SchedulerService {
   private readonly logger = new Logger(SchedulerService.name);
+  private lastRunTime: Date | null = null;
+  private totalConfigsProcessed = 0;
+  private successfulRuns = 0;
+  private failedRuns = 0;
 
   constructor(
     private supabaseService: SupabaseService,
@@ -18,24 +23,139 @@ export class SchedulerService {
     private notificationService: NotificationService,
     private encryptionService: EncryptionService,
     private reportRunsService: ReportRunsService,
-  ) {}
+  ) {
+    this.logger.log(
+      "🚀 SchedulerService instantiated - cron jobs should be registered",
+    );
+    this.logger.log(
+      "📅 Hourly report generation cron: @Cron(CronExpression.EVERY_HOUR)",
+    );
+    this.logger.log(
+      "💓 Debug heartbeat cron: @Cron('0 * * * * *') - every minute",
+    );
+    this.logger.log("🔔 Test cron: @Cron('*/30 * * * * *') - every 30 seconds");
+  }
 
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_MINUTE) // Changed to every minute for accurate scheduling
   async handleReportGeneration() {
-    this.logger.log("Starting scheduled report generation...");
+    const startTime = new Date();
+    this.lastRunTime = startTime;
 
     try {
       const dueConfigurations =
         await this.supabaseService.getDueReportConfigurations();
-      this.logger.log(
-        `Found ${dueConfigurations.length} due report configurations`,
-      );
+
+      // Only log details when there are configurations to process
+      if (dueConfigurations.length > 0) {
+        this.logger.log(
+          `🚀 Starting scheduled report generation at ${startTime.toISOString()}`,
+        );
+        this.logger.log(`⏰ Current time: ${startTime.toLocaleString()}`);
+        this.logger.log(
+          `📋 Found ${dueConfigurations.length} due report configurations`,
+        );
+
+        // Log schedule details for debugging
+        dueConfigurations.forEach((config) => {
+          const nextRunTime = parseNextRunTime(
+            config.schedule,
+            config.last_run_at ? new Date(config.last_run_at) : new Date(),
+          );
+          this.logger.log(
+            `📅 DUE Config ${config.id}: schedule="${config.schedule}", last_run=${config.last_run_at || "never"}, next_scheduled=${nextRunTime?.toISOString() || "unknown"}, name="${config.name || "unnamed"}"`,
+          );
+        });
+      } else {
+        // Minimal logging when nothing to do
+        this.logger.debug(
+          `🔍 Scheduler check at ${startTime.toISOString()} - no configurations due`,
+        );
+      }
+
+      if (dueConfigurations.length === 0) {
+        return;
+      }
+
+      let processedCount = 0;
+      let successCount = 0;
+      let failedCount = 0;
 
       for (const config of dueConfigurations) {
-        await this.processReportConfiguration(config);
+        try {
+          await this.processReportConfiguration(config);
+          successCount++;
+        } catch (error) {
+          failedCount++;
+          this.logger.error(
+            `❌ Failed to process config ${config.id}:`,
+            error.message,
+          );
+        }
+        processedCount++;
       }
+
+      this.totalConfigsProcessed += processedCount;
+      this.successfulRuns += successCount;
+      this.failedRuns += failedCount;
+
+      this.logger.log(
+        `✅ Batch complete: ${successCount} successful, ${failedCount} failed out of ${processedCount} configurations`,
+      );
     } catch (error) {
-      this.logger.error("Error in scheduled report generation:", error);
+      this.logger.error(
+        "💥 Critical error in scheduled report generation:",
+        error,
+      );
+    }
+  }
+
+  /**
+   * Get scheduler statistics for health monitoring
+   */
+  getSchedulerStats() {
+    return {
+      lastRunTime: this.lastRunTime,
+      totalConfigsProcessed: this.totalConfigsProcessed,
+      successfulRuns: this.successfulRuns,
+      failedRuns: this.failedRuns,
+      isRunning: this.lastRunTime
+        ? Date.now() - this.lastRunTime.getTime() < 5 * 60 * 1000
+        : false, // Consider running if last run was within 5 minutes
+    };
+  }
+
+  /**
+   * Manual trigger for testing scheduler logic
+   */
+  async triggerManualRun(): Promise<{
+    success: boolean;
+    message: string;
+    stats: { processed: number; successful: number; failed: number };
+  }> {
+    this.logger.log("🔧 Manual scheduler trigger initiated");
+
+    try {
+      await this.handleReportGeneration();
+      return {
+        success: true,
+        message: "Manual trigger completed successfully",
+        stats: {
+          processed: this.totalConfigsProcessed,
+          successful: this.successfulRuns,
+          failed: this.failedRuns,
+        },
+      };
+    } catch (error) {
+      this.logger.error("❌ Manual trigger failed:", error);
+      return {
+        success: false,
+        message: `Manual trigger failed: ${error.message}`,
+        stats: {
+          processed: this.totalConfigsProcessed,
+          successful: this.successfulRuns,
+          failed: this.failedRuns,
+        },
+      };
     }
   }
 
@@ -106,8 +226,14 @@ export class SchedulerService {
       // Calculate since date
       const sinceDate = this.calculateSinceDate(
         config.schedule,
-        config.last_run_timestamp,
+        config.last_run_at,
       );
+
+      console.log({
+        sinceDate,
+        schedule: config.schedule,
+        lastRunAt: config.last_run_at,
+      });
 
       // Fetch commits
       const commits = await this.githubService.fetchCommits(
@@ -119,6 +245,44 @@ export class SchedulerService {
 
       if (commits.length === 0) {
         this.logger.log(`No new commits found for config ${configId}`);
+
+        // Create a "no commits" message to send via webhook
+        const timeframe = this.isDailySchedule(config.schedule)
+          ? "day"
+          : "week";
+        const noCommitsMessage =
+          `📊 **Git Report - No Activity**\n\n` +
+          `**Repository:** ${repository.github_url}\n` +
+          `**Branch:** ${repository.branch}\n` +
+          `**Period:** ${this.formatDateRange(sinceDate, new Date())}\n\n` +
+          `✅ No new commits found in the last ${timeframe}.\n\n` +
+          `This means your repository has been quiet - no changes were made during this period. ` +
+          `You'll receive your next report according to your schedule: \`${config.schedule}\``;
+
+        // Send webhook even when no commits
+        const webhookSuccess = await this.notificationService.sendWebhook(
+          config.webhook_url,
+          noCommitsMessage,
+          {
+            repository: repository.github_url,
+            branch: repository.branch,
+            commitsCount: 0,
+            dateRange: {
+              since: sinceDate.toISOString(),
+              until: new Date().toISOString(),
+            },
+            isTest: false,
+          },
+        );
+
+        // Update webhook delivery status
+        await this.reportRunsService.updateWebhookDelivery(
+          reportRun.id,
+          config.user_id,
+          webhookSuccess,
+          webhookSuccess ? 200 : 500,
+        );
+
         await this.reportRunsService.markRunAsSuccess(
           reportRun.id,
           config.user_id,
@@ -128,13 +292,16 @@ export class SchedulerService {
             commits_processed: 0,
             commit_range_from: sinceDate.toISOString(),
             commit_range_to: new Date().toISOString(),
-            report_content: "No new commits found",
+            report_content: noCommitsMessage,
           },
         );
-        await this.updateConfigurationStatus(
-          config,
-          "success",
-          "No new commits found",
+
+        // Update configuration with appropriate status
+        const status = webhookSuccess ? "success" : "failed";
+        await this.updateConfigurationStatus(config, status, noCommitsMessage);
+
+        this.logger.log(
+          `Report configuration ${configId} processed successfully (no commits). Webhook sent: ${webhookSuccess}`,
         );
         return;
       }
@@ -151,10 +318,20 @@ export class SchedulerService {
       const costUsd = summaryResult.costUsd;
       const summary = summaryResult.summary;
 
+      // Create formatted report with metadata header
+      const formattedReport =
+        `📊 **Git Report - ${commits.length} ${commits.length === 1 ? "Commit" : "Commits"}**\n\n` +
+        `**Repository:** ${repository.github_url}\n` +
+        `**Branch:** ${repository.branch}\n` +
+        `**Period:** ${this.formatDateRange(sinceDate, new Date())}\n` +
+        `**Commits:** ${commits.length}\n\n` +
+        `---\n\n` +
+        summary;
+
       // Send webhook with metadata
       const webhookSuccess = await this.notificationService.sendWebhook(
         config.webhook_url,
-        summary,
+        formattedReport,
         {
           repository: repository.github_url,
           branch: repository.branch,
@@ -186,13 +363,13 @@ export class SchedulerService {
           commit_range_from:
             commits[commits.length - 1]?.sha || sinceDate.toISOString(),
           commit_range_to: commits[0]?.sha || new Date().toISOString(),
-          report_content: summary,
+          report_content: formattedReport,
         },
       );
 
       // Update configuration
       const status = webhookSuccess ? "success" : "failed";
-      await this.updateConfigurationStatus(config, status, summary);
+      await this.updateConfigurationStatus(config, status, formattedReport);
 
       this.logger.log(
         `Report configuration ${configId} processed successfully. Tokens used: ${tokensUsed}, Cost: $${costUsd}`,
@@ -219,18 +396,15 @@ export class SchedulerService {
    * Calculate the date from which to fetch commits.
    *
    * Logic:
-   * - If this is the first run (no lastRunTimestamp), use a default lookback period
+   * - If this is the first run (no lastRunAt), use a default lookback period
    * - If there was a previous run, fetch commits since that timestamp
    * - For daily schedules: default to 1 day ago
    * - For weekly schedules: default to 7 days ago
    * - For custom cron schedules: default to 1 day ago
    */
-  private calculateSinceDate(
-    schedule: string,
-    lastRunTimestamp?: string,
-  ): Date {
-    if (lastRunTimestamp) {
-      return new Date(lastRunTimestamp);
+  private calculateSinceDate(schedule: string, lastRunAt?: string): Date {
+    if (lastRunAt) {
+      return new Date(lastRunAt);
     }
 
     const now = new Date();
@@ -266,6 +440,22 @@ export class SchedulerService {
     return parts.length === 5 && parts[4] !== "*";
   }
 
+  /**
+   * Format date range for reports
+   */
+  private formatDateRange(sinceDate: Date, endDate: Date): string {
+    const formatOptions: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZoneName: "short",
+    };
+
+    return `${sinceDate.toLocaleDateString("en-US", formatOptions)} - ${endDate.toLocaleDateString("en-US", formatOptions)}`;
+  }
+
   private async updateConfigurationStatus(
     config: any,
     status: string,
@@ -273,11 +463,11 @@ export class SchedulerService {
   ) {
     const updates: any = {
       last_run_status: status,
-      last_run_timestamp: new Date().toISOString(),
+      last_run_at: new Date().toISOString(),
     };
 
     if (reportContent) {
-      updates.last_report_content = reportContent;
+      updates.last_run_content = reportContent;
     }
 
     await this.supabaseService.updateReportConfiguration(
@@ -285,5 +475,54 @@ export class SchedulerService {
       config.user_id,
       updates,
     );
+  }
+
+  /**
+   * Debug method to check if a configuration should be due
+   */
+  private async debugScheduleCheck(config: any): Promise<boolean> {
+    const now = new Date();
+
+    this.logger.debug(`🔍 Debugging schedule for config ${config.id}:`);
+    this.logger.debug(`   Schedule: ${config.schedule}`);
+    this.logger.debug(`   Last run: ${config.last_run_at || "never"}`);
+    this.logger.debug(`   Enabled: ${config.enabled}`);
+    this.logger.debug(`   Current time: ${now.toISOString()}`);
+
+    if (!config.enabled) {
+      this.logger.debug(`   ❌ Configuration is disabled`);
+      return false;
+    }
+
+    const isDue = isScheduleDue(config.schedule, config.last_run_at);
+    const nextRunTime = parseNextRunTime(
+      config.schedule,
+      config.last_run_at ? new Date(config.last_run_at) : new Date(),
+    );
+
+    this.logger.debug(
+      `   Next run time: ${nextRunTime?.toISOString() || "unknown"}`,
+    );
+    this.logger.debug(`   Is due: ${isDue}`);
+
+    if (nextRunTime) {
+      this.logger.debug(
+        `   Time until next run: ${nextRunTime.getTime() - now.getTime()}ms`,
+      );
+    }
+
+    return isDue;
+  }
+
+  /**
+   * Debug cron to verify scheduling is working - runs every minute
+   */
+  @Cron("0 * * * * *") // Every minute at 0 seconds
+  async debugCronHeartbeat() {
+    const now = new Date();
+    this.logger.log(
+      `💓 Cron heartbeat: ${now.toISOString()} (${now.toLocaleString()})`,
+    );
+    this.lastRunTime = now; // Update for health check
   }
 }
