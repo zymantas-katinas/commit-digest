@@ -15,6 +15,7 @@ export class SchedulerService {
   private totalConfigsProcessed = 0;
   private successfulRuns = 0;
   private failedRuns = 0;
+  private lastMemoryReset = Date.now();
 
   constructor(
     private supabaseService: SupabaseService,
@@ -36,10 +37,19 @@ export class SchedulerService {
     this.logger.log("🔔 Test cron: @Cron('*/30 * * * * *') - every 30 seconds");
   }
 
-  @Cron(CronExpression.EVERY_MINUTE) // Changed to every minute for accurate scheduling
+  @Cron("0 */10 * * * *") // Changed to every 10 minutes for better memory management
   async handleReportGeneration() {
     const startTime = new Date();
     this.lastRunTime = startTime;
+
+    // Reset counters every hour to prevent memory accumulation
+    if (Date.now() - this.lastMemoryReset > 60 * 60 * 1000) {
+      this.resetCounters();
+      if (global.gc) {
+        this.logger.log("🧹 Running garbage collection");
+        global.gc();
+      }
+    }
 
     try {
       const dueConfigurations =
@@ -516,13 +526,24 @@ export class SchedulerService {
 
   /**
    * Debug cron to verify scheduling is working - runs every minute
+   * DISABLED: This was causing memory issues by running too frequently
    */
-  @Cron("0 * * * * *") // Every minute at 0 seconds
-  async debugCronHeartbeat() {
-    const now = new Date();
+  // @Cron("0 * * * * *") // Every minute at 0 seconds
+  // async debugCronHeartbeat() {
+  //   const now = new Date();
+  //   this.logger.log(
+  //     `💓 Cron heartbeat: ${now.toISOString()} (${now.toLocaleString()})`,
+  //   );
+  //   this.lastRunTime = now; // Update for health check
+  // }
+
+  private resetCounters() {
     this.logger.log(
-      `💓 Cron heartbeat: ${now.toISOString()} (${now.toLocaleString()})`,
+      `🔄 Resetting counters - Previous: processed=${this.totalConfigsProcessed}, successful=${this.successfulRuns}, failed=${this.failedRuns}`,
     );
-    this.lastRunTime = now; // Update for health check
+    this.totalConfigsProcessed = 0;
+    this.successfulRuns = 0;
+    this.failedRuns = 0;
+    this.lastMemoryReset = Date.now();
   }
 }

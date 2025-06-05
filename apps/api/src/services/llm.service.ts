@@ -20,6 +20,8 @@ export class LLMService {
       openAIApiKey: this.configService.get("OPENAI_API_KEY"),
       modelName: "gpt-4o-mini",
       temperature: 0.3,
+      maxRetries: 2,
+      timeout: 30000,
     });
   }
 
@@ -36,7 +38,16 @@ export class LLMService {
       };
     }
 
-    const commitMessages = commits
+    // Limit commits to prevent excessive token usage and memory consumption
+    const maxCommits = 100;
+    const limitedCommits = commits.slice(0, maxCommits);
+    if (commits.length > maxCommits) {
+      console.warn(
+        `Limited commits from ${commits.length} to ${maxCommits} for memory management`,
+      );
+    }
+
+    const commitMessages = limitedCommits
       .map((commit) => {
         const author = commit.author?.login || commit.commit.author.name;
         const date = new Date(commit.commit.author.date).toLocaleDateString();

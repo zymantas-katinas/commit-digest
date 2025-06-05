@@ -11,6 +11,12 @@ export interface HealthStatus {
   };
   uptime: number;
   schedulerStats?: any;
+  memoryUsage?: {
+    rss: number;
+    heapUsed: number;
+    heapTotal: number;
+    external: number;
+  };
 }
 
 @Injectable()
@@ -21,6 +27,7 @@ export class HealthService {
 
   async getHealthStatus(): Promise<HealthStatus> {
     const schedulerStats = this.schedulerService.getSchedulerStats();
+    const memoryUsage = process.memoryUsage();
 
     const services = {
       database: await this.checkDatabase(),
@@ -47,6 +54,12 @@ export class HealthService {
       services,
       uptime: Date.now() - this.startTime,
       schedulerStats,
+      memoryUsage: {
+        rss: Math.round(memoryUsage.rss / 1024 / 1024), // MB
+        heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024), // MB
+        heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024), // MB
+        external: Math.round(memoryUsage.external / 1024 / 1024), // MB
+      },
     };
   }
 
