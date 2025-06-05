@@ -29,7 +29,7 @@ export class LLMService {
   ): Promise<LLMSummaryResult> {
     if (commits.length === 0) {
       return {
-        summary: `# Git Commit Report (${timeframe})\n\nNo commits found for this period.`,
+        summary: `No commits found for this period.`,
         tokensUsed: 0,
         costUsd: 0,
         model: "gpt-4o-mini",
@@ -45,26 +45,42 @@ export class LLMService {
       .join("\n");
 
     const promptTemplate = new PromptTemplate({
-      template: `You are an expert at summarizing Git commit histories.
-Given the following list of commit messages from the past {timeframe}, please generate a concise, human-readable report in Markdown format.
-Focus on highlighting:
-1. New features or significant additions.
-2. Important bug fixes.
-3. Any breaking changes (if discernible).
-Keep the summary clear and easy for a project manager or team lead to understand.
+      template: `You are an expert at summarizing Git commit histories for team reports.
+
+Given the following commit messages, create a clean, natural summary in **markdown format**.
+
+IMPORTANT RULES:
+- Do NOT include dates, repository info, or commit counts (this is already provided separately)
+- Do NOT create empty sections like "Bug Fixes: None" 
+- Only mention what actually happened
+- Use markdown headers (##) and bullet points (-) for structure
+- Keep it concise and focused
+- If there's only one trivial change, just describe it simply without headers
 
 Commit Messages:
----
 {commitMessages}
----
 
-Please generate a well-structured Markdown report with appropriate headings and bullet points. Return ONLY the report content - do not include any meta-commentary, explanations about the summary, or concluding statements about the report itself.`,
-      inputVariables: ["timeframe", "commitMessages"],
+Generate a brief, natural markdown summary. Examples of good summaries:
+
+For multiple changes:
+## 🚀 New Features
+- Added user authentication system
+- Redesigned dashboard layout
+
+## 🐛 Bug Fixes
+- Fixed login redirect issue
+- Resolved mobile layout problems
+
+For single change: "Added user authentication system."
+
+For trivial changes: "Empty commit for testing purposes."
+
+Write ONLY the summary content in markdown - no meta-commentary.`,
+      inputVariables: ["commitMessages"],
     });
 
     try {
       const prompt = await promptTemplate.format({
-        timeframe,
         commitMessages,
       });
 
@@ -91,7 +107,7 @@ Please generate a well-structured Markdown report with appropriate headings and 
     } catch (error) {
       console.error("Error generating commit summary:", error);
       return {
-        summary: `# Git Commit Report (${timeframe})\n\n## Error\n\nFailed to generate AI summary. Raw commits:\n\n${commitMessages}`,
+        summary: `Failed to generate AI summary. Raw commits:\n\n${commitMessages}`,
         tokensUsed: 0,
         costUsd: 0,
         model: "gpt-4o-mini",
