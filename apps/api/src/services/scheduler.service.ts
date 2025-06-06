@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { Cron, CronExpression } from "@nestjs/schedule";
+import { Cron } from "@nestjs/schedule";
 import { SupabaseService } from "./supabase.service";
 import { GitHubService } from "./github.service";
 import { LLMService } from "./llm.service";
@@ -37,7 +37,7 @@ export class SchedulerService {
     this.logger.log("🔔 Test cron: @Cron('*/30 * * * * *') - every 30 seconds");
   }
 
-  @Cron("0 */10 * * * *") // Changed to every 10 minutes for better memory management
+  @Cron("0 * * * * *") // Changed to every 10 minutes for better memory management
   async handleReportGeneration() {
     const startTime = new Date();
     this.lastRunTime = startTime;
