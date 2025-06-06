@@ -8,6 +8,7 @@ import { ReportRunsModule } from "./report-runs/report-runs.module";
 import { ServicesModule } from "./services/services.module";
 import { HealthModule } from "./health/health.module";
 import { SubscriptionsModule } from "./subscriptions/subscriptions.module";
+import { UsersController } from "./controllers/users.controller";
 
 @Module({
   imports: [
@@ -23,5 +24,6 @@ import { SubscriptionsModule } from "./subscriptions/subscriptions.module";
     HealthModule,
     SubscriptionsModule,
   ],
+  controllers: [UsersController],
 })
 export class AppModule {}

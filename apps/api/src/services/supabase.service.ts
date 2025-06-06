@@ -195,20 +195,25 @@ export class SupabaseService {
   }
 
   async getDueReportConfigurations(): Promise<ReportConfiguration[]> {
-    // Get all enabled configurations and check them individually
+    // Get all enabled configurations with user timezone information
     // This approach is more reliable than trying to parse cron in SQL
     const { data, error } = await this.supabase
       .from("report_configurations")
-      .select("*")
+      .select(
+        `
+        *,
+        user_profiles!inner(timezone)
+      `,
+      )
       .eq("enabled", true);
 
     if (error) throw error;
 
     if (!data) return [];
 
-    // Filter configurations that are due to run using proper cron parsing
+    // Filter configurations that are due to run using proper cron parsing with timezone
     const now = new Date();
-    const dueConfigurations = data.filter((config) => {
+    const dueConfigurations = data.filter((config: any) => {
       try {
         // If never run before, it's due
         if (!config.last_run_at) {
@@ -217,8 +222,11 @@ export class SupabaseService {
 
         const lastRun = new Date(config.last_run_at);
 
-        // Use the new cron utility function
-        return isScheduleDue(config.schedule, config.last_run_at);
+        // Get user timezone from the joined profile data
+        const userTimezone = config.user_profiles?.timezone || "UTC";
+
+        // Use the new cron utility function with timezone support
+        return isScheduleDue(config.schedule, config.last_run_at, userTimezone);
       } catch (error) {
         // If cron parsing fails, log the error and use fallback logic
         console.error(
@@ -236,6 +244,33 @@ export class SupabaseService {
       }
     });
 
-    return dueConfigurations;
+    // Clean up the response to match the original interface
+    return dueConfigurations.map((config: any) => {
+      const { user_profiles, ...reportConfig } = config;
+      return reportConfig;
+    });
+  }
+
+  async getUserTimezone(userId: string): Promise<string> {
+    const { data, error } = await this.supabase
+      .from("user_profiles")
+      .select("timezone")
+      .eq("id", userId)
+      .single();
+
+    if (error || !data) {
+      return "UTC"; // Default timezone
+    }
+
+    return data.timezone || "UTC";
+  }
+
+  async updateUserTimezone(userId: string, timezone: string): Promise<void> {
+    const { error } = await this.supabase
+      .from("user_profiles")
+      .update({ timezone })
+      .eq("id", userId);
+
+    if (error) throw error;
   }
 }
