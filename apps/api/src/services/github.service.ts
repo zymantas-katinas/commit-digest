@@ -1,4 +1,5 @@
 import { Injectable, HttpException, HttpStatus } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import axios from "axios";
 
 export interface GitHubCommit {
@@ -18,6 +19,8 @@ export interface GitHubCommit {
 
 @Injectable()
 export class GitHubService {
+  constructor(private configService: ConfigService) {}
+
   async fetchCommits(
     githubUrl: string,
     branch: string,
@@ -49,8 +52,14 @@ export class GitHubService {
         "User-Agent": "CommitDigest",
       };
 
-      if (pat && pat.trim()) {
-        headers.Authorization = `token ${pat}`;
+      // Use provided PAT or fallback to app's default GitHub token
+      const token =
+        pat && pat.trim()
+          ? pat
+          : this.configService.get<string>("GITHUB_TOKEN");
+
+      if (token) {
+        headers.Authorization = `token ${token}`;
       }
 
       const response = await axios.get(apiUrl, {
@@ -76,6 +85,23 @@ export class GitHubService {
               HttpStatus.UNAUTHORIZED,
             );
           }
+        }
+        if (error.response?.status === 403) {
+          // Handle rate limiting
+          const resetTime = error.response?.headers["x-ratelimit-reset"];
+          let message = "GitHub API rate limit exceeded";
+
+          if (resetTime) {
+            const resetDate = new Date(parseInt(resetTime) * 1000);
+            message += `. Rate limit resets at ${resetDate.toISOString()}`;
+          }
+
+          if (!pat || !pat.trim()) {
+            message +=
+              ". Consider adding a Personal Access Token to increase rate limits.";
+          }
+
+          throw new HttpException(message, HttpStatus.TOO_MANY_REQUESTS);
         }
         if (error.response?.status === 404) {
           throw new HttpException("Repository not found", HttpStatus.NOT_FOUND);

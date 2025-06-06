@@ -152,6 +152,9 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 # OpenAI
 OPENAI_API_KEY=your_openai_api_key
 
+# GitHub (optional - helps avoid rate limiting for public repos)
+GITHUB_TOKEN=ghp_your_github_personal_access_token
+
 # Encryption (Generate a 32-character string)
 PAT_ENCRYPTION_KEY=your_32_character_encryption_key
 
@@ -175,7 +178,13 @@ FRONTEND_URL=http://localhost:3000
    - Visit [OpenAI API Keys](https://platform.openai.com/api-keys)
    - Create a new API key (starts with `sk-`)
 
-3. **PAT_ENCRYPTION_KEY**:
+3. **GITHUB_TOKEN** (optional):
+
+   - Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
+   - Generate a new token with `public_repo` scope
+   - This helps avoid rate limiting when accessing public repositories
+
+4. **PAT_ENCRYPTION_KEY**:
    - Generate using: `node -e "console.log(require('crypto').randomBytes(32).toString('base64').substring(0, 32))"`
 
 #### Frontend Web (`apps/web/.env.local`)
@@ -242,6 +251,35 @@ pnpm start
 3. **Configure Reports**: Set up automated reports with schedule and webhook URL
 4. **Test Webhooks**: Use the test feature to verify your webhook endpoint works
 5. **Receive Reports**: AI-generated summaries will be sent to your webhook endpoint
+
+## Troubleshooting
+
+### GitHub API Rate Limit (403 Error)
+
+If you're getting 403 "rate limit exceeded" errors:
+
+1. **Add a GitHub Token**: Set `GITHUB_TOKEN` in your environment variables
+2. **Use Personal Access Tokens**: When adding repositories, include a Personal Access Token
+3. **Check Rate Limits**: GitHub allows 60 requests/hour for unauthenticated requests, 5000/hour for authenticated
+
+### Database Relationship Errors
+
+If you see "Could not find a relationship between 'report_configurations' and 'user_profiles'":
+
+1. **Run the migration**: Execute `database/migration_ensure_user_profiles.sql` in your Supabase SQL Editor
+2. **Check table exists**: Verify the `user_profiles` table exists in your database
+3. **Create user profiles**: The migration will automatically create profiles for existing users
+
+### Missing User Profiles
+
+If the scheduler fails with missing user profiles:
+
+```sql
+-- Run this in Supabase SQL Editor to create missing profiles
+INSERT INTO user_profiles (id, timezone)
+SELECT id, 'UTC' FROM auth.users
+WHERE id NOT IN (SELECT id FROM user_profiles);
+```
 
 ## Documentation
 

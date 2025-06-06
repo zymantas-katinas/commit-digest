@@ -195,25 +195,45 @@ export class SupabaseService {
   }
 
   async getDueReportConfigurations(): Promise<ReportConfiguration[]> {
-    // Get all enabled configurations with user timezone information
-    // This approach is more reliable than trying to parse cron in SQL
+    // Get all enabled configurations with optional user timezone information
+    // Use LEFT JOIN to handle missing user_profiles gracefully
     const { data, error } = await this.supabase
       .from("report_configurations")
       .select(
         `
         *,
-        user_profiles!inner(timezone)
+        user_profiles(timezone)
       `,
       )
       .eq("enabled", true);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error fetching due report configurations:", error);
+      // If the user_profiles relationship fails, fallback to basic query
+      const { data: fallbackData, error: fallbackError } = await this.supabase
+        .from("report_configurations")
+        .select("*")
+        .eq("enabled", true);
+
+      if (fallbackError) {
+        throw fallbackError;
+      }
+
+      // Use fallback data with default timezone
+      return this.filterDueConfigurations(fallbackData || [], "UTC");
+    }
 
     if (!data) return [];
 
-    // Filter configurations that are due to run using proper cron parsing with timezone
+    return this.filterDueConfigurations(data, null);
+  }
+
+  private filterDueConfigurations(
+    configurations: any[],
+    defaultTimezone?: string,
+  ): ReportConfiguration[] {
     const now = new Date();
-    const dueConfigurations = data.filter((config: any) => {
+    const dueConfigurations = configurations.filter((config: any) => {
       try {
         // If never run before, it's due
         if (!config.last_run_at) {
@@ -222,8 +242,9 @@ export class SupabaseService {
 
         const lastRun = new Date(config.last_run_at);
 
-        // Get user timezone from the joined profile data
-        const userTimezone = config.user_profiles?.timezone || "UTC";
+        // Get user timezone from the joined profile data or use default
+        const userTimezone =
+          config.user_profiles?.timezone || defaultTimezone || "UTC";
 
         // Use the new cron utility function with timezone support
         return isScheduleDue(config.schedule, config.last_run_at, userTimezone);
