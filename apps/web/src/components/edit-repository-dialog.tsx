@@ -161,7 +161,7 @@ export function EditRepositoryDialog({
             {errors.pat && (
               <p className="text-sm text-red-600">{errors.pat.message}</p>
             )}
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-slate-500">
               Optional for public repositories. Required for private
               repositories. Create a new token at{" "}
               <a

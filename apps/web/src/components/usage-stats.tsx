@@ -21,8 +21,8 @@ export function UsageStats() {
     return (
       <div className="bg-card rounded-lg border p-3">
         <div className="animate-pulse">
-          <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
-          <div className="h-2 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-3 bg-slate-200 rounded w-3/4 mb-2"></div>
+          <div className="h-2 bg-slate-200 rounded w-1/2"></div>
         </div>
       </div>
     );
@@ -79,7 +79,7 @@ export function UsageStats() {
             </span>
           </div>
 
-          <div className="w-full bg-gray-200 rounded-full h-1.5">
+          <div className="w-full bg-slate-200 rounded-full h-1.5">
             <div
               className={`h-1.5 rounded-full transition-all duration-300 ${
                 usagePercentage >= 100

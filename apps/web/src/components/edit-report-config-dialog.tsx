@@ -228,12 +228,12 @@ export function EditReportConfigDialog({
                     Use Preset
                   </Button>
                 </div>
-                <div className="text-xs text-gray-600 space-y-1">
+                <div className="text-xs text-slate-600 space-y-1">
                   <p>
                     <strong>Cron format:</strong> minute hour day month weekday
                   </p>
                   <p>
-                    <strong>Examples:</strong>
+                    <strong>Examples (times in your timezone):</strong>
                   </p>
                   <ul className="ml-4 space-y-0.5">
                     <li>
@@ -249,6 +249,10 @@ export function EditReportConfigDialog({
                       • <code>30 8 1 * *</code> - Monthly on 1st at 8:30 AM
                     </li>
                   </ul>
+                  <p className="text-amber-600 mt-2">
+                    💡 Times are interpreted in your timezone. Update your
+                    timezone in settings if needed.
+                  </p>
                 </div>
               </div>
             )}
@@ -270,7 +274,7 @@ export function EditReportConfigDialog({
                 {errors.webhook_url.message}
               </p>
             )}
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-slate-500">
               The URL where reports will be sent via POST request.
             </p>
           </div>

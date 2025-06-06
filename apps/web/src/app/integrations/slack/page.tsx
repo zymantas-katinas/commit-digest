@@ -303,14 +303,14 @@ export default function SlackIntegrationPage() {
                     <div className="font-bold text-lg mb-2">
                       📊 Weekly Development Summary
                     </div>
-                    <div className="text-sm text-gray-600 mb-4">
+                    <div className="text-sm text-slate-600 mb-4">
                       Jan 15, 2024 • 12 commits
                     </div>
                   </div>
 
                   <div>
                     <div className="font-semibold mb-2">🚀 New Features</div>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 ml-4">
+                    <ul className="list-disc list-inside space-y-1 text-sm text-slate-700 ml-4">
                       <li>Added user authentication with OAuth integration</li>
                       <li>Implemented real-time notifications system</li>
                       <li>Created dashboard analytics page</li>
@@ -319,14 +319,14 @@ export default function SlackIntegrationPage() {
 
                   <div>
                     <div className="font-semibold mb-2">🐛 Bug Fixes</div>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 ml-4">
+                    <ul className="list-disc list-inside space-y-1 text-sm text-slate-700 ml-4">
                       <li>Fixed payment processing timeout issues</li>
                       <li>Resolved mobile layout responsiveness</li>
                     </ul>
                   </div>
 
                   <div className="border-t pt-3 mt-4">
-                    <div className="flex flex-wrap gap-4 text-xs text-gray-500">
+                    <div className="flex flex-wrap gap-4 text-xs text-slate-500">
                       <span>
                         <strong>Repository:</strong>{" "}
                         <a href="#" className="text-blue-600">

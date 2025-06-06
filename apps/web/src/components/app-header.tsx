@@ -9,11 +9,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { GitBranch, LogOut, Menu } from "lucide-react";
+import { GitBranch, LogOut, Menu, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/stores/auth";
 import { useState } from "react";
+import Image from "next/image";
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -35,13 +36,13 @@ export function AppHeader() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center">
         <div className="mr-4 hidden md:flex">
-          <Link className="mr-6 flex items-center space-x-2" href="/">
-            <div className="h-8 w-8 rounded bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center">
-              <GitBranch className="h-5 w-5 text-white" />
-            </div>
-            <span className="hidden font-bold sm:inline-block">
-              CommitDigest
-            </span>
+          <Link className="mr-10 flex items-center space-x-2" href="/">
+            <Image
+              src="/images/logo.svg"
+              alt="CommitDigest"
+              width={160}
+              height={100}
+            />
           </Link>
           <nav className="flex items-center gap-6 text-sm">
             <Link
@@ -84,6 +85,18 @@ export function AppHeader() {
                 Dashboard
               </Link>
             )}
+            {/* {user && (
+              <Link
+                className={`transition-colors hover:text-foreground/80 ${
+                  pathname === "/settings"
+                    ? "text-foreground"
+                    : "text-foreground/60"
+                }`}
+                href="/settings"
+              >
+                Settings
+              </Link>
+            )} */}
           </nav>
         </div>
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
@@ -155,6 +168,19 @@ export function AppHeader() {
                         onClick={closeMobileMenu}
                       >
                         Dashboard
+                      </Link>
+                    )}
+                    {user && (
+                      <Link
+                        className={`text-lg transition-colors hover:text-foreground/80 ${
+                          pathname === "/settings"
+                            ? "text-foreground font-medium"
+                            : "text-foreground/60"
+                        }`}
+                        href="/settings"
+                        onClick={closeMobileMenu}
+                      >
+                        Settings
                       </Link>
                     )}
                     <a

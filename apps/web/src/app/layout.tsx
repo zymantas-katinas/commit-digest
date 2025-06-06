@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { Noto_Sans } from "next/font/google";
+import { Noto_Sans, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 
-const inter = Noto_Sans({ subsets: ["latin"] });
+const inter = Geist({ subsets: ["latin"] });
+const mono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
@@ -103,7 +104,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={inter.className}>
+      <body className={`${inter.className}`}>
         <Providers>{children}</Providers>
       </body>
     </html>

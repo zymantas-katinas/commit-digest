@@ -76,4 +76,15 @@ export const api = {
     apiClient.get("/report-runs", { params }),
   getReportRun: (id: string) => apiClient.get(`/report-runs/${id}`),
   getUsageStats: () => apiClient.get("/report-runs/usage"),
+
+  // Timezone management
+  async getUserProfile() {
+    const response = await apiClient.get("/users/profile");
+    return response;
+  },
+
+  async updateUserTimezone(timezone: string) {
+    const response = await apiClient.put("/users/timezone", { timezone });
+    return response;
+  },
 };

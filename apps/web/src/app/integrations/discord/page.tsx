@@ -277,7 +277,7 @@ export default function DiscordIntegrationPage() {
                     </div>
                     <div>
                       <div className="font-semibold">CommitDigest</div>
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-slate-400">
                         Today at 9:00 AM
                       </div>
                     </div>
@@ -287,7 +287,7 @@ export default function DiscordIntegrationPage() {
                     <div className="text-lg font-bold mb-2">
                       📊 **Weekly Development Summary**
                     </div>
-                    <div className="text-sm text-gray-400 mb-4">
+                    <div className="text-sm text-slate-400 mb-4">
                       *Jan 15, 2024 • 12 commits*
                     </div>
 
@@ -317,8 +317,8 @@ export default function DiscordIntegrationPage() {
                         </div>
                       </div>
 
-                      <div className="border-t border-gray-600 pt-3 mt-4">
-                        <div className="text-xs text-gray-400 space-y-1">
+                      <div className="border-t border-slate-600 pt-3 mt-4">
+                        <div className="text-xs text-slate-400 space-y-1">
                           <div>
                             **Repository:**
                             https://github.com/user/awesome-project

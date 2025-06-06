@@ -54,7 +54,7 @@ export function StatusIndicator() {
       case "down":
         return "bg-red-500";
       default:
-        return "bg-gray-400 animate-pulse";
+        return "bg-slate-400 animate-pulse";
     }
   };
 
