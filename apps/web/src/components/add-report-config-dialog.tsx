@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +33,7 @@ const cronRegex =
 const reportConfigSchema = z.object({
   name: z.string().min(1, "Configuration name is required"),
   repositoryId: z.string().min(1, "Repository is required"),
+  branch: z.string().min(1, "Branch is required"),
   schedule: z
     .string()
     .min(1, "Schedule is required")
@@ -51,7 +52,13 @@ type ReportConfigFormData = z.infer<typeof reportConfigSchema>;
 interface Repository {
   id: string;
   github_url: string;
-  branch: string;
+}
+
+interface Branch {
+  name: string;
+  commit: {
+    sha: string;
+  };
 }
 
 interface AddReportConfigDialogProps {
@@ -70,6 +77,7 @@ export function AddReportConfigDialog({
   const [error, setError] = useState<string | null>(null);
   const [isCustomSchedule, setIsCustomSchedule] = useState(false);
   const [customSchedule, setCustomSchedule] = useState("");
+  const [selectedRepoId, setSelectedRepoId] = useState<string>("");
 
   const {
     register,
@@ -85,6 +93,18 @@ export function AddReportConfigDialog({
     },
   });
 
+  // Fetch branches when a repository is selected
+  const {
+    data: branches,
+    isLoading: branchesLoading,
+    error: branchesError,
+  } = useQuery({
+    queryKey: ["repository-branches", selectedRepoId],
+    queryFn: () =>
+      api.getRepositoryBranches(selectedRepoId).then((res) => res.data),
+    enabled: !!selectedRepoId,
+  });
+
   const createMutation = useMutation({
     mutationFn: (data: ReportConfigFormData) =>
       api.createReportConfiguration(data),
@@ -94,6 +114,7 @@ export function AddReportConfigDialog({
       setError(null);
       setIsCustomSchedule(false);
       setCustomSchedule("");
+      setSelectedRepoId("");
     },
     onError: (error: any) => {
       setError(
@@ -113,6 +134,7 @@ export function AddReportConfigDialog({
       setError(null);
       setIsCustomSchedule(false);
       setCustomSchedule("");
+      setSelectedRepoId("");
     }
     onOpenChange(newOpen);
   };
@@ -150,6 +172,13 @@ export function AddReportConfigDialog({
     setValue("schedule", value);
   };
 
+  const handleRepositoryChange = (value: string) => {
+    setSelectedRepoId(value);
+    setValue("repositoryId", value);
+    // Reset branch selection when repository changes
+    setValue("branch", "");
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[525px]">
@@ -174,7 +203,7 @@ export function AddReportConfigDialog({
           <div className="space-y-2">
             <Label htmlFor="repositoryId">Repository</Label>
             <Select
-              onValueChange={(value) => setValue("repositoryId", value)}
+              onValueChange={handleRepositoryChange}
               disabled={createMutation.isPending}
             >
               <SelectTrigger>
@@ -183,14 +212,9 @@ export function AddReportConfigDialog({
               <SelectContent>
                 {repositories.map((repo) => (
                   <SelectItem key={repo.id} value={repo.id}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium truncate">
-                        {getRepositoryName(repo.github_url)}
-                      </span>
-                      <span className="text-xs text-muted-foreground bg-primary/10 px-2 py-0.5 rounded-full">
-                        {repo.branch}
-                      </span>
-                    </div>
+                    <span className="text-sm font-medium truncate">
+                      {getRepositoryName(repo.github_url)}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -199,6 +223,46 @@ export function AddReportConfigDialog({
               <p className="text-sm text-red-600">
                 {errors.repositoryId.message}
               </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="branch">Branch</Label>
+            <Select
+              onValueChange={(value) => setValue("branch", value)}
+              disabled={createMutation.isPending || !selectedRepoId}
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    !selectedRepoId
+                      ? "Select a repository first"
+                      : branchesLoading
+                        ? "Loading branches..."
+                        : "Select a branch"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {branchesLoading ? (
+                  <div className="flex items-center justify-center p-2">
+                    <LoadingSpinner size="sm" />
+                  </div>
+                ) : branchesError ? (
+                  <div className="p-2 text-sm text-red-600">
+                    Failed to load branches
+                  </div>
+                ) : (
+                  branches?.map((branch: Branch) => (
+                    <SelectItem key={branch.name} value={branch.name}>
+                      <span className="text-sm font-medium">{branch.name}</span>
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+            {errors.branch && (
+              <p className="text-sm text-red-600">{errors.branch.message}</p>
             )}
           </div>
 
@@ -225,49 +289,25 @@ export function AddReportConfigDialog({
               </Select>
             ) : (
               <div className="space-y-2">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="0 9 * * * (daily at 9 AM)"
-                    value={customSchedule}
-                    onChange={(e) => handleCustomScheduleChange(e.target.value)}
-                    disabled={createMutation.isPending}
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => handleScheduleTypeChange("")}
-                    disabled={createMutation.isPending}
-                  >
-                    Use Preset
-                  </Button>
-                </div>
-                <div className="text-xs text-slate-600 space-y-1">
-                  <p>
-                    <strong>Cron format:</strong> minute hour day month weekday
-                  </p>
-                  <p>
-                    <strong>Examples (times in your timezone):</strong>
-                  </p>
-                  <ul className="ml-4 space-y-0.5">
-                    <li>
-                      • <code>0 9 * * *</code> - Daily at 9:00 AM
-                    </li>
-                    <li>
-                      • <code>0 9 * * 1</code> - Weekly on Monday at 9:00 AM
-                    </li>
-                    <li>
-                      • <code>0 */6 * * *</code> - Every 6 hours
-                    </li>
-                    <li>
-                      • <code>30 8 1 * *</code> - Monthly on 1st at 8:30 AM
-                    </li>
-                  </ul>
-                  <p className="text-amber-600 mt-2">
-                    💡 Times are interpreted in your timezone. Update your
-                    timezone in settings if needed.
-                  </p>
-                </div>
+                <Input
+                  placeholder="Enter cron expression (e.g., 0 9 * * *)"
+                  value={customSchedule}
+                  onChange={(e) => handleCustomScheduleChange(e.target.value)}
+                  disabled={createMutation.isPending}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsCustomSchedule(false);
+                    setCustomSchedule("");
+                    setValue("schedule", "");
+                  }}
+                  disabled={createMutation.isPending}
+                >
+                  ← Back to presets
+                </Button>
               </div>
             )}
             {errors.schedule && (
@@ -279,7 +319,7 @@ export function AddReportConfigDialog({
             <Label htmlFor="webhook_url">Webhook URL</Label>
             <Input
               id="webhook_url"
-              placeholder="http://localhost:3002/webhook"
+              placeholder="https://your-app.com/webhook"
               {...register("webhook_url")}
               disabled={createMutation.isPending}
             />
@@ -288,31 +328,28 @@ export function AddReportConfigDialog({
                 {errors.webhook_url.message}
               </p>
             )}
-            <p className="text-xs text-slate-500">
-              The URL where reports will be sent via POST request.
-            </p>
           </div>
 
           {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-              {error}
+            <div className="p-3 rounded-md bg-red-50 border border-red-200">
+              <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
           <DialogFooter>
             <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
+              type="submit"
               disabled={createMutation.isPending}
+              className="w-full"
             >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
               {createMutation.isPending ? (
-                <LoadingSpinner size="sm" className="mr-2" />
-              ) : null}
-              Create Configuration
+                <>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  Creating Configuration...
+                </>
+              ) : (
+                "Create Configuration"
+              )}
             </Button>
           </DialogFooter>
         </form>

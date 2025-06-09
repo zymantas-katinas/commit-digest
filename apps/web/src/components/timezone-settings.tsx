@@ -60,7 +60,7 @@ export function TimezoneSettings({ onSuccess }: TimezoneSettingsProps) {
 
   // Update timezone mutation
   const updateTimezoneMutation = useMutation({
-    mutationFn: (timezone: string) => api.updateUserTimezone(timezone),
+    mutationFn: (timezone: string) => api.updateUserProfile({ timezone }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
       setError(null);

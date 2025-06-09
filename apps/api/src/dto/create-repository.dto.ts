@@ -6,10 +6,6 @@ export class CreateRepositoryDto {
   githubUrl: string;
 
   @IsString()
-  @IsNotEmpty()
-  branch: string;
-
-  @IsString()
   @IsOptional()
   pat?: string;
 }

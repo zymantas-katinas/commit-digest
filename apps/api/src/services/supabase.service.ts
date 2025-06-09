@@ -7,7 +7,6 @@ export interface Repository {
   id: string;
   user_id: string;
   github_url: string;
-  branch: string;
   encrypted_access_token: string;
   created_at: string;
   updated_at: string;
@@ -17,6 +16,7 @@ export interface ReportConfiguration {
   id: string;
   user_id: string;
   repository_id: string;
+  branch: string;
   name?: string;
   schedule: string;
   webhook_url: string;
@@ -28,14 +28,22 @@ export interface ReportConfiguration {
   updated_at: string;
 }
 
+export interface UsageStats {
+  current_month_reports: number;
+  current_month_tokens: number;
+  current_month_cost_usd: number;
+  plan_limit_reports: number;
+  plan_limit_repositories: number;
+}
+
 @Injectable()
 export class SupabaseService {
   private supabase: SupabaseClient;
 
   constructor(private configService: ConfigService) {
     this.supabase = createClient(
-      this.configService.get("SUPABASE_URL"),
-      this.configService.get("SUPABASE_SERVICE_ROLE_KEY"),
+      this.configService.get<string>("SUPABASE_URL")!,
+      this.configService.get<string>("SUPABASE_SERVICE_ROLE_KEY")!,
     );
   }
 
@@ -43,7 +51,6 @@ export class SupabaseService {
   async createRepository(
     userId: string,
     githubUrl: string,
-    branch: string,
     encryptedPat: string | null,
   ): Promise<Repository> {
     const { data, error } = await this.supabase
@@ -51,7 +58,6 @@ export class SupabaseService {
       .insert({
         user_id: userId,
         github_url: githubUrl,
-        branch: branch,
         encrypted_access_token: encryptedPat,
       })
       .select()
@@ -65,7 +71,8 @@ export class SupabaseService {
     const { data, error } = await this.supabase
       .from("repositories")
       .select("*")
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
     return data || [];
@@ -82,22 +89,11 @@ export class SupabaseService {
     return data;
   }
 
-  async deleteRepository(id: string, userId: string): Promise<void> {
-    const { error } = await this.supabase
-      .from("repositories")
-      .delete()
-      .eq("id", id)
-      .eq("user_id", userId);
-
-    if (error) throw error;
-  }
-
   async updateRepository(
     id: string,
     userId: string,
     updates: {
       github_url?: string;
-      branch?: string;
       encrypted_access_token?: string;
     },
   ): Promise<Repository> {
@@ -113,10 +109,21 @@ export class SupabaseService {
     return data;
   }
 
+  async deleteRepository(id: string, userId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from("repositories")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", userId);
+
+    if (error) throw error;
+  }
+
   // Report Configuration operations
   async createReportConfiguration(
     userId: string,
     repositoryId: string,
+    branch: string,
     schedule: string,
     webhookUrl: string,
     name?: string,
@@ -127,6 +134,7 @@ export class SupabaseService {
       .insert({
         user_id: userId,
         repository_id: repositoryId,
+        branch: branch,
         name: name,
         schedule: schedule,
         webhook_url: webhookUrl,

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -26,19 +26,9 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { api } from "@/lib/api";
 import { isValidCronExpression } from "@/lib/cron-utils";
 
-// Predefined cron expressions with display names
-const PRESET_SCHEDULES = [
-  { value: "0 9 * * *", label: "Daily at 9:00 AM" },
-  { value: "0 7 * * *", label: "Daily at 7:00 AM" },
-  { value: "0 9 * * 1", label: "Weekly on Monday at 9:00 AM" },
-  { value: "0 9 1 * *", label: "Monthly on the 1st at 9:00 AM" },
-  { value: "0 */6 * * *", label: "Every 6 hours" },
-  { value: "0 9 * * 1-5", label: "Weekdays at 9:00 AM" },
-  { value: "custom", label: "🔧 Custom cron expression" },
-];
-
 const reportConfigSchema = z.object({
   name: z.string().min(1, "Configuration name is required"),
+  branch: z.string().min(1, "Branch is required"),
   schedule: z
     .string()
     .min(1, "Schedule is required")
@@ -54,10 +44,18 @@ const reportConfigSchema = z.object({
 
 type EditReportConfigFormData = z.infer<typeof reportConfigSchema>;
 
+interface Branch {
+  name: string;
+  commit: {
+    sha: string;
+  };
+}
+
 interface ReportConfiguration {
   id: string;
   name?: string;
   repository_id: string;
+  branch: string;
   schedule: string;
   webhook_url: string;
   enabled: boolean;
@@ -94,8 +92,19 @@ export function EditReportConfigDialog({
     resolver: zodResolver(reportConfigSchema),
   });
 
-  // Watch the schedule field to keep Select in sync
-  const watchedSchedule = watch("schedule");
+  // Fetch branches for the repository
+  const {
+    data: branches,
+    isLoading: branchesLoading,
+    error: branchesError,
+  } = useQuery({
+    queryKey: ["repository-branches", configuration?.repository_id],
+    queryFn: () =>
+      api
+        .getRepositoryBranches(configuration!.repository_id)
+        .then((res) => res.data),
+    enabled: !!configuration?.repository_id && open,
+  });
 
   const updateMutation = useMutation({
     mutationFn: (data: EditReportConfigFormData) =>
@@ -118,11 +127,21 @@ export function EditReportConfigDialog({
   useEffect(() => {
     if (configuration && open) {
       setValue("name", configuration.name || "");
+      setValue("branch", configuration.branch);
       setValue("webhook_url", configuration.webhook_url);
       setValue("enabled", configuration.enabled);
 
-      // Check if the current schedule is one of the predefined options
-      const isPredefined = PRESET_SCHEDULES.some(
+      // Handle schedule
+      const scheduleOptions = [
+        { value: "0 9 * * *", label: "Daily at 9:00 AM" },
+        { value: "0 9 * * 1", label: "Weekly on Monday at 9:00 AM" },
+        { value: "0 9 1 * *", label: "Monthly on the 1st at 9:00 AM" },
+        { value: "0 7 * * *", label: "Daily at 7:00 AM" },
+        { value: "0 */6 * * *", label: "Every 6 hours" },
+        { value: "0 9 * * 1-5", label: "Weekdays at 9:00 AM" },
+      ];
+
+      const isPredefined = scheduleOptions.some(
         (option) => option.value === configuration.schedule,
       );
 
@@ -151,6 +170,15 @@ export function EditReportConfigDialog({
     }
     onOpenChange(newOpen);
   };
+
+  const scheduleOptions = [
+    { value: "0 9 * * *", label: "Daily at 9:00 AM" },
+    { value: "0 9 * * 1", label: "Weekly on Monday at 9:00 AM" },
+    { value: "0 9 1 * *", label: "Monthly on the 1st at 9:00 AM" },
+    { value: "0 7 * * *", label: "Daily at 7:00 AM" },
+    { value: "0 */6 * * *", label: "Every 6 hours" },
+    { value: "0 9 * * 1-5", label: "Weekdays at 9:00 AM" },
+  ];
 
   const handleScheduleTypeChange = (value: string) => {
     if (value === "custom") {
@@ -191,69 +219,85 @@ export function EditReportConfigDialog({
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="branch">Branch</Label>
+            <Select
+              onValueChange={(value) => setValue("branch", value)}
+              disabled={updateMutation.isPending}
+              value={watch("branch")}
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    branchesLoading ? "Loading branches..." : "Select a branch"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {branchesLoading ? (
+                  <div className="flex items-center justify-center p-2">
+                    <LoadingSpinner size="sm" />
+                  </div>
+                ) : branchesError ? (
+                  <div className="p-2 text-sm text-red-600">
+                    Failed to load branches
+                  </div>
+                ) : (
+                  branches?.map((branch: Branch) => (
+                    <SelectItem key={branch.name} value={branch.name}>
+                      <span className="text-sm font-medium">{branch.name}</span>
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+            {errors.branch && (
+              <p className="text-sm text-red-600">{errors.branch.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="schedule">Schedule</Label>
             {!isCustomSchedule ? (
               <Select
                 onValueChange={handleScheduleTypeChange}
                 disabled={updateMutation.isPending}
-                value={isCustomSchedule ? "custom" : watchedSchedule}
+                value={isCustomSchedule ? "custom" : watch("schedule")}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select schedule" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PRESET_SCHEDULES.map((option) => (
+                  {scheduleOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
                   ))}
+                  <SelectItem value="custom">
+                    🔧 Custom cron expression
+                  </SelectItem>
                 </SelectContent>
               </Select>
             ) : (
               <div className="space-y-2">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="0 9 * * *"
-                    value={customSchedule}
-                    onChange={(e) => handleCustomScheduleChange(e.target.value)}
-                    disabled={updateMutation.isPending}
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => handleScheduleTypeChange("")}
-                    disabled={updateMutation.isPending}
-                  >
-                    Use Preset
-                  </Button>
-                </div>
-                <div className="text-xs text-slate-600 space-y-1">
-                  <p>
-                    <strong>Cron format:</strong> minute hour day month weekday
-                  </p>
-                  <p>
-                    <strong>Examples (times in your timezone):</strong>
-                  </p>
-                  <ul className="ml-4 space-y-0.5">
-                    <li>
-                      • <code>0 9 * * *</code> - Daily at 9:00 AM
-                    </li>
-                    <li>
-                      • <code>0 9 * * 1</code> - Weekly on Monday at 9:00 AM
-                    </li>
-                    <li>
-                      • <code>0 */6 * * *</code> - Every 6 hours
-                    </li>
-                    <li>
-                      • <code>30 8 1 * *</code> - Monthly on 1st at 8:30 AM
-                    </li>
-                  </ul>
-                  <p className="text-amber-600 mt-2">
-                    💡 Times are interpreted in your timezone. Update your
-                    timezone in settings if needed.
-                  </p>
-                </div>
+                <Input
+                  placeholder="Enter cron expression (e.g., 0 9 * * *)"
+                  value={customSchedule}
+                  onChange={(e) => handleCustomScheduleChange(e.target.value)}
+                  disabled={updateMutation.isPending}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsCustomSchedule(false);
+                    setCustomSchedule("");
+                    setValue("schedule", "");
+                  }}
+                  disabled={updateMutation.isPending}
+                >
+                  ← Back to presets
+                </Button>
               </div>
             )}
             {errors.schedule && (
@@ -265,7 +309,7 @@ export function EditReportConfigDialog({
             <Label htmlFor="webhook_url">Webhook URL</Label>
             <Input
               id="webhook_url"
-              placeholder="http://localhost:3002/webhook"
+              placeholder="https://your-app.com/webhook"
               {...register("webhook_url")}
               disabled={updateMutation.isPending}
             />
@@ -274,31 +318,28 @@ export function EditReportConfigDialog({
                 {errors.webhook_url.message}
               </p>
             )}
-            <p className="text-xs text-slate-500">
-              The URL where reports will be sent via POST request.
-            </p>
           </div>
 
           {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-              {error}
+            <div className="p-3 rounded-md bg-red-50 border border-red-200">
+              <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
           <DialogFooter>
             <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
+              type="submit"
               disabled={updateMutation.isPending}
+              className="w-full"
             >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={updateMutation.isPending}>
               {updateMutation.isPending ? (
-                <LoadingSpinner size="sm" className="mr-2" />
-              ) : null}
-              Update Configuration
+                <>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  Updating Configuration...
+                </>
+              ) : (
+                "Update Configuration"
+              )}
             </Button>
           </DialogFooter>
         </form>

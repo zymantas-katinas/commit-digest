@@ -4,19 +4,21 @@ import { supabase } from "./supabase";
 // Use the /api proxy instead of direct API calls
 // The Next.js rewrite in next.config.js will handle routing to the actual API
 export const apiClient = axios.create({
-  baseURL: "/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001",
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-// Add auth token to requests
-apiClient.interceptors.request.use(async (config) => {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (session?.access_token) {
-    config.headers.Authorization = `Bearer ${session.access_token}`;
+// Request interceptor to add auth token
+apiClient.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("supabase.auth.token");
+    if (token) {
+      const parsedToken = JSON.parse(token);
+      config.headers.Authorization = `Bearer ${parsedToken.access_token}`;
+    }
   }
-
   return config;
 });
 
@@ -27,26 +29,25 @@ export const api = {
 
   // Repositories
   getRepositories: () => apiClient.get("/repositories"),
-  createRepository: (data: {
-    githubUrl: string;
-    branch: string;
-    pat?: string;
-  }) => apiClient.post("/repositories", data),
+  createRepository: (data: { githubUrl: string; pat?: string }) =>
+    apiClient.post("/repositories", data),
   updateRepository: (
     id: string,
     data: {
       githubUrl?: string;
-      branch?: string;
       pat?: string;
     },
   ) => apiClient.put(`/repositories/${id}`, data),
   deleteRepository: (id: string) => apiClient.delete(`/repositories/${id}`),
+  getRepositoryBranches: (id: string) =>
+    apiClient.get(`/repositories/${id}/branches`),
 
   // Report Configurations
   getReportConfigurations: () => apiClient.get("/report-configurations"),
   createReportConfiguration: (data: {
     name: string;
     repositoryId: string;
+    branch: string;
     schedule: string;
     webhook_url: string;
     enabled?: boolean;
@@ -57,6 +58,7 @@ export const api = {
     id: string,
     data: {
       name?: string;
+      branch?: string;
       schedule?: string;
       webhook_url?: string;
       enabled?: boolean;
@@ -83,8 +85,8 @@ export const api = {
     return response;
   },
 
-  async updateUserTimezone(timezone: string) {
-    const response = await apiClient.put("/users/timezone", { timezone });
+  async updateUserProfile(data: any) {
+    const response = await apiClient.put("/users/profile", data);
     return response;
   },
 };

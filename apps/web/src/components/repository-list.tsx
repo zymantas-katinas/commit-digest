@@ -11,7 +11,6 @@ import { Trash2, ExternalLink, GitBranch, Edit } from "lucide-react";
 interface Repository {
   id: string;
   github_url: string;
-  branch: string;
   created_at: string;
 }
 
@@ -89,9 +88,6 @@ export function RepositoryList({
                 </h3>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                  {repo.branch}
-                </span>
                 <a
                   href={repo.github_url}
                   target="_blank"
@@ -103,14 +99,13 @@ export function RepositoryList({
                 </a>
               </div>
             </div>
+
             <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleEdit(repo)}
-                disabled={deletingId === repo.id}
-                className="h-6 w-6 p-0 text-muted-foreground hover:text-blue-400 hover:bg-blue-500/10"
-                title="Edit repository"
+                className="h-7 w-7 p-0"
               >
                 <Edit className="h-3 w-3" />
               </Button>
@@ -119,8 +114,7 @@ export function RepositoryList({
                 size="sm"
                 onClick={() => handleDelete(repo.id)}
                 disabled={deletingId === repo.id}
-                className="h-6 w-6 p-0 text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
-                title="Delete repository"
+                className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
               >
                 {deletingId === repo.id ? (
                   <LoadingSpinner size="sm" />
@@ -133,7 +127,6 @@ export function RepositoryList({
         </div>
       ))}
 
-      {/* Edit Dialog */}
       <EditRepositoryDialog
         open={!!editingRepository}
         onOpenChange={(open) => !open && setEditingRepository(null)}

@@ -35,13 +35,13 @@ import {
 interface Repository {
   id: string;
   github_url: string;
-  branch: string;
 }
 
 interface ReportConfiguration {
   id: string;
   name?: string;
   repository_id: string;
+  branch: string;
   schedule: string;
   webhook_url: string;
   enabled: boolean;
@@ -333,7 +333,7 @@ export function ReportConfigurationList({
                     </span>
                     <span className="flex-shrink-0">•</span>
                     <span className="bg-muted px-2 py-0.5 rounded-full text-xs flex-shrink-0">
-                      {repo?.branch || "unknown"}
+                      {config.branch}
                     </span>
                     {repo && (
                       <a

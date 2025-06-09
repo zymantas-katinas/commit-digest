@@ -26,7 +26,6 @@ const repositorySchema = z.object({
       (url) => url.includes("github.com"),
       "Must be a GitHub repository URL",
     ),
-  branch: z.string().min(1, "Branch is required"),
   pat: z.string().optional(),
 });
 
@@ -35,7 +34,6 @@ type RepositoryFormData = z.infer<typeof repositorySchema>;
 interface Repository {
   id: string;
   github_url: string;
-  branch: string;
   created_at: string;
 }
 
@@ -64,32 +62,15 @@ export function EditRepositoryDialog({
     resolver: zodResolver(repositorySchema),
   });
 
-  // Set form values when repository changes
   useEffect(() => {
-    if (repository) {
+    if (repository && open) {
       setValue("githubUrl", repository.github_url);
-      setValue("branch", repository.branch);
-      setValue("pat", ""); // Don't pre-fill PAT for security
     }
-  }, [repository, setValue]);
+  }, [repository, open, setValue]);
 
   const updateMutation = useMutation({
-    mutationFn: (data: RepositoryFormData) => {
-      if (!repository) throw new Error("No repository selected");
-
-      // Only include fields that have values
-      const updateData: any = {
-        githubUrl: data.githubUrl,
-        branch: data.branch,
-      };
-
-      // Only include PAT if it's provided
-      if (data.pat && data.pat.trim()) {
-        updateData.pat = data.pat;
-      }
-
-      return api.updateRepository(repository.id, updateData);
-    },
+    mutationFn: (data: RepositoryFormData) =>
+      api.updateRepository(repository!.id, data),
     onSuccess: () => {
       onSuccess();
       reset();
@@ -135,67 +116,43 @@ export function EditRepositoryDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="branch">Branch</Label>
-            <Input
-              id="branch"
-              placeholder="main"
-              {...register("branch")}
-              disabled={updateMutation.isPending}
-            />
-            {errors.branch && (
-              <p className="text-sm text-red-600">{errors.branch.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="pat">
-              Personal Access Token (Optional for public repos)
-            </Label>
+            <Label htmlFor="pat">Personal Access Token (PAT)</Label>
             <Input
               id="pat"
               type="password"
-              placeholder="Leave empty to keep current or if public repo"
+              placeholder="Leave empty to keep current token"
               {...register("pat")}
               disabled={updateMutation.isPending}
             />
             {errors.pat && (
               <p className="text-sm text-red-600">{errors.pat.message}</p>
             )}
-            <p className="text-xs text-slate-500">
-              Optional for public repositories. Required for private
-              repositories. Create a new token at{" "}
-              <a
-                href="https://github.com/settings/tokens"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                GitHub Settings
-              </a>{" "}
-              with repository read access.
+            <p className="text-sm text-muted-foreground">
+              Leave empty to keep the current token. Enter a new token to update
+              it.
             </p>
           </div>
 
           {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-              {error}
+            <div className="p-3 rounded-md bg-red-50 border border-red-200">
+              <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
           <DialogFooter>
             <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
+              type="submit"
               disabled={updateMutation.isPending}
+              className="w-full"
             >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={updateMutation.isPending}>
               {updateMutation.isPending ? (
-                <LoadingSpinner size="sm" className="mr-2" />
-              ) : null}
-              Update Repository
+                <>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  Updating Repository...
+                </>
+              ) : (
+                "Update Repository"
+              )}
             </Button>
           </DialogFooter>
         </form>

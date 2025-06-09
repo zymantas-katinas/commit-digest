@@ -7,9 +7,5 @@ export class UpdateRepositoryDto {
 
   @IsString()
   @IsOptional()
-  branch?: string;
-
-  @IsString()
-  @IsOptional()
   pat?: string; // Personal Access Token
 }

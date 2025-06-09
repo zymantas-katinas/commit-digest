@@ -52,6 +52,7 @@ interface ReportConfiguration {
   id: string;
   name?: string;
   repository_id: string;
+  branch: string;
   schedule: string;
   webhook_url: string;
   enabled: boolean;

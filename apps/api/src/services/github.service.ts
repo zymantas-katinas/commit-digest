@@ -17,9 +17,98 @@ export interface GitHubCommit {
   } | null;
 }
 
+export interface GitHubBranch {
+  name: string;
+  commit: {
+    sha: string;
+  };
+}
+
 @Injectable()
 export class GitHubService {
   constructor(private configService: ConfigService) {}
+
+  async fetchBranches(
+    githubUrl: string,
+    pat?: string,
+  ): Promise<GitHubBranch[]> {
+    try {
+      // Extract owner and repo from GitHub URL
+      const urlParts = githubUrl.replace("https://github.com/", "").split("/");
+      if (urlParts.length < 2) {
+        throw new Error("Invalid GitHub URL format");
+      }
+
+      const owner = urlParts[0];
+      const repo = urlParts[1].replace(".git", "");
+
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/branches`;
+
+      const headers: any = {
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "CommitDigest",
+      };
+
+      // Use provided PAT or fallback to app's default GitHub token
+      const token =
+        pat && pat.trim()
+          ? pat
+          : this.configService.get<string>("GITHUB_TOKEN");
+
+      if (token) {
+        headers.Authorization = `token ${token}`;
+      }
+
+      const response = await axios.get(apiUrl, {
+        headers,
+      });
+
+      return response.data;
+    } catch (error) {
+      console.log({
+        error,
+      });
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          if (pat && pat.trim()) {
+            throw new HttpException(
+              "Invalid GitHub token",
+              HttpStatus.UNAUTHORIZED,
+            );
+          } else {
+            throw new HttpException(
+              "This repository is private and requires a Personal Access Token",
+              HttpStatus.UNAUTHORIZED,
+            );
+          }
+        }
+        if (error.response?.status === 403) {
+          // Handle rate limiting
+          const resetTime = error.response?.headers["x-ratelimit-reset"];
+          let message = "GitHub API rate limit exceeded";
+
+          if (resetTime) {
+            const resetDate = new Date(parseInt(resetTime) * 1000);
+            message += `. Rate limit resets at ${resetDate.toISOString()}`;
+          }
+
+          if (!pat || !pat.trim()) {
+            message +=
+              ". Consider adding a Personal Access Token to increase rate limits.";
+          }
+
+          throw new HttpException(message, HttpStatus.TOO_MANY_REQUESTS);
+        }
+        if (error.response?.status === 404) {
+          throw new HttpException("Repository not found", HttpStatus.NOT_FOUND);
+        }
+      }
+      throw new HttpException(
+        "Failed to fetch branches from GitHub",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 
   async fetchCommits(
     githubUrl: string,

@@ -253,7 +253,7 @@ export class SchedulerService {
       // Fetch commits
       const commits = await this.githubService.fetchCommits(
         repository.github_url,
-        repository.branch,
+        config.branch,
         pat,
         sinceDate,
       );
@@ -268,7 +268,7 @@ export class SchedulerService {
         const noCommitsMessage =
           `📊 **Git Report - No Activity**\n\n` +
           `**Repository:** ${repository.github_url}\n` +
-          `**Branch:** ${repository.branch}\n` +
+          `**Branch:** ${config.branch}\n` +
           `**Period:** ${this.formatDateRange(sinceDate, new Date())}\n\n` +
           `✅ No new commits found in the last ${timeframe}.\n\n` +
           `This means your repository has been quiet - no changes were made during this period. ` +
@@ -280,7 +280,7 @@ export class SchedulerService {
           noCommitsMessage,
           {
             repository: repository.github_url,
-            branch: repository.branch,
+            branch: config.branch,
             commitsCount: 0,
             dateRange: {
               since: sinceDate.toISOString(),
@@ -337,7 +337,7 @@ export class SchedulerService {
       const formattedReport =
         `📊 **Git Report - ${commits.length} ${commits.length === 1 ? "Commit" : "Commits"}**\n\n` +
         `**Repository:** ${repository.github_url}\n` +
-        `**Branch:** ${repository.branch}\n` +
+        `**Branch:** ${config.branch}\n` +
         `**Period:** ${this.formatDateRange(sinceDate, new Date())}\n` +
         `**Commits:** ${commits.length}\n\n` +
         `---\n\n` +
@@ -349,7 +349,7 @@ export class SchedulerService {
         formattedReport,
         {
           repository: repository.github_url,
-          branch: repository.branch,
+          branch: config.branch,
           commitsCount: commits.length,
           dateRange: {
             since: sinceDate.toISOString(),

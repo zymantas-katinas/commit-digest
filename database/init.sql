@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS repositories (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   github_url TEXT NOT NULL,
-  branch TEXT NOT NULL DEFAULT 'main',
   encrypted_access_token TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -17,6 +16,7 @@ CREATE TABLE IF NOT EXISTS report_configurations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   repository_id UUID REFERENCES repositories(id) ON DELETE CASCADE NOT NULL,
+  branch TEXT NOT NULL DEFAULT 'main',
   name TEXT,
   schedule TEXT NOT NULL,
   webhook_url TEXT NOT NULL,

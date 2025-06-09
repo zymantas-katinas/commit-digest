@@ -13,6 +13,7 @@ import {
 } from "@nestjs/common";
 import { SupabaseAuthGuard } from "../guards/supabase-auth.guard";
 import { SupabaseService } from "../services/supabase.service";
+import { GitHubService } from "../services/github.service";
 import { EncryptionService } from "../services/encryption.service";
 import { CreateRepositoryDto } from "../dto/create-repository.dto";
 import { UpdateRepositoryDto } from "../dto/update-repository.dto";
@@ -22,6 +23,7 @@ import { UpdateRepositoryDto } from "../dto/update-repository.dto";
 export class RepositoriesController {
   constructor(
     private supabaseService: SupabaseService,
+    private githubService: GitHubService,
     private encryptionService: EncryptionService,
   ) {}
 
@@ -60,7 +62,6 @@ export class RepositoriesController {
       const repository = await this.supabaseService.createRepository(
         userId,
         createRepositoryDto.githubUrl,
-        createRepositoryDto.branch,
         encryptedPat,
       );
 
@@ -85,12 +86,51 @@ export class RepositoriesController {
       const repositories =
         await this.supabaseService.getRepositoriesByUserId(userId);
 
-      // Return repositories without the encrypted PATs
-      return repositories.map(({ encrypted_access_token, ...repo }) => repo);
+      // Return repositories without encrypted PATs
+      const repositoriesResponse = repositories.map((repo) => {
+        const { encrypted_access_token, ...repoResponse } = repo;
+        return repoResponse;
+      });
+
+      return repositoriesResponse;
     } catch (error) {
-      console.error("Error fetching repositories:", error);
       throw new HttpException(
         "Failed to fetch repositories",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get(":id/branches")
+  async getRepositoryBranches(@Param("id") id: string, @Request() req) {
+    try {
+      const userId = req.user.id;
+
+      // Get the repository and verify ownership
+      const repository = await this.supabaseService.getRepositoryById(id);
+      if (!repository || repository.user_id !== userId) {
+        throw new HttpException("Repository not found", HttpStatus.NOT_FOUND);
+      }
+
+      // Decrypt PAT if available
+      const pat = repository.encrypted_access_token
+        ? this.encryptionService.decrypt(repository.encrypted_access_token)
+        : null;
+
+      // Fetch branches from GitHub
+      const branches = await this.githubService.fetchBranches(
+        repository.github_url,
+        pat,
+      );
+
+      return branches;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error("Fetch branches error:", error);
+      throw new HttpException(
+        "Failed to fetch repository branches",
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -110,10 +150,6 @@ export class RepositoriesController {
 
       if (updateRepositoryDto.githubUrl) {
         updates.github_url = updateRepositoryDto.githubUrl;
-      }
-
-      if (updateRepositoryDto.branch) {
-        updates.branch = updateRepositoryDto.branch;
       }
 
       if (updateRepositoryDto.pat) {

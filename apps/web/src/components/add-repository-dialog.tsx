@@ -26,7 +26,6 @@ const repositorySchema = z.object({
       (url) => url.includes("github.com"),
       "Must be a GitHub repository URL",
     ),
-  branch: z.string().min(1, "Branch is required"),
   pat: z.string().optional(),
 });
 
@@ -52,9 +51,6 @@ export function AddRepositoryDialog({
     reset,
   } = useForm<RepositoryFormData>({
     resolver: zodResolver(repositorySchema),
-    defaultValues: {
-      branch: "main",
-    },
   });
 
   const createMutation = useMutation({
@@ -104,67 +100,43 @@ export function AddRepositoryDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="branch">Branch</Label>
-            <Input
-              id="branch"
-              placeholder="main"
-              {...register("branch")}
-              disabled={createMutation.isPending}
-            />
-            {errors.branch && (
-              <p className="text-sm text-red-600">{errors.branch.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="pat">
-              Personal Access Token (Optional for public repos)
-            </Label>
+            <Label htmlFor="pat">Personal Access Token (PAT)</Label>
             <Input
               id="pat"
               type="password"
-              placeholder="ghp_xxxxxxxxxxxxxxxxxxxx (optional for public repos)"
+              placeholder="Optional - Required for private repositories"
               {...register("pat")}
               disabled={createMutation.isPending}
             />
             {errors.pat && (
               <p className="text-sm text-red-600">{errors.pat.message}</p>
             )}
-            <p className="text-xs text-slate-500">
-              Optional for public repositories. Required for private
-              repositories. Create a token at{" "}
-              <a
-                href="https://github.com/settings/tokens"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                GitHub Settings
-              </a>{" "}
-              with repository read access.
+            <p className="text-sm text-muted-foreground">
+              A PAT is required for private repositories and improves rate
+              limits for public ones.
             </p>
           </div>
 
           {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-              {error}
+            <div className="p-3 rounded-md bg-red-50 border border-red-200">
+              <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
           <DialogFooter>
             <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
+              type="submit"
               disabled={createMutation.isPending}
+              className="w-full"
             >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
               {createMutation.isPending ? (
-                <LoadingSpinner size="sm" className="mr-2" />
-              ) : null}
-              Add Repository
+                <>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  Adding Repository...
+                </>
+              ) : (
+                "Add Repository"
+              )}
             </Button>
           </DialogFooter>
         </form>

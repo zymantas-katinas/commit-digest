@@ -78,6 +78,7 @@ export class ReportConfigurationsController {
         await this.supabaseService.createReportConfiguration(
           userId,
           createReportConfigurationDto.repositoryId,
+          createReportConfigurationDto.branch,
           createReportConfigurationDto.schedule,
           createReportConfigurationDto.webhook_url,
           createReportConfigurationDto.name,
@@ -235,7 +236,7 @@ export class ReportConfigurationsController {
         // Fetch commits
         commits = await this.githubService.fetchCommits(
           repository.github_url,
-          repository.branch,
+          config.branch,
           pat,
           sinceDate,
         );
@@ -292,7 +293,7 @@ export class ReportConfigurationsController {
           `# [TEST] ${summaryResult.summary}`,
           {
             repository: repository.github_url,
-            branch: repository.branch,
+            branch: config.branch,
             commitsCount: commits.length,
             dateRange: {
               since: new Date(
@@ -440,7 +441,7 @@ export class ReportConfigurationsController {
         // Fetch commits for the specified date range
         commits = await this.githubService.fetchCommits(
           repository.github_url,
-          repository.branch,
+          config.branch,
           pat,
           fromDate,
         );
@@ -528,7 +529,7 @@ export class ReportConfigurationsController {
           `# [MANUAL] ${summaryResult.summary}`,
           {
             repository: repository.github_url,
-            branch: repository.branch,
+            branch: config.branch,
             commitsCount: commits.length,
             dateRange: {
               since: fromDate.toISOString(),
