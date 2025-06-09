@@ -1,24 +1,21 @@
 import axios from "axios";
 import { supabase } from "./supabase";
-
 // Use the /api proxy instead of direct API calls
 // The Next.js rewrite in next.config.js will handle routing to the actual API
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001",
-  headers: {
-    "Content-Type": "application/json",
-  },
+  baseURL: "/api",
 });
 
-// Request interceptor to add auth token
-apiClient.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("supabase.auth.token");
-    if (token) {
-      const parsedToken = JSON.parse(token);
-      config.headers.Authorization = `Bearer ${parsedToken.access_token}`;
-    }
+// Add auth token to requests
+apiClient.interceptors.request.use(async (config) => {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (session?.access_token) {
+    config.headers.Authorization = `Bearer ${session.access_token}`;
   }
+
   return config;
 });
 
