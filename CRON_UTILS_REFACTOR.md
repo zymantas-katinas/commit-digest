@@ -100,7 +100,7 @@ isValidCronExpression("0 9 * * *"); // true
 isValidCronExpression("invalid cron"); // false
 ```
 
-## 🔄 Migration Notes
+## 🔄 Migration Notes.
 
 - All existing functionality preserved
 - No breaking changes to component APIs
