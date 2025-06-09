@@ -66,15 +66,20 @@ export class SchedulerService {
         );
 
         // Log schedule details for debugging
-        dueConfigurations.forEach((config) => {
+        for (const config of dueConfigurations) {
+          // Get user timezone for accurate logging
+          const userTimezone = await this.supabaseService.getUserTimezone(
+            config.user_id,
+          );
           const nextRunTime = parseNextRunTime(
             config.schedule,
             config.last_run_at ? new Date(config.last_run_at) : new Date(),
+            userTimezone,
           );
           this.logger.log(
-            `📅 DUE Config ${config.id}: schedule="${config.schedule}", last_run=${config.last_run_at || "never"}, next_scheduled=${nextRunTime?.toISOString() || "unknown"}, name="${config.name || "unnamed"}"`,
+            `📅 DUE Config ${config.id}: schedule="${config.schedule}", timezone="${userTimezone}", last_run=${config.last_run_at || "never"}, next_scheduled=${nextRunTime?.toISOString() || "unknown"}, name="${config.name || "unnamed"}"`,
           );
-        });
+        }
       } else {
         // Minimal logging when nothing to do
         this.logger.debug(
@@ -492,9 +497,13 @@ export class SchedulerService {
    */
   private async debugScheduleCheck(config: any): Promise<boolean> {
     const now = new Date();
+    const userTimezone = await this.supabaseService.getUserTimezone(
+      config.user_id,
+    );
 
     this.logger.debug(`🔍 Debugging schedule for config ${config.id}:`);
     this.logger.debug(`   Schedule: ${config.schedule}`);
+    this.logger.debug(`   Timezone: ${userTimezone}`);
     this.logger.debug(`   Last run: ${config.last_run_at || "never"}`);
     this.logger.debug(`   Enabled: ${config.enabled}`);
     this.logger.debug(`   Current time: ${now.toISOString()}`);
@@ -504,10 +513,15 @@ export class SchedulerService {
       return false;
     }
 
-    const isDue = isScheduleDue(config.schedule, config.last_run_at);
+    const isDue = isScheduleDue(
+      config.schedule,
+      config.last_run_at,
+      userTimezone,
+    );
     const nextRunTime = parseNextRunTime(
       config.schedule,
       config.last_run_at ? new Date(config.last_run_at) : new Date(),
+      userTimezone,
     );
 
     this.logger.debug(
