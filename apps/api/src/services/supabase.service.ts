@@ -203,21 +203,34 @@ export class SupabaseService {
   }
 
   async getDueReportConfigurations(): Promise<ReportConfiguration[]> {
-    // Get all enabled configurations with optional user timezone information
-    // Use LEFT JOIN to handle missing user_profiles gracefully
-    const { data, error } = await this.supabase
-      .from("report_configurations")
-      .select(
-        `
-        *,
-        user_profiles(timezone)
-      `,
-      )
-      .eq("enabled", true);
+    try {
+      const { data, error } = await this.supabase
+        .from("report_configurations")
+        .select(
+          `
+          *,
+          user_profiles!left(timezone)
+        `,
+        )
+        .eq("enabled", true);
 
-    if (error) {
-      console.error("Error fetching due report configurations:", error);
-      // If the user_profiles relationship fails, fallback to basic query
+      if (error) {
+        console.error("Error fetching due report configurations:", error);
+        const { data: fallbackData, error: fallbackError } = await this.supabase
+          .from("report_configurations")
+          .select("*")
+          .eq("enabled", true);
+
+        if (fallbackError) {
+          throw fallbackError;
+        }
+
+        return this.filterDueConfigurations(fallbackData || [], "UTC");
+      }
+
+      return this.filterDueConfigurations(data || [], null);
+    } catch (error) {
+      console.error("Error in getDueReportConfigurations:", error);
       const { data: fallbackData, error: fallbackError } = await this.supabase
         .from("report_configurations")
         .select("*")
@@ -227,13 +240,8 @@ export class SupabaseService {
         throw fallbackError;
       }
 
-      // Use fallback data with default timezone
       return this.filterDueConfigurations(fallbackData || [], "UTC");
     }
-
-    if (!data) return [];
-
-    return this.filterDueConfigurations(data, null);
   }
 
   private filterDueConfigurations(
@@ -295,10 +303,16 @@ export class SupabaseService {
   }
 
   async updateUserTimezone(userId: string, timezone: string): Promise<void> {
-    const { error } = await this.supabase
-      .from("user_profiles")
-      .update({ timezone })
-      .eq("id", userId);
+    const { error } = await this.supabase.from("user_profiles").upsert(
+      {
+        id: userId,
+        timezone: timezone,
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "id",
+      },
+    );
 
     if (error) throw error;
   }

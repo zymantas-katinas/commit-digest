@@ -32,13 +32,11 @@ export class UsersController {
     const userId = req.user.sub;
     const { timezone } = body;
 
-    // Validate timezone format (basic check)
     if (!timezone || typeof timezone !== "string") {
       throw new Error("Invalid timezone format");
     }
 
     try {
-      // Test if timezone is valid by trying to use it
       new Date().toLocaleString("en-US", { timeZone: timezone });
 
       await this.supabaseService.updateUserTimezone(userId, timezone);
@@ -51,5 +49,30 @@ export class UsersController {
     } catch (error) {
       throw new Error("Invalid timezone or update failed");
     }
+  }
+
+  @Put("profile")
+  async updateProfile(@Request() req, @Body() body: { timezone?: string }) {
+    const userId = req.user.sub;
+    const { timezone } = body;
+
+    if (timezone) {
+      if (typeof timezone !== "string") {
+        throw new Error("Invalid timezone format");
+      }
+
+      try {
+        new Date().toLocaleString("en-US", { timeZone: timezone });
+        await this.supabaseService.updateUserTimezone(userId, timezone);
+      } catch (error) {
+        throw new Error("Invalid timezone or update failed");
+      }
+    }
+
+    return {
+      success: true,
+      message: "Profile updated successfully",
+      timezone: timezone,
+    };
   }
 }
