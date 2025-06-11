@@ -7,15 +7,15 @@ const nextConfig = {
         destination: `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000"}/:path*`,
       },
       {
-        source: "/ingest/static/:path*",
+        source: "/ph/static/:path*",
         destination: "https://eu-assets.i.posthog.com/static/:path*",
       },
       {
-        source: "/ingest/:path*",
+        source: "/ph/:path*",
         destination: "https://eu.i.posthog.com/:path*",
       },
       {
-        source: "/ingest/decide",
+        source: "/ph/decide",
         destination: "https://eu.i.posthog.com/decide",
       },
     ];
