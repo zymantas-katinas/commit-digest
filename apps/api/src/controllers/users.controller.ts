@@ -38,7 +38,12 @@ export class UsersController {
 
     try {
       new Date().toLocaleString("en-US", { timeZone: timezone });
+    } catch (timezoneError) {
+      console.error("Invalid timezone:", timezone, timezoneError);
+      throw new Error(`Invalid timezone: ${timezone}`);
+    }
 
+    try {
       await this.supabaseService.updateUserTimezone(userId, timezone);
 
       return {
@@ -46,8 +51,11 @@ export class UsersController {
         message: "Timezone updated successfully",
         timezone: timezone,
       };
-    } catch (error) {
-      throw new Error("Invalid timezone or update failed");
+    } catch (dbError) {
+      console.error("Database error updating timezone:", dbError);
+      throw new Error(
+        `Failed to update timezone: ${dbError.message || "Unknown database error"}`,
+      );
     }
   }
 
@@ -63,9 +71,18 @@ export class UsersController {
 
       try {
         new Date().toLocaleString("en-US", { timeZone: timezone });
+      } catch (timezoneError) {
+        console.error("Invalid timezone:", timezone, timezoneError);
+        throw new Error(`Invalid timezone: ${timezone}`);
+      }
+
+      try {
         await this.supabaseService.updateUserTimezone(userId, timezone);
-      } catch (error) {
-        throw new Error("Invalid timezone or update failed");
+      } catch (dbError) {
+        console.error("Database error updating timezone:", dbError);
+        throw new Error(
+          `Failed to update timezone: ${dbError.message || "Unknown database error"}`,
+        );
       }
     }
 

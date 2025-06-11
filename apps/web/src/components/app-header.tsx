@@ -85,18 +85,6 @@ export function AppHeader() {
                 Dashboard
               </Link>
             )}
-            {user && (
-              <Link
-                className={`transition-colors hover:text-foreground/80 ${
-                  pathname === "/settings"
-                    ? "text-foreground"
-                    : "text-foreground/60"
-                }`}
-                href="/settings"
-              >
-                Settings
-              </Link>
-            )}
           </nav>
         </div>
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
@@ -168,19 +156,6 @@ export function AppHeader() {
                         onClick={closeMobileMenu}
                       >
                         Dashboard
-                      </Link>
-                    )}
-                    {user && (
-                      <Link
-                        className={`text-lg transition-colors hover:text-foreground/80 ${
-                          pathname === "/settings"
-                            ? "text-foreground font-medium"
-                            : "text-foreground/60"
-                        }`}
-                        href="/settings"
-                        onClick={closeMobileMenu}
-                      >
-                        Settings
                       </Link>
                     )}
                     <a

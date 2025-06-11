@@ -303,17 +303,37 @@ export class SupabaseService {
   }
 
   async updateUserTimezone(userId: string, timezone: string): Promise<void> {
-    const { error } = await this.supabase.from("user_profiles").upsert(
-      {
-        id: userId,
-        timezone: timezone,
-        updated_at: new Date().toISOString(),
-      },
-      {
-        onConflict: "id",
-      },
+    console.log(
+      `Attempting to update timezone for user ${userId} to ${timezone}`,
     );
 
-    if (error) throw error;
+    const { data, error } = await this.supabase
+      .from("user_profiles")
+      .upsert(
+        {
+          id: userId,
+          timezone: timezone,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "id",
+        },
+      )
+      .select();
+
+    if (error) {
+      console.error("Supabase upsert error:", {
+        error,
+        userId,
+        timezone,
+        errorCode: error.code,
+        errorMessage: error.message,
+        errorDetails: error.details,
+        errorHint: error.hint,
+      });
+      throw error;
+    }
+
+    console.log("Timezone update successful:", { userId, timezone, data });
   }
 }

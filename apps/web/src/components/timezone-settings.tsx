@@ -46,6 +46,7 @@ export function TimezoneSettings({ onSuccess }: TimezoneSettingsProps) {
     formState: { errors },
     setValue,
     watch,
+    trigger,
   } = useForm<TimezoneFormData>({
     resolver: zodResolver(timezoneSchema),
   });
@@ -93,9 +94,10 @@ export function TimezoneSettings({ onSuccess }: TimezoneSettingsProps) {
     updateTimezoneMutation.mutate(data.timezone);
   };
 
-  const handleUseBrowserTimezone = () => {
+  const handleUseBrowserTimezone = async () => {
     if (browserTimezone) {
       setValue("timezone", browserTimezone);
+      await trigger("timezone");
     }
   };
 
@@ -175,14 +177,12 @@ export function TimezoneSettings({ onSuccess }: TimezoneSettingsProps) {
 
         {/* Browser Timezone Detection */}
         {browserTimezone && browserTimezone !== watchedTimezone && (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="p-3 bg-muted border border-border rounded-lg">
             <div className="flex items-center gap-2 mb-1">
-              <MapPin className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">
-                Detected Timezone
-              </span>
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Detected Timezone</span>
             </div>
-            <p className="text-sm text-blue-700 mb-2">
+            <p className="text-sm text-muted-foreground mb-2">
               We detected your browser timezone as {browserTimezone}
             </p>
             <Button
@@ -190,7 +190,6 @@ export function TimezoneSettings({ onSuccess }: TimezoneSettingsProps) {
               variant="outline"
               size="sm"
               onClick={handleUseBrowserTimezone}
-              className="text-blue-700 border-blue-300 hover:bg-blue-100"
             >
               Use Detected Timezone
             </Button>
