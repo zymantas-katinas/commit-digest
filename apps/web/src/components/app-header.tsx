@@ -85,7 +85,7 @@ export function AppHeader() {
                 Dashboard
               </Link>
             )}
-            {/* {user && (
+            {user && (
               <Link
                 className={`transition-colors hover:text-foreground/80 ${
                   pathname === "/settings"
@@ -96,7 +96,7 @@ export function AppHeader() {
               >
                 Settings
               </Link>
-            )} */}
+            )}
           </nav>
         </div>
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">

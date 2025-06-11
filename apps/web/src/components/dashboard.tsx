@@ -9,6 +9,8 @@ import { ReportConfigurationList } from "@/components/report-configuration-list"
 import { AddRepositoryDialog } from "@/components/add-repository-dialog";
 import { AddReportConfigDialog } from "@/components/add-report-config-dialog";
 import { UsageStats } from "@/components/usage-stats";
+import { TimezoneWidget } from "@/components/timezone-widget";
+import { TimezoneStatus } from "@/components/timezone-status";
 import { AppHeader } from "@/components/app-header";
 import { useAuthStore } from "@/stores/auth";
 import { api } from "@/lib/api";
@@ -49,6 +51,11 @@ export function Dashboard() {
           <UsageStats />
         </div>
 
+        {/* Timezone Widget - Mobile */}
+        <div className="lg:hidden mb-6">
+          <TimezoneWidget />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Repositories Section - Compact Sidebar */}
           <div className="lg:col-span-1 order-2 lg:order-1 space-y-4">
@@ -82,6 +89,9 @@ export function Dashboard() {
                 )}
               </div>
             </div>
+
+            {/* Timezone Widget */}
+            <TimezoneWidget />
 
             {/* Usage Statistics - Hidden on mobile, shown on desktop */}
             <div className="hidden lg:block">
@@ -118,6 +128,7 @@ export function Dashboard() {
                     <p className="text-sm text-muted-foreground mt-1">
                       Manage automated report schedules and webhooks
                     </p>
+                    <TimezoneStatus className="mt-2" />
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <Button
