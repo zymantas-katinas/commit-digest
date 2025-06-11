@@ -52,6 +52,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://commitdigest.com",
   },
+  manifest: `/favicon/site.webmanifest`,
 };
 
 export default function Home() {
