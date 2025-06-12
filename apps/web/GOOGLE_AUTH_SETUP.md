@@ -25,7 +25,7 @@ This guide will help you set up Google OAuth authentication for your CommitDiges
 
 1. Go to "APIs & Services" > "Credentials"
 2. Click "Create Credentials" > "OAuth 2.0 Client IDs"
-3. Select "Web application" as the application type
+3. Select "Web application" as the application type.
 4. Give it a meaningful name (e.g., "CommitDigest Web App")
 5. In "Authorized JavaScript origins", add:
    - `http://localhost:3000` (for development)
