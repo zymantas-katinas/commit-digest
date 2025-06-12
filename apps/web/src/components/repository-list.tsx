@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EditRepositoryDialog } from "@/components/edit-repository-dialog";
@@ -27,12 +27,14 @@ export function RepositoryList({
   const [editingRepository, setEditingRepository] = useState<Repository | null>(
     null,
   );
+  const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.deleteRepository(id),
     onSuccess: () => {
       onRefetch();
       setDeletingId(null);
+      queryClient.invalidateQueries({ queryKey: ["usage-stats"] });
     },
     onError: (error) => {
       console.error("Delete repository error:", error);

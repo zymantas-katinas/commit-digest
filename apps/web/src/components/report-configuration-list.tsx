@@ -94,6 +94,7 @@ export function ReportConfigurationList({
     onSuccess: () => {
       onRefetch();
       setDeletingId(null);
+      queryClient.invalidateQueries({ queryKey: ["usage-stats"] });
     },
     onError: (error) => {
       console.error("Delete configuration error:", error);
@@ -137,6 +138,7 @@ export function ReportConfigurationList({
     onSuccess: () => {
       onRefetch();
       setTogglingId(null);
+      queryClient.invalidateQueries({ queryKey: ["usage-stats"] });
     },
     onError: (error) => {
       console.error("Toggle configuration error:", error);

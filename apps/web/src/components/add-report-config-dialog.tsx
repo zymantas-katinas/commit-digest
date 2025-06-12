@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -72,6 +72,7 @@ export function AddReportConfigDialog({
   const [isCustomSchedule, setIsCustomSchedule] = useState(false);
   const [customSchedule, setCustomSchedule] = useState("");
   const [selectedRepoId, setSelectedRepoId] = useState<string>("");
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -109,6 +110,7 @@ export function AddReportConfigDialog({
       setIsCustomSchedule(false);
       setCustomSchedule("");
       setSelectedRepoId("");
+      queryClient.invalidateQueries({ queryKey: ["usage-stats"] });
     },
     onError: (error: any) => {
       setError(

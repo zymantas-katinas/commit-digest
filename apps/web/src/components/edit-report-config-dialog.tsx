@@ -26,6 +26,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { BranchSelector, Branch } from "@/components/ui/branch-selector";
 import { api } from "@/lib/api";
 import { isValidCronExpression } from "@/lib/cron-utils";
+import { useQueryClient } from "@tanstack/react-query";
 
 const reportConfigSchema = z.object({
   name: z.string().min(1, "Configuration name is required"),
@@ -86,6 +87,8 @@ export function EditReportConfigDialog({
     resolver: zodResolver(reportConfigSchema),
   });
 
+  const queryClient = useQueryClient();
+
   // Fetch branches for the repository
   const {
     data: branches,
@@ -109,6 +112,7 @@ export function EditReportConfigDialog({
       setError(null);
       setIsCustomSchedule(false);
       setCustomSchedule("");
+      queryClient.invalidateQueries({ queryKey: ["usage-stats"] });
     },
     onError: (error: any) => {
       setError(

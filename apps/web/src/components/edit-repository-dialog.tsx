@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +51,7 @@ export function EditRepositoryDialog({
   onSuccess,
 }: EditRepositoryDialogProps) {
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -75,6 +76,7 @@ export function EditRepositoryDialog({
       onSuccess();
       reset();
       setError(null);
+      queryClient.invalidateQueries({ queryKey: ["usage-stats"] });
     },
     onError: (error: any) => {
       setError(error.response?.data?.message || "Failed to update repository");
