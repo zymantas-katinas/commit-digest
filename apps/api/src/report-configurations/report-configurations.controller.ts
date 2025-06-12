@@ -69,7 +69,7 @@ export class ReportConfigurationsController {
 
       if (!canCreate) {
         throw new HttpException(
-          "Report configuration limit reached for this repository. Upgrade to add more report configurations.",
+          "Total report limit reached. Upgrade to add more report configurations.",
           HttpStatus.FORBIDDEN,
         );
       }

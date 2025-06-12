@@ -113,8 +113,8 @@ CREATE TRIGGER update_subscriptions_updated_at
 
 -- Insert default plans
 INSERT INTO subscription_plans (name, description, price_usd, monthly_runs_limit, max_repositories, max_reports, stripe_price_id, stripe_product_id) VALUES
-  ('Free', 'Free tier with basic features', 0.00, 50, 1, 5, NULL, NULL),
-  ('Pro', 'Professional plan with advanced features', 15.00, 500, 10, 50, NULL, NULL)
+  ('Free', 'Free tier with basic features', 0.00, 50, 5, 10, NULL, NULL),
+  ('Pro', 'Professional plan with advanced features', 15.00, 500, 10, 100, NULL, NULL)
 ON CONFLICT DO NOTHING;
 
 -- Create function to get user's effective limits
@@ -129,8 +129,8 @@ BEGIN
   RETURN QUERY
   SELECT 
     COALESCE(sp.monthly_runs_limit, 50) as monthly_runs_limit,
-    COALESCE(sp.max_repositories, 1) as max_repositories,
-    COALESCE(sp.max_reports, 5) as max_reports,
+    COALESCE(sp.max_repositories, 5) as max_repositories,
+    COALESCE(sp.max_reports, 10) as max_reports,
     COALESCE(sp.name, 'Free') as plan_name
   FROM user_profiles up
   LEFT JOIN subscription_plans sp ON up.current_plan_id = sp.id
@@ -139,7 +139,7 @@ BEGIN
   UNION ALL
   
   -- Default to free plan if no profile exists
-  SELECT 50, 1, 5, 'Free'
+  SELECT 50, 5, 10, 'Free'
   WHERE NOT EXISTS (SELECT 1 FROM user_profiles WHERE id = p_user_id)
   LIMIT 1;
 END;

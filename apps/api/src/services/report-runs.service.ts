@@ -92,8 +92,8 @@ export class ReportRunsService {
         // Return default free tier limits if error
         return {
           monthly_runs_limit: 50,
-          max_repositories: 1,
-          max_reports: 5,
+          max_repositories: 5,
+          max_reports: 10,
           plan_name: "Free",
         };
       }
@@ -101,8 +101,8 @@ export class ReportRunsService {
       return (
         data[0] || {
           monthly_runs_limit: 50,
-          max_repositories: 1,
-          max_reports: 5,
+          max_repositories: 5,
+          max_reports: 10,
           plan_name: "Free",
         }
       );
@@ -110,8 +110,8 @@ export class ReportRunsService {
       this.logger.error("Error fetching user limits:", error);
       return {
         monthly_runs_limit: 50,
-        max_repositories: 1,
-        max_reports: 5,
+        max_repositories: 5,
+        max_reports: 10,
         plan_name: "Free",
       };
     }

@@ -33,6 +33,27 @@ export class ReportRunsController {
     const userLimits = await this.reportRunsService.getUserLimits(userId);
     const canRun = await this.reportRunsService.checkUsageLimit(userId);
 
+    // Get current repository count
+    const { data: repositories } = await this.reportRunsService[
+      "supabaseService"
+    ]["supabase"]
+      .from("repositories")
+      .select("id")
+      .eq("user_id", userId);
+    const currentRepositories = repositories?.length || 0;
+
+    // Get current total report configurations count
+    const { data: reportConfigs } = await this.reportRunsService[
+      "supabaseService"
+    ]["supabase"]
+      .from("report_configurations")
+      .select("id")
+      .in(
+        "repository_id",
+        (repositories || []).map((r) => r.id),
+      );
+    const currentReports = reportConfigs?.length || 0;
+
     const usage = monthlyUsage || {
       user_id: userId,
       month: new Date().toISOString().slice(0, 7) + "-01",
@@ -64,6 +85,8 @@ export class ReportRunsController {
         0,
         userLimits.monthly_runs_limit - usage.successful_runs,
       ),
+      currentRepositories,
+      currentReports,
     };
   }
 

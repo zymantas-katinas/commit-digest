@@ -127,7 +127,7 @@ CREATE OR REPLACE FUNCTION can_user_create_report_config(p_user_id UUID, p_repos
 RETURNS BOOLEAN AS $$
 DECLARE
   user_limits RECORD;
-  current_config_count INTEGER;
+  current_total_config_count INTEGER;
 BEGIN
   -- Verify repository belongs to user
   IF NOT EXISTS (SELECT 1 FROM repositories WHERE id = p_repository_id AND user_id = p_user_id) THEN
@@ -137,13 +137,14 @@ BEGIN
   -- Get user limits
   SELECT * INTO user_limits FROM get_user_limits(p_user_id);
   
-  -- Get current report configuration count for this repository
-  SELECT COUNT(*) INTO current_config_count 
-  FROM report_configurations 
-  WHERE repository_id = p_repository_id;
+  -- Get current TOTAL report configuration count across ALL repositories for this user
+  SELECT COUNT(*) INTO current_total_config_count 
+  FROM report_configurations rc
+  JOIN repositories r ON r.id = rc.repository_id
+  WHERE r.user_id = p_user_id;
   
-  -- Check if user can create more report configurations
-  RETURN current_config_count < user_limits.max_reports;
+  -- Check if user can create more report configurations (total limit)
+  RETURN current_total_config_count < user_limits.max_reports;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

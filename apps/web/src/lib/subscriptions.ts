@@ -49,6 +49,8 @@ export interface UsageStats {
   monthlyLimit: number;
   runsUsed: number;
   runsRemaining: number;
+  currentRepositories: number;
+  currentReports: number;
 }
 
 export const subscriptionService = {

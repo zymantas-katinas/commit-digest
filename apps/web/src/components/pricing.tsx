@@ -67,7 +67,7 @@ export function Pricing({ showHeader = true, embedded = false }: PricingProps) {
     const features = [
       `${plan.monthly_runs_limit} monthly report runs`,
       `Up to ${plan.max_repositories} repositories`,
-      `Up to ${plan.max_reports} reports per repository`,
+      `Up to ${plan.max_reports} total reports`,
     ];
 
     if (plan.name === "Pro") {

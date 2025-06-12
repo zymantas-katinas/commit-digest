@@ -33,15 +33,15 @@ The Stripe subscription system for CommitDigest has been successfully implemente
 ### Free Tier (Current)
 
 - 50 monthly report runs
-- 5 max reports per repository
-- 1 repository limit
+- 5 repositories maximum
+- 10 total reports across all repositories
 - Community support
 
 ### Pro Tier ($15/month)
 
 - 500 monthly report runs
-- 50 max reports per repository
-- 10 repository limit
+- 10 repositories maximum
+- 100 total reports across all repositories
 - Priority support
 - Advanced analytics
 - Custom integrations

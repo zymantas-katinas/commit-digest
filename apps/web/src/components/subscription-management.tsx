@@ -203,15 +203,16 @@ export function SubscriptionManagement() {
                 </p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-medium">Max Repositories</p>
+                <p className="text-sm font-medium">Repositories</p>
                 <p className="text-2xl font-bold">
+                  {usageStats.currentRepositories}/
                   {usageStats.limits.max_repositories}
                 </p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-medium">Max Reports per Repo</p>
+                <p className="text-sm font-medium">Total Reports</p>
                 <p className="text-2xl font-bold">
-                  {usageStats.limits.max_reports}
+                  {usageStats.currentReports}/{usageStats.limits.max_reports}
                 </p>
               </div>
             </div>

@@ -11,8 +11,8 @@ This guide handles the migration of existing users who have more repositories or
 
 **After Subscription Implementation:**
 
-- Free tier limits: 1 repository, 5 reports per repository, 50 monthly runs
-- Pro tier limits: 10 repositories, 50 reports per repository, 500 monthly runs
+- Free tier limits: 5 repositories, 10 total reports across all repositories, 50 monthly runs
+- Pro tier limits: 10 repositories, 100 total reports across all repositories, 500 monthly runs
 
 ## Migration Strategy: Grandfathering Approach ✅
 
@@ -71,7 +71,7 @@ WITH user_stats AS (
 SELECT
   COUNT(*) as total_users,
   COUNT(CASE WHEN repository_count > 1 THEN 1 END) as users_exceeding_repo_limit,
-  COUNT(CASE WHEN max_reports_per_repo > 5 THEN 1 END) as users_exceeding_report_limit
+  COUNT(CASE WHEN max_reports_per_repo > 10 THEN 1 END) as users_exceeding_report_limit
 FROM user_stats;
 ```
 
@@ -102,14 +102,14 @@ The following limit checks have been added to the API:
 
 ⚠️ **What's Now Limited:**
 
-- Cannot create NEW repositories (already have > 1)
-- Cannot create NEW report configurations (already have > 5 per repo)
+- Cannot create NEW repositories (if already have > 5)
+- Cannot create NEW report configurations (already have > 10 total reports)
 - See upgrade prompts in the UI
 
 🎯 **How to Add More:**
 
 - Upgrade to Pro plan ($15/month)
-- Immediately unlock: 10 repositories, 50 reports per repo, 500 monthly runs
+- Immediately unlock: 10 repositories, 100 total reports, 500 monthly runs
 
 ## User Communication
 
@@ -125,12 +125,12 @@ We've introduced subscription plans to better serve your needs!
 ✅ Good news: Your existing repositories and reports continue working normally.
 
 We've automatically placed you on our Free plan, which includes:
-- 1 repository, 5 reports per repo, 50 monthly runs
+- 5 repositories, 10 total reports, 50 monthly runs
 
-Since you currently have [X] repositories and [Y] reports, you're grandfathered in and can continue using all your existing configurations.
+Since you currently have [X] repositories and [Y] total reports, you're grandfathered in and can continue using all your existing configurations.
 
 To add NEW repositories or reports, consider upgrading to our Pro plan:
-- 10 repositories, 50 reports per repo, 500 monthly runs
+- 10 repositories, 100 total reports, 500 monthly runs
 - Only $15/month
 
 Upgrade anytime at: [Your App URL]/pricing
@@ -173,13 +173,13 @@ FROM (
   GROUP BY u.id, u.email
 ) us
 JOIN auth.users u ON u.id = us.user_id
-WHERE us.repository_count > 1 OR us.max_reports_per_repo > 5;
+WHERE us.repository_count > 5 OR us.max_reports_per_repo > 10;
 ```
 
 ### Common User Questions
 
 **Q: "Why can't I create a new repository?"**
-A: You're on the Free plan (1 repository limit) but already have multiple repositories from before our subscription launch. You're grandfathered in to keep existing ones. Upgrade to Pro to add more.
+A: You're on the Free plan (5 repository limit) but already have more than 5 repositories from before our subscription launch. You're grandfathered in to keep existing ones. Upgrade to Pro to add more.
 
 **Q: "Will my existing reports stop working?"**
 A: No! All existing configurations continue working normally. You only need to upgrade to create NEW ones.
@@ -213,3 +213,19 @@ After migration, monitor:
 - User satisfaction scores
 
 The grandfathering approach maximizes user satisfaction while encouraging upgrades for new features.
+
+## Migration Overview
+
+The subscription system has been updated to use **total reports across all repositories** instead of **reports per repository**. This provides more flexibility for users.
+
+### New Plan Structure
+
+- Free tier limits: 5 repositories, 10 total reports across all repositories, 50 monthly runs
+- Pro tier limits: 10 repositories, 100 total reports across all repositories, 500 monthly runs
+
+### Key Changes
+
+1. **Report Limits**: Changed from "per repository" to "total across all repositories"
+2. **Database Function**: Updated `can_user_create_report_config()` to check total reports
+3. **UI Updates**: Subscription cards now show "X/Y total reports" format
+4. **Default Values**: Free tier increased from 5 to 10 total reports, Pro tier increased from 50 to 100 total reports
