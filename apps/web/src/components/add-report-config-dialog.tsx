@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { BranchSelector, Branch } from "@/components/ui/branch-selector";
 import { api } from "@/lib/api";
 import { isValidCronExpression } from "@/lib/cron-utils";
 
@@ -52,13 +53,6 @@ type ReportConfigFormData = z.infer<typeof reportConfigSchema>;
 interface Repository {
   id: string;
   github_url: string;
-}
-
-interface Branch {
-  name: string;
-  commit: {
-    sha: string;
-  };
 }
 
 interface AddReportConfigDialogProps {
@@ -228,39 +222,19 @@ export function AddReportConfigDialog({
 
           <div className="space-y-2">
             <Label htmlFor="branch">Branch</Label>
-            <Select
+            <BranchSelector
+              branches={branches}
+              value={watch("branch")}
               onValueChange={(value) => setValue("branch", value)}
+              placeholder={
+                !selectedRepoId
+                  ? "Select a repository first"
+                  : "Select a branch"
+              }
               disabled={createMutation.isPending || !selectedRepoId}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    !selectedRepoId
-                      ? "Select a repository first"
-                      : branchesLoading
-                        ? "Loading branches..."
-                        : "Select a branch"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {branchesLoading ? (
-                  <div className="flex items-center justify-center p-2">
-                    <LoadingSpinner size="sm" />
-                  </div>
-                ) : branchesError ? (
-                  <div className="p-2 text-sm text-red-600">
-                    Failed to load branches
-                  </div>
-                ) : (
-                  branches?.map((branch: Branch) => (
-                    <SelectItem key={branch.name} value={branch.name}>
-                      <span className="text-sm font-medium">{branch.name}</span>
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
+              loading={branchesLoading}
+              error={!!branchesError}
+            />
             {errors.branch && (
               <p className="text-sm text-red-600">{errors.branch.message}</p>
             )}
