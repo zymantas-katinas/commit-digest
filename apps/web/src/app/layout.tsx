@@ -88,13 +88,12 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  verification: {
-    google: "your-google-verification-code",
-  },
+
   alternates: {
     canonical: "https://commitdigest.com",
   },
   category: "Developer Tools",
+  manifest: `/favicon/site.webmanifest`,
 };
 
 export default function RootLayout({

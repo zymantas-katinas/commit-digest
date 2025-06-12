@@ -197,8 +197,8 @@ export function TimezoneSettings({ onSuccess }: TimezoneSettingsProps) {
         )}
 
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">{error}</p>
+          <div className="p-3 bg-muted border border-border rounded-lg">
+            <p className="text-sm text-destructive">{error}</p>
           </div>
         )}
 
@@ -219,14 +219,12 @@ export function TimezoneSettings({ onSuccess }: TimezoneSettingsProps) {
       </form>
 
       {/* Schedule Information */}
-      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+      <div className="p-4 bg-muted border border-border rounded-lg">
         <div className="flex items-center gap-2 mb-2">
-          <Clock className="h-4 w-4 text-amber-600" />
-          <span className="text-sm font-medium text-amber-800">
-            About Scheduled Reports
-          </span>
+          <Clock className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">About Scheduled Reports</span>
         </div>
-        <p className="text-sm text-amber-700">
+        <p className="text-sm text-muted-foreground">
           When you set a schedule like "Daily at 9:00 AM", reports will be
           generated at 9:00 AM in your selected timezone. This ensures you
           receive reports at the right time regardless of where the server is

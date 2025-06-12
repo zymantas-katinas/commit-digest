@@ -9,7 +9,13 @@ export class UsersController {
 
   @Get("profile")
   async getProfile(@Request() req) {
-    const userId = req.user.sub;
+    console.log("User object:", JSON.stringify(req.user, null, 2));
+
+    const userId = req.user?.id || req.user?.sub;
+
+    if (!userId) {
+      throw new Error("User ID not found in token");
+    }
 
     try {
       const timezone = await this.supabaseService.getUserTimezone(userId);
@@ -29,7 +35,14 @@ export class UsersController {
 
   @Put("timezone")
   async updateTimezone(@Request() req, @Body() body: { timezone: string }) {
-    const userId = req.user.sub;
+    console.log("User object:", JSON.stringify(req.user, null, 2));
+
+    const userId = req.user?.id || req.user?.sub;
+
+    if (!userId) {
+      throw new Error("User ID not found in token");
+    }
+
     const { timezone } = body;
 
     if (!timezone || typeof timezone !== "string") {
@@ -61,7 +74,14 @@ export class UsersController {
 
   @Put("profile")
   async updateProfile(@Request() req, @Body() body: { timezone?: string }) {
-    const userId = req.user.sub;
+    console.log("User object:", JSON.stringify(req.user, null, 2));
+
+    const userId = req.user?.id || req.user?.sub;
+
+    if (!userId) {
+      throw new Error("User ID not found in token");
+    }
+
     const { timezone } = body;
 
     if (timezone) {
