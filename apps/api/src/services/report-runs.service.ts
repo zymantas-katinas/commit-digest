@@ -5,7 +5,7 @@ export interface ReportRun {
   id: string;
   user_id: string;
   repository_id: string;
-  report_configuration_id: string;
+  report_configuration_id: string | null;
   started_at: string;
   completed_at?: string;
   status: "running" | "success" | "failed" | "cancelled";
@@ -49,7 +49,7 @@ export interface UserLimits {
 export interface CreateReportRunData {
   user_id: string;
   repository_id: string;
-  report_configuration_id: string;
+  report_configuration_id?: string | null;
   configuration_snapshot?: any;
   model_used?: string;
 }
@@ -394,6 +394,8 @@ export class ReportRunsService {
 
   /**
    * Get total count of runs for a specific report configuration
+   * Note: This only counts runs that still have a valid configuration reference.
+   * Historical runs where the configuration was deleted will have NULL report_configuration_id.
    */
   async getConfigurationRunCount(configurationId: string): Promise<number> {
     try {

@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS report_runs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   repository_id UUID REFERENCES repositories(id) ON DELETE CASCADE NOT NULL,
-  report_configuration_id UUID REFERENCES report_configurations(id) ON DELETE CASCADE NOT NULL,
+  report_configuration_id UUID REFERENCES report_configurations(id) ON DELETE SET NULL,
   
   -- Run metadata
   started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
