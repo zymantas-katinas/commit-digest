@@ -320,10 +320,15 @@ export default function DiscordIntegrationPage() {
                       <div className="border-t border-slate-600 pt-3 mt-4">
                         <div className="text-xs text-slate-400 space-y-1">
                           <div>
-                            **Repository:**
-                            https://github.com/user/awesome-project
+                            **Repository:**{" "}
+                            <span className="font-mono">
+                              https://github.com/user/awesome-project
+                            </span>
                           </div>
-                          <div>**Branch:** main • **Commits:** 12</div>
+                          <div>
+                            **Branch:** <span className="font-mono">main</span>{" "}
+                            • **Commits:** 12
+                          </div>
                         </div>
                       </div>
                     </div>

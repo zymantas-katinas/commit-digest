@@ -299,16 +299,20 @@ export default function DocsPage() {
                   <li>Click the "+" button in the Repositories section</li>
                   <li>
                     Enter your GitHub repository URL (e.g.,{" "}
-                    <code className="bg-muted px-1 py-0.5 rounded">
+                    <code className="bg-muted px-1 py-0.5 rounded font-mono">
                       https://github.com/username/repo
                     </code>
                     )
                   </li>
                   <li>
                     Specify the branch to monitor (usually{" "}
-                    <code className="bg-muted px-1 py-0.5 rounded">main</code>{" "}
+                    <code className="bg-muted px-1 py-0.5 rounded font-mono">
+                      main
+                    </code>{" "}
                     or{" "}
-                    <code className="bg-muted px-1 py-0.5 rounded">master</code>
+                    <code className="bg-muted px-1 py-0.5 rounded font-mono">
+                      master
+                    </code>
                     )
                   </li>
                   <li>Provide a Personal Access Token (PAT)</li>
@@ -347,11 +351,13 @@ export default function DocsPage() {
                   <li>Select the required scopes:</li>
                   <ul className="list-disc list-inside ml-6 mt-2 space-y-1">
                     <li>
-                      <code className="bg-muted px-1 py-0.5 rounded">repo</code>{" "}
+                      <code className="bg-muted px-1 py-0.5 rounded font-mono">
+                        repo
+                      </code>{" "}
                       - For private repositories
                     </li>
                     <li>
-                      <code className="bg-muted px-1 py-0.5 rounded">
+                      <code className="bg-muted px-1 py-0.5 rounded font-mono">
                         public_repo
                       </code>{" "}
                       - For public repositories only
@@ -507,7 +513,7 @@ export default function DocsPage() {
                 </p>
 
                 <div className="bg-muted rounded-lg p-4 mb-4">
-                  <pre className="text-sm overflow-x-auto">
+                  <pre className="text-sm overflow-x-auto font-mono">
                     {`# Commit Digest for repository-name
 
 ## Summary
@@ -620,7 +626,7 @@ Brief overview of the period's activity
                 </p>
 
                 <div className="bg-muted rounded-lg p-4 mb-6">
-                  <pre className="text-sm overflow-x-auto">
+                  <pre className="text-sm overflow-x-auto font-mono">
                     {`{
   "content": "AI-generated commit summary...",
   "timestamp": "2024-01-15T10:30:00.000Z",
@@ -741,7 +747,7 @@ Brief overview of the period's activity
 
                 <div className="bg-muted rounded-lg p-4 mb-6">
                   <h4 className="font-semibold mb-2">Slack Payload Example:</h4>
-                  <pre className="text-sm overflow-x-auto">
+                  <pre className="text-sm overflow-x-auto font-mono">
                     {`{
   "text": "Formatted markdown content...",
   "blocks": [
@@ -794,7 +800,7 @@ Brief overview of the period's activity
                   <h4 className="font-semibold mb-2">
                     Discord Payload Example:
                   </h4>
-                  <pre className="text-sm overflow-x-auto">
+                  <pre className="text-sm overflow-x-auto font-mono">
                     {`{
   "content": "# Weekly Report\\n\\n## Features\\n- Added user authentication\\n- Fixed bug in payments\\n\\n**Repository:** https://github.com/user/repo\\n**Branch:** main\\n**Commits:** 15",
   "timestamp": "2024-01-15T10:30:00.000Z",
@@ -816,7 +822,7 @@ Brief overview of the period's activity
                   <h4 className="font-semibold mb-2">
                     Generic Payload Example:
                   </h4>
-                  <pre className="text-sm overflow-x-auto">
+                  <pre className="text-sm overflow-x-auto font-mono">
                     {`{
   "content": "AI-generated commit summary...",
   "timestamp": "2024-01-15T10:30:00.000Z",
@@ -1114,7 +1120,7 @@ Brief overview of the period's activity
                     </p>
                     <a
                       href="mailto:support@commitdigest.com"
-                      className="text-blue-600 hover:text-blue-800 text-sm"
+                      className="text-blue-600 hover:text-blue-800 text-sm font-mono"
                     >
                       support@commitdigest.com
                     </a>

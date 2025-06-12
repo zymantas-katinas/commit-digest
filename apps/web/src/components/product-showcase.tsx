@@ -109,7 +109,7 @@ export function ProductShowcase() {
                   endpoint
                 </div>
                 <div className="bg-black/50 rounded p-3 overflow-x-auto">
-                  <pre className="text-xs text-muted-foreground">
+                  <pre className="text-xs text-muted-foreground font-mono">
                     {`{
   "content": "# Weekly Development Summary\\n\\n**Repository:** my-awesome-project\\n**Period:** Dec 1-7, 2024\\n**Total Commits:** 23\\n\\n## Key Highlights\\n\\n✅ Implemented user authentication system\\n✅ Added comprehensive test coverage\\n✅ Optimized database queries for performance\\n\\n## Breaking Changes\\n\\n• Updated API endpoints for authentication\\n\\n## Next Week Focus\\n\\n• Deploy authentication to staging\\n• Performance testing and optimization",
   "timestamp": "2024-12-07T15:30:00.000Z",
@@ -133,16 +133,22 @@ export function ProductShowcase() {
                       </div>
                       <div className="mt-1 space-y-1">
                         <div>
-                          <span className="text-green-400">content</span> -
-                          Markdown report
+                          <span className="text-green-400 font-mono">
+                            content
+                          </span>{" "}
+                          - Markdown report
                         </div>
                         <div>
-                          <span className="text-green-400">timestamp</span> -
-                          When sent
+                          <span className="text-green-400 font-mono">
+                            timestamp
+                          </span>{" "}
+                          - When sent
                         </div>
                         <div>
-                          <span className="text-green-400">repository</span> -
-                          GitHub URL
+                          <span className="text-green-400 font-mono">
+                            repository
+                          </span>{" "}
+                          - GitHub URL
                         </div>
                       </div>
                     </div>
@@ -150,16 +156,22 @@ export function ProductShowcase() {
                       <div className="text-blue-400 font-medium">Metadata:</div>
                       <div className="mt-1 space-y-1">
                         <div>
-                          <span className="text-green-400">branch</span> - Git
-                          branch
+                          <span className="text-green-400 font-mono">
+                            branch
+                          </span>{" "}
+                          - Git branch
                         </div>
                         <div>
-                          <span className="text-green-400">commitsCount</span> -
-                          # of commits
+                          <span className="text-green-400 font-mono">
+                            commitsCount
+                          </span>{" "}
+                          - # of commits
                         </div>
                         <div>
-                          <span className="text-green-400">dateRange</span> -
-                          Time period
+                          <span className="text-green-400 font-mono">
+                            dateRange
+                          </span>{" "}
+                          - Time period
                         </div>
                       </div>
                     </div>
@@ -178,7 +190,9 @@ export function ProductShowcase() {
                       feat: implement JWT authentication system
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      abc123d • john.doe@company.com • 2 hours ago
+                      <span className="font-mono">abc123d</span> •{" "}
+                      <span className="font-mono">john.doe@company.com</span> •
+                      2 hours ago
                     </div>
                   </div>
                   <div className="border-l-2 border-blue-500 pl-3">
@@ -186,7 +200,9 @@ export function ProductShowcase() {
                       test: add comprehensive auth service tests
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      def456e • jane.smith@company.com • 4 hours ago
+                      <span className="font-mono">def456e</span> •{" "}
+                      <span className="font-mono">jane.smith@company.com</span>{" "}
+                      • 4 hours ago
                     </div>
                   </div>
                   <div className="border-l-2 border-yellow-500 pl-3">
@@ -194,7 +210,9 @@ export function ProductShowcase() {
                       perf: optimize database connection pooling
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      ghi789f • mike.wilson@company.com • 6 hours ago
+                      <span className="font-mono">ghi789f</span> •{" "}
+                      <span className="font-mono">mike.wilson@company.com</span>{" "}
+                      • 6 hours ago
                     </div>
                   </div>
                   <div className="border-l-2 border-green-500 pl-3">
@@ -202,7 +220,11 @@ export function ProductShowcase() {
                       feat: add password reset functionality
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      jkl012g • sarah.johnson@company.com • 8 hours ago
+                      <span className="font-mono">jkl012g</span> •{" "}
+                      <span className="font-mono">
+                        sarah.johnson@company.com
+                      </span>{" "}
+                      • 8 hours ago
                     </div>
                   </div>
                   <div className="border-l-2 border-red-500 pl-3">
@@ -210,7 +232,9 @@ export function ProductShowcase() {
                       fix: resolve session timeout edge case
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      mno345h • david.brown@company.com • 10 hours ago
+                      <span className="font-mono">mno345h</span> •{" "}
+                      <span className="font-mono">david.brown@company.com</span>{" "}
+                      • 10 hours ago
                     </div>
                   </div>
                   <div className="border-l-2 border-blue-500 pl-3">
@@ -218,7 +242,9 @@ export function ProductShowcase() {
                       test: integration tests for login endpoints
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      pqr678i • lisa.garcia@company.com • 12 hours ago
+                      <span className="font-mono">pqr678i</span> •{" "}
+                      <span className="font-mono">lisa.garcia@company.com</span>{" "}
+                      • 12 hours ago
                     </div>
                   </div>
                   <div className="border-l-2 border-yellow-500 pl-3">
@@ -226,7 +252,9 @@ export function ProductShowcase() {
                       perf: improve query performance in user lookup
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      stu901j • alex.kim@company.com • 14 hours ago
+                      <span className="font-mono">stu901j</span> •{" "}
+                      <span className="font-mono">alex.kim@company.com</span> •
+                      14 hours ago
                     </div>
                   </div>
                   <div className="text-center text-xs text-muted-foreground pt-2 border-t">

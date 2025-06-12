@@ -4,7 +4,10 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 
 const inter = Geist({ subsets: ["latin"] });
-const mono = Geist_Mono({ subsets: ["latin"] });
+const mono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -122,7 +125,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.className}`}>
+      <body className={`${inter.className} ${mono.variable}`}>
         <Providers>{children}</Providers>
       </body>
     </html>
