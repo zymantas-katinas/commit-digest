@@ -100,7 +100,8 @@ export function TimezoneSettings({
 
   const handleUseBrowserTimezone = () => {
     if (browserTimezone) {
-      setValue("timezone", browserTimezone, { shouldValidate: true });
+      setError(null);
+      updateTimezoneMutation.mutate(browserTimezone);
     }
   };
 
