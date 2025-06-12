@@ -219,25 +219,36 @@ export function EditReportConfigDialog({
 
           <div className="space-y-2">
             <Label htmlFor="branch">Branch</Label>
-            <ErrorBoundary
-              fallback={
-                <div className="p-3 border border-red-200 bg-red-50 rounded-md">
-                  <p className="text-sm text-red-600">
-                    Branch selector failed to load
-                  </p>
-                </div>
-              }
-            >
+            {branchesError ? (
+              <div className="p-3 border border-red-200 bg-red-50 rounded-md">
+                <p className="text-sm text-red-600">
+                  Failed to load branches. Please check your repository
+                  connection.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => {
+                    // Force retry by reloading
+                    window.location.reload();
+                  }}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : (
               <BranchSelector
-                branches={branches}
+                branches={branches || []}
                 value={watch("branch")}
                 onValueChange={(value) => setValue("branch", value)}
                 placeholder="Select a branch"
                 disabled={updateMutation.isPending}
                 loading={branchesLoading}
-                error={!!branchesError}
+                error={false}
               />
-            </ErrorBoundary>
+            )}
             {errors.branch && (
               <p className="text-sm text-red-600">{errors.branch.message}</p>
             )}

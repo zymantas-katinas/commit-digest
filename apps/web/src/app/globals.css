@@ -80,10 +80,4 @@
       transparent 0
     );
   }
-
-  .font-mono {
-    font-family:
-      var(--font-mono), ui-monospace, SFMono-Regular, "SF Mono", Consolas,
-      "Liberation Mono", Menlo, monospace;
-  }
 }

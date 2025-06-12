@@ -46,19 +46,28 @@ export function BranchSelector({
 
   React.useEffect(() => {
     try {
-      if (!branches || branches.length === 0) {
+      // Defensive programming: ensure branches is an array
+      const safeBranches = Array.isArray(branches) ? branches : [];
+
+      if (safeBranches.length === 0) {
         setFilteredBranches([]);
         return;
       }
 
-      if (!searchTerm.trim()) {
-        setFilteredBranches(branches);
+      if (!searchTerm || !searchTerm.trim()) {
+        setFilteredBranches(safeBranches);
         return;
       }
 
-      const filtered = branches.filter((branch) =>
-        branch.name.toLowerCase().includes(searchTerm.toLowerCase()),
-      );
+      const filtered = safeBranches.filter((branch) => {
+        // Defensive check: ensure branch exists and has a name
+        if (!branch || typeof branch.name !== "string") {
+          console.warn("Invalid branch object:", branch);
+          return false;
+        }
+        return branch.name.toLowerCase().includes(searchTerm.toLowerCase());
+      });
+
       setFilteredBranches(filtered);
     } catch (error) {
       console.error("Error filtering branches:", error);
@@ -68,7 +77,8 @@ export function BranchSelector({
 
   const selectedBranch = React.useMemo(() => {
     try {
-      return branches.find((branch) => branch.name === value);
+      if (!Array.isArray(branches) || !value) return undefined;
+      return branches.find((branch) => branch && branch.name === value);
     } catch (error) {
       console.error("Error finding selected branch:", error);
       return undefined;
@@ -78,9 +88,11 @@ export function BranchSelector({
   const handleSelect = React.useCallback(
     (branchName: string) => {
       try {
-        onValueChange?.(branchName);
-        setOpen(false);
-        setSearchTerm("");
+        if (typeof branchName === "string" && onValueChange) {
+          onValueChange(branchName);
+          setOpen(false);
+          setSearchTerm("");
+        }
       } catch (error) {
         console.error("Error selecting branch:", error);
       }
@@ -98,7 +110,11 @@ export function BranchSelector({
   );
 
   const clearSearch = React.useCallback(() => {
-    setSearchTerm("");
+    try {
+      setSearchTerm("");
+    } catch (error) {
+      console.error("Error clearing search:", error);
+    }
   }, []);
 
   return (
@@ -135,7 +151,13 @@ export function BranchSelector({
           <Input
             placeholder="Search branches..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              try {
+                setSearchTerm(e.target.value || "");
+              } catch (error) {
+                console.error("Error setting search term:", error);
+              }
+            }}
             className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
           />
           {searchTerm && (
@@ -167,11 +189,24 @@ export function BranchSelector({
             </div>
           ) : (
             <div className="p-1">
-              {filteredBranches.map((branch) => {
-                if (!branch || !branch.name) return null;
+              {filteredBranches.map((branch, index) => {
+                // Additional safety check
+                if (
+                  !branch ||
+                  !branch.name ||
+                  typeof branch.name !== "string"
+                ) {
+                  console.warn(
+                    "Skipping invalid branch at index:",
+                    index,
+                    branch,
+                  );
+                  return null;
+                }
+
                 return (
                   <div
-                    key={branch.name}
+                    key={`${branch.name}-${index}`}
                     className={cn(
                       "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
                       value === branch.name &&
@@ -193,7 +228,7 @@ export function BranchSelector({
             </div>
           )}
         </div>
-        {filteredBranches.length > 0 && (
+        {filteredBranches.length > 0 && Array.isArray(branches) && (
           <div className="border-t p-2 text-xs text-muted-foreground">
             {filteredBranches.length} of {branches.length} branches
             {searchTerm && ` matching "${searchTerm}"`}
