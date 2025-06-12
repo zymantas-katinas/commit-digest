@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { BranchSelector, Branch } from "@/components/ui/branch-selector";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { api } from "@/lib/api";
 import { isValidCronExpression } from "@/lib/cron-utils";
 
@@ -224,19 +225,29 @@ export function AddReportConfigDialog({
 
           <div className="space-y-2">
             <Label htmlFor="branch">Branch</Label>
-            <BranchSelector
-              branches={branches}
-              value={watch("branch")}
-              onValueChange={(value) => setValue("branch", value)}
-              placeholder={
-                !selectedRepoId
-                  ? "Select a repository first"
-                  : "Select a branch"
+            <ErrorBoundary
+              fallback={
+                <div className="p-3 border border-red-200 bg-red-50 rounded-md">
+                  <p className="text-sm text-red-600">
+                    Branch selector failed to load
+                  </p>
+                </div>
               }
-              disabled={createMutation.isPending || !selectedRepoId}
-              loading={branchesLoading}
-              error={!!branchesError}
-            />
+            >
+              <BranchSelector
+                branches={branches}
+                value={watch("branch")}
+                onValueChange={(value) => setValue("branch", value)}
+                placeholder={
+                  !selectedRepoId
+                    ? "Select a repository first"
+                    : "Select a branch"
+                }
+                disabled={createMutation.isPending || !selectedRepoId}
+                loading={branchesLoading}
+                error={!!branchesError}
+              />
+            </ErrorBoundary>
             {errors.branch && (
               <p className="text-sm text-red-600">{errors.branch.message}</p>
             )}

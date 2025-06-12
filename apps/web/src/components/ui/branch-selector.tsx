@@ -45,38 +45,61 @@ export function BranchSelector({
   const [filteredBranches, setFilteredBranches] = React.useState<Branch[]>([]);
 
   React.useEffect(() => {
-    if (!branches || branches.length === 0) {
+    try {
+      if (!branches || branches.length === 0) {
+        setFilteredBranches([]);
+        return;
+      }
+
+      if (!searchTerm.trim()) {
+        setFilteredBranches(branches);
+        return;
+      }
+
+      const filtered = branches.filter((branch) =>
+        branch.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
+      setFilteredBranches(filtered);
+    } catch (error) {
+      console.error("Error filtering branches:", error);
       setFilteredBranches([]);
-      return;
     }
-
-    if (!searchTerm.trim()) {
-      setFilteredBranches(branches);
-      return;
-    }
-
-    const filtered = branches.filter((branch) =>
-      branch.name.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
-    setFilteredBranches(filtered);
   }, [branches, searchTerm]);
 
-  const selectedBranch = branches.find((branch) => branch.name === value);
+  const selectedBranch = React.useMemo(() => {
+    try {
+      return branches.find((branch) => branch.name === value);
+    } catch (error) {
+      console.error("Error finding selected branch:", error);
+      return undefined;
+    }
+  }, [branches, value]);
 
-  const handleSelect = (branchName: string) => {
-    onValueChange?.(branchName);
-    setOpen(false);
+  const handleSelect = React.useCallback(
+    (branchName: string) => {
+      try {
+        onValueChange?.(branchName);
+        setOpen(false);
+        setSearchTerm("");
+      } catch (error) {
+        console.error("Error selecting branch:", error);
+      }
+    },
+    [onValueChange],
+  );
+
+  const truncateBranchName = React.useCallback(
+    (name: string, maxLength: number = 30) => {
+      if (!name || typeof name !== "string") return "";
+      if (name.length <= maxLength) return name;
+      return name.substring(0, maxLength - 3) + "...";
+    },
+    [],
+  );
+
+  const clearSearch = React.useCallback(() => {
     setSearchTerm("");
-  };
-
-  const truncateBranchName = (name: string, maxLength: number = 30) => {
-    if (name.length <= maxLength) return name;
-    return name.substring(0, maxLength - 3) + "...";
-  };
-
-  const clearSearch = () => {
-    setSearchTerm("");
-  };
+  }, []);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -102,8 +125,10 @@ export function BranchSelector({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] p-0"
+        className="w-80 p-0"
         align="start"
+        side="bottom"
+        sideOffset={4}
       >
         <div className="flex items-center border-b px-3">
           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
@@ -142,25 +167,29 @@ export function BranchSelector({
             </div>
           ) : (
             <div className="p-1">
-              {filteredBranches.map((branch) => (
-                <div
-                  key={branch.name}
-                  className={cn(
-                    "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
-                    value === branch.name && "bg-accent text-accent-foreground",
-                  )}
-                  onClick={() => handleSelect(branch.name)}
-                  title={branch.name}
-                >
-                  <Check
+              {filteredBranches.map((branch) => {
+                if (!branch || !branch.name) return null;
+                return (
+                  <div
+                    key={branch.name}
                     className={cn(
-                      "mr-2 h-4 w-4",
-                      value === branch.name ? "opacity-100" : "opacity-0",
+                      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
+                      value === branch.name &&
+                        "bg-accent text-accent-foreground",
                     )}
-                  />
-                  <span className="truncate">{branch.name}</span>
-                </div>
-              ))}
+                    onClick={() => handleSelect(branch.name)}
+                    title={branch.name}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === branch.name ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                    <span className="truncate">{branch.name}</span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

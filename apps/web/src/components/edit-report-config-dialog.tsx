@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { BranchSelector, Branch } from "@/components/ui/branch-selector";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { api } from "@/lib/api";
 import { isValidCronExpression } from "@/lib/cron-utils";
 import { useQueryClient } from "@tanstack/react-query";
@@ -218,15 +219,25 @@ export function EditReportConfigDialog({
 
           <div className="space-y-2">
             <Label htmlFor="branch">Branch</Label>
-            <BranchSelector
-              branches={branches}
-              value={watch("branch")}
-              onValueChange={(value) => setValue("branch", value)}
-              placeholder="Select a branch"
-              disabled={updateMutation.isPending}
-              loading={branchesLoading}
-              error={!!branchesError}
-            />
+            <ErrorBoundary
+              fallback={
+                <div className="p-3 border border-red-200 bg-red-50 rounded-md">
+                  <p className="text-sm text-red-600">
+                    Branch selector failed to load
+                  </p>
+                </div>
+              }
+            >
+              <BranchSelector
+                branches={branches}
+                value={watch("branch")}
+                onValueChange={(value) => setValue("branch", value)}
+                placeholder="Select a branch"
+                disabled={updateMutation.isPending}
+                loading={branchesLoading}
+                error={!!branchesError}
+              />
+            </ErrorBoundary>
             {errors.branch && (
               <p className="text-sm text-red-600">{errors.branch.message}</p>
             )}
