@@ -33,9 +33,13 @@ type TimezoneFormData = z.infer<typeof timezoneSchema>;
 
 interface TimezoneSettingsProps {
   onSuccess?: () => void;
+  showHeader?: boolean;
 }
 
-export function TimezoneSettings({ onSuccess }: TimezoneSettingsProps) {
+export function TimezoneSettings({
+  onSuccess,
+  showHeader = true,
+}: TimezoneSettingsProps) {
   const [error, setError] = useState<string | null>(null);
   const [browserTimezone, setBrowserTimezone] = useState<string>("");
   const queryClient = useQueryClient();
@@ -94,10 +98,9 @@ export function TimezoneSettings({ onSuccess }: TimezoneSettingsProps) {
     updateTimezoneMutation.mutate(data.timezone);
   };
 
-  const handleUseBrowserTimezone = async () => {
+  const handleUseBrowserTimezone = () => {
     if (browserTimezone) {
-      setValue("timezone", browserTimezone);
-      await trigger("timezone");
+      setValue("timezone", browserTimezone, { shouldValidate: true });
     }
   };
 
@@ -124,15 +127,17 @@ export function TimezoneSettings({ onSuccess }: TimezoneSettingsProps) {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          <Globe className="h-5 w-5" />
-          Timezone Settings
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          Set your timezone to receive scheduled reports at the correct time.
-        </p>
-      </div>
+      {showHeader && (
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            Timezone Settings
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Set your timezone to receive scheduled reports at the correct time.
+          </p>
+        </div>
+      )}
 
       {/* Current Time Display */}
       <div className="p-4 bg-muted/50 rounded-lg">

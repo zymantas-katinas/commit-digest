@@ -108,6 +108,7 @@ export function TimezoneStatus({
             </DialogDescription>
           </DialogHeader>
           <TimezoneSettings
+            showHeader={false}
             onSuccess={() => {
               setDialogOpen(false);
             }}
