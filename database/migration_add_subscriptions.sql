@@ -114,7 +114,7 @@ CREATE TRIGGER update_subscriptions_updated_at
 -- Insert default plans
 INSERT INTO subscription_plans (name, description, price_usd, monthly_runs_limit, max_repositories, max_reports, stripe_price_id, stripe_product_id) VALUES
   ('Free', 'Free tier with basic features', 0.00, 50, 5, 10, NULL, NULL),
-  ('Pro', 'Professional plan with advanced features', 15.00, 500, 10, 100, NULL, NULL)
+  ('Pro', 'Professional plan with advanced features', 15.00, 500, 9999, 9999, NULL, NULL)
 ON CONFLICT DO NOTHING;
 
 -- Create function to get user's effective limits

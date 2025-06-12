@@ -16,7 +16,7 @@ Successfully changed the subscription business logic from "reports per repositor
 **Updated Plans**:
 
 - Free tier: 5 repositories, 10 total reports (increased from 1 repo and 5 per repo)
-- Pro tier: 10 repositories, 100 total reports (increased from 50 per repo)
+- Pro tier: Unlimited repositories, unlimited total reports (with 9999 safety limit in backend)
 
 ### 2. Backend API Changes
 
@@ -39,7 +39,8 @@ Successfully changed the subscription business logic from "reports per repositor
 
 **Subscription Management Component**:
 
-- Now displays: "2/10 repositories", "12/50 reports"
+- Now displays: "2/5 repositories", "12/10 reports" format as requested for Free tier
+- For Pro tier: Shows "2 repositories" (no limit), "12 reports" (no limit)
 - Changed from showing max limits to showing current/max format
 
 **Pricing Component**:
@@ -71,10 +72,11 @@ SET max_repositories = 5,
     description = 'Free tier with basic features - 5 repositories, 10 total reports across all repositories'
 WHERE name = 'Free';
 
--- Update Pro plan
+-- Update Pro plan to unlimited (with safety limits)
 UPDATE subscription_plans
-SET max_reports = 100,
-    description = 'Professional plan with advanced features - 10 repositories, 100 total reports across all repositories'
+SET max_repositories = 9999,
+    max_reports = 9999,
+    description = 'Professional plan with advanced features - unlimited repositories and reports'
 WHERE name = 'Pro';
 ```
 
@@ -89,8 +91,8 @@ WHERE name = 'Pro';
 ### After:
 
 - Free: 5 repos, 10 total reports across all repos
-- Pro: 10 repos, 100 total reports across all repos
-- UI shows: "12/100 total reports"
+- Pro: Unlimited repos, unlimited total reports (9999 safety limit in backend)
+- UI shows: Free tier "3/5 repositories, 12/10 reports", Pro tier "3 repositories, 12 reports"
 
 ## Benefits
 

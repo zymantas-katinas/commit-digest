@@ -40,8 +40,8 @@ The Stripe subscription system for CommitDigest has been successfully implemente
 ### Pro Tier ($15/month)
 
 - 500 monthly report runs
-- 10 repositories maximum
-- 100 total reports across all repositories
+- Unlimited repositories
+- Unlimited total reports
 - Priority support
 - Advanced analytics
 - Custom integrations

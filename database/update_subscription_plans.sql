@@ -9,10 +9,11 @@ SET max_repositories = 5,
     description = 'Free tier with basic features - 5 repositories, 10 total reports across all repositories'
 WHERE name = 'Free';
 
--- Update Pro plan to allow 100 total reports (instead of 50 per repo) 
+-- Update Pro plan to allow unlimited repositories and reports (with safety limits)
 UPDATE subscription_plans 
-SET max_reports = 100,
-    description = 'Professional plan with advanced features - 10 repositories, 100 total reports across all repositories'
+SET max_repositories = 9999,
+    max_reports = 9999,
+    description = 'Professional plan with advanced features - unlimited repositories and reports'
 WHERE name = 'Pro';
 
 -- Verify the updates

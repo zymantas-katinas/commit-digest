@@ -12,7 +12,7 @@ This guide handles the migration of existing users who have more repositories or
 **After Subscription Implementation:**
 
 - Free tier limits: 5 repositories, 10 total reports across all repositories, 50 monthly runs
-- Pro tier limits: 10 repositories, 100 total reports across all repositories, 500 monthly runs
+- Pro tier limits: Unlimited repositories, unlimited total reports, 500 monthly runs
 
 ## Migration Strategy: Grandfathering Approach ✅
 
@@ -130,7 +130,7 @@ We've automatically placed you on our Free plan, which includes:
 Since you currently have [X] repositories and [Y] total reports, you're grandfathered in and can continue using all your existing configurations.
 
 To add NEW repositories or reports, consider upgrading to our Pro plan:
-- 10 repositories, 100 total reports, 500 monthly runs
+- Unlimited repositories, unlimited total reports, 500 monthly runs
 - Only $15/month
 
 Upgrade anytime at: [Your App URL]/pricing
@@ -221,7 +221,7 @@ The subscription system has been updated to use **total reports across all repos
 ### New Plan Structure
 
 - Free tier limits: 5 repositories, 10 total reports across all repositories, 50 monthly runs
-- Pro tier limits: 10 repositories, 100 total reports across all repositories, 500 monthly runs
+- Pro tier limits: Unlimited repositories, unlimited total reports, 500 monthly runs
 
 ### Key Changes
 

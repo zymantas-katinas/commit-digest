@@ -66,8 +66,12 @@ export function Pricing({ showHeader = true, embedded = false }: PricingProps) {
   const getPlanFeatures = (plan: SubscriptionPlan) => {
     const features = [
       `${plan.monthly_runs_limit} monthly report runs`,
-      `Up to ${plan.max_repositories} repositories`,
-      `Up to ${plan.max_reports} total reports`,
+      plan.max_repositories >= 9999
+        ? "Unlimited repositories"
+        : `Up to ${plan.max_repositories} repositories`,
+      plan.max_reports >= 9999
+        ? "Unlimited total reports"
+        : `Up to ${plan.max_reports} total reports`,
     ];
 
     if (plan.name === "Pro") {

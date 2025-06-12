@@ -205,14 +205,19 @@ export function SubscriptionManagement() {
               <div className="space-y-1">
                 <p className="text-sm font-medium">Repositories</p>
                 <p className="text-2xl font-bold">
-                  {usageStats.currentRepositories}/
-                  {usageStats.limits.max_repositories}
+                  {usageStats.currentRepositories}
+                  {usageStats.limits.max_repositories >= 9999
+                    ? ""
+                    : `/${usageStats.limits.max_repositories}`}
                 </p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-medium">Total Reports</p>
                 <p className="text-2xl font-bold">
-                  {usageStats.currentReports}/{usageStats.limits.max_reports}
+                  {usageStats.currentReports}
+                  {usageStats.limits.max_reports >= 9999
+                    ? ""
+                    : `/${usageStats.limits.max_reports}`}
                 </p>
               </div>
             </div>

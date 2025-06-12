@@ -39,10 +39,19 @@ export function UsageStats() {
     );
   }
 
-  const { monthlyUsage, canRunMore, limits, runsUsed, runsRemaining } =
-    usageStats;
+  const {
+    monthlyUsage,
+    canRunMore,
+    limits,
+    runsUsed,
+    runsRemaining,
+    currentRepositories,
+    currentReports,
+  } = usageStats;
   const usagePercentage = (runsUsed / limits.monthly_runs_limit) * 100;
   const isFreePlan = limits.plan_name === "Free";
+  const isUnlimited =
+    limits.max_repositories >= 9999 || limits.max_reports >= 9999;
 
   return (
     <div className="bg-card rounded-lg border border-l-4 border-l-green-500">
@@ -115,11 +124,21 @@ export function UsageStats() {
         <div className="grid grid-cols-2 gap-2 pt-2 border-t text-xs">
           <div>
             <div className="text-muted-foreground">Repositories</div>
-            <div className="font-medium">{limits.max_repositories}</div>
+            <div className="font-medium">
+              {currentRepositories || 0}
+              {isUnlimited || limits.max_repositories >= 9999
+                ? ""
+                : `/${limits.max_repositories}`}
+            </div>
           </div>
           <div>
-            <div className="text-muted-foreground">Reports/Repo</div>
-            <div className="font-medium">{limits.max_reports}</div>
+            <div className="text-muted-foreground">Total Reports</div>
+            <div className="font-medium">
+              {currentReports || 0}
+              {isUnlimited || limits.max_reports >= 9999
+                ? ""
+                : `/${limits.max_reports}`}
+            </div>
           </div>
         </div>
       </div>
