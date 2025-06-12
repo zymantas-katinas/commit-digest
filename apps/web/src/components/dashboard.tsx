@@ -50,13 +50,17 @@ export function Dashboard() {
           <UsageStats />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
           {/* Repositories Section - Compact Sidebar */}
-          <div className="lg:col-span-1 order-2 lg:order-1 space-y-4">
-            <div className="bg-card rounded-lg border border-l-4 border-l-blue-500">
-              <div className="p-4 border-b bg-muted/30">
+          <div className="lg:col-span-1 order-2 lg:order-1 space-y-8">
+            <div className="hidden lg:block">
+              <UsageStats />
+            </div>
+
+            <div className="">
+              <div className="mb-2">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-sm font-medium text-blue-400 uppercase tracking-wide">
+                  <h2 className="text-sm font-medium uppercase tracking-wide">
                     Repositories
                   </h2>
                   <Button
@@ -70,7 +74,7 @@ export function Dashboard() {
                   </Button>
                 </div>
               </div>
-              <div className="p-3">
+              <div className="">
                 {reposLoading ? (
                   <div className="flex justify-center py-4">
                     <LoadingSpinner size="sm" />
@@ -85,9 +89,6 @@ export function Dashboard() {
             </div>
 
             {/* Usage Statistics - Hidden on mobile, shown on desktop */}
-            <div className="hidden lg:block">
-              <UsageStats />
-            </div>
           </div>
 
           {/* Main Content Area */}
@@ -111,8 +112,8 @@ export function Dashboard() {
             )}
 
             {/* Report Configurations Section */}
-            <div className="bg-card rounded-lg border">
-              <div className="p-6 border-b border-border">
+            <div className="">
+              <div className="mb-6 border-border">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                   <div>
                     <h2 className="text-xl font-semibold">Scheduled Reports</h2>
@@ -153,7 +154,7 @@ export function Dashboard() {
                   </div>
                 </div>
               </div>
-              <div className="p-6">
+              <div className="">
                 {configsLoading ? (
                   <div className="flex justify-center py-8">
                     <LoadingSpinner />

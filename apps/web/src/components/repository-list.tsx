@@ -5,8 +5,21 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EditRepositoryDialog } from "@/components/edit-repository-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { api } from "@/lib/api";
-import { Trash2, ExternalLink, GitBranch, Edit } from "lucide-react";
+import {
+  Trash2,
+  ExternalLink,
+  GitBranch,
+  Edit,
+  MoreVertical,
+} from "lucide-react";
 
 interface Repository {
   id: string;
@@ -81,50 +94,62 @@ export function RepositoryList({
           key={repo.id}
           className="group relative p-3 border border-border rounded-md hover:border-border/80 hover:bg-muted/50 transition-colors"
         >
-          <div className="flex items-start justify-between">
+          <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center space-x-1 mb-1">
+              <div className="flex items-center space-x-1">
                 <GitBranch className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                <h3 className="text-sm font-medium truncate">
+                <h3 className="text-sm font-medium truncate font-mono">
                   {getRepoName(repo.github_url)}
                 </h3>
               </div>
-              <div className="flex items-center space-x-2">
-                <a
-                  href={repo.github_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                  title="Open in GitHub"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
             </div>
 
-            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEdit(repo)}
-                className="h-7 w-7 p-0"
-              >
-                <Edit className="h-3 w-3" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDelete(repo.id)}
-                disabled={deletingId === repo.id}
-                className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
-              >
-                {deletingId === repo.id ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <Trash2 className="h-3 w-3" />
-                )}
-              </Button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <MoreVertical className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[160px]">
+                <DropdownMenuItem
+                  onClick={() => handleEdit(repo)}
+                  className="cursor-pointer"
+                >
+                  <Edit className="h-3 w-3 mr-2" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    window.open(
+                      repo.github_url,
+                      "_blank",
+                      "noopener,noreferrer",
+                    )
+                  }
+                  className="cursor-pointer"
+                >
+                  <ExternalLink className="h-3 w-3 mr-2" />
+                  Open in GitHub
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => handleDelete(repo.id)}
+                  disabled={deletingId === repo.id}
+                  className="cursor-pointer text-red-600 focus:text-red-600"
+                >
+                  {deletingId === repo.id ? (
+                    <LoadingSpinner size="sm" className="mr-2" />
+                  ) : (
+                    <Trash2 className="h-3 w-3 mr-2" />
+                  )}
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       ))}

@@ -64,8 +64,8 @@ export function TimezoneStatus({
   }
 
   return (
-    <div className={`flex items-center justify-between ${className}`}>
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <div className={`flex items-center flex-wrap justify-between ${className}`}>
+      <div className="flex items-center flex-wrap gap-2 text-xs text-muted-foreground">
         {showLabel && (
           <div className="flex items-center gap-1">
             <Globe className="h-3 w-3" />
@@ -73,14 +73,14 @@ export function TimezoneStatus({
           </div>
         )}
         <div className="flex items-center gap-1">
-          <span className="font-medium text-foreground">
+          <span className="font-medium text-foreground font-mono">
             {formatTimezone(currentTimezone)} (UTC
             {getTimezoneOffset(currentTimezone)})
           </span>
           <span className="text-muted-foreground">•</span>
           <div className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            <span>{currentTime}</span>
+            <span className="font-mono">{currentTime}</span>
           </div>
         </div>
       </div>

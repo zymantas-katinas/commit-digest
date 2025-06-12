@@ -316,7 +316,7 @@ export function ReportConfigurationList({
           return (
             <div
               key={config.id}
-              className="bg-card border border-border rounded-lg p-4 sm:p-6 hover:shadow-md transition-shadow"
+              className="bg-card rounded-lg p-4 sm:p-6 hover:shadow-md transition-shadow"
             >
               {/* Header */}
               <div className="flex flex-col space-y-4 md:flex-row md:items-start md:justify-between md:space-y-0 mb-4">
@@ -330,11 +330,11 @@ export function ReportConfigurationList({
                   {/* Repository Info */}
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-3">
                     <GitBranch className="h-4 w-4 flex-shrink-0" />
-                    <span className="font-medium truncate">
+                    <span className="font-medium truncate font-mono">
                       {getRepositoryName(config.repository_id)}
                     </span>
                     <span className="flex-shrink-0">•</span>
-                    <span className="bg-muted px-2 py-0.5 rounded-full text-xs flex-shrink-0">
+                    <span className="bg-muted px-2 py-0.5 rounded-full text-xs flex-shrink-0 font-mono">
                       {config.branch}
                     </span>
                     {repo && (
@@ -371,8 +371,8 @@ export function ReportConfigurationList({
                   </div>
 
                   {/* Action Buttons - Responsive Layout */}
-                  <div className="flex flex-wrap gap-2 md:flex-nowrap md:space-x-2">
-                    <Button
+                  <div className="flex flex-wrap gap-2 md:flex-nowrap">
+                    {/* <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleTest(config.id)}
@@ -389,15 +389,15 @@ export function ReportConfigurationList({
                           <span className="hidden sm:inline">Test</span>
                         </>
                       )}
-                    </Button>
+                    </Button> */}
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={() => handleManualTrigger(config)}
                       disabled={
                         testingId === config.id || deletingId === config.id
                       }
-                      className="flex-1 md:flex-none text-purple-400 border-purple-400/20 hover:bg-purple-500/10"
+                      // className="flex-1 md:flex-none text-purple-400 border-purple-400/20 hover:bg-purple-500/10"
                     >
                       <Calendar className="h-4 w-4 mr-1" />
                       <span className="hidden sm:inline">Manual</span>
@@ -407,12 +407,12 @@ export function ReportConfigurationList({
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
                           disabled={
                             testingId === config.id || deletingId === config.id
                           }
-                          className="flex-1 md:flex-none text-muted-foreground hover:bg-muted"
+                          // className="flex-1 md:flex-none text-muted-foreground hover:bg-muted"
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
@@ -456,9 +456,9 @@ export function ReportConfigurationList({
               {/* Configuration Details */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                 <div className="flex items-center text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
+                  {/* <Clock className="h-4 w-4 mr-2 flex-shrink-0" /> */}
                   <span className="font-medium mr-2">Schedule:</span>
-                  <span className="truncate">
+                  <span className="truncate font-mono bg-muted/50 text-white/80 px-2 py-0.5 rounded-sm">
                     {getScheduleDisplay(config.schedule)}
                   </span>
                 </div>
@@ -467,7 +467,10 @@ export function ReportConfigurationList({
                   <span className="font-medium mr-2 flex-shrink-0">
                     Webhook:
                   </span>
-                  <span className="truncate" title={config.webhook_url}>
+                  <span
+                    className="truncate font-mono"
+                    title={config.webhook_url}
+                  >
                     {config.webhook_url.length > 40
                       ? `${config.webhook_url.substring(0, 40)}...`
                       : config.webhook_url}
@@ -531,7 +534,7 @@ export function ReportConfigurationList({
                             <span className="font-medium text-green-300">
                               Commits found:
                             </span>{" "}
-                            <span className="text-green-100">
+                            <span className="text-green-100 font-mono">
                               {testResult.commitsFound || 0}
                             </span>
                           </div>
@@ -651,7 +654,7 @@ export function ReportConfigurationList({
                               <span className="font-medium text-purple-300">
                                 Commits found:
                               </span>{" "}
-                              <span className="text-purple-100">
+                              <span className="text-purple-100 font-mono">
                                 {manualTriggerResult.commitsFound || 0}
                               </span>
                             </div>

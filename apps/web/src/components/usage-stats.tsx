@@ -54,10 +54,10 @@ export function UsageStats() {
     limits.max_repositories >= 9999 || limits.max_reports >= 9999;
 
   return (
-    <div className="bg-card rounded-lg border border-l-4 border-l-green-500">
-      <div className="p-4 border-b bg-muted/30">
+    <div className=" ">
+      <div className="mb-2">
         <div className="flex justify-between items-center">
-          <h3 className="text-sm font-medium text-green-400 uppercase tracking-wide">
+          <h3 className="text-sm font-medium uppercase tracking-wide">
             {limits.plan_name} Plan
           </h3>
           {isFreePlan && (
@@ -76,14 +76,14 @@ export function UsageStats() {
         </div>
       </div>
 
-      <div className="p-3 space-y-3">
+      <div className=" space-y-3">
         {/* Usage Progress */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted-foreground">
               Monthly Runs
             </span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground font-mono">
               {runsUsed}/{limits.monthly_runs_limit}
             </span>
           </div>
@@ -105,7 +105,7 @@ export function UsageStats() {
             {canRunMore ? (
               <>
                 <CheckCircle className="h-3 w-3 text-green-500" />
-                <span className="text-xs text-green-600">
+                <span className="text-xs text-green-600 font-mono">
                   {runsRemaining} runs remaining
                 </span>
               </>
@@ -122,18 +122,18 @@ export function UsageStats() {
 
         {/* Plan Limits */}
         <div className="grid grid-cols-2 gap-2 pt-2 border-t text-xs">
-          <div>
+          <div className="flex items-center gap-2">
             <div className="text-muted-foreground">Repositories</div>
-            <div className="font-medium">
+            <div className="font-medium font-mono">
               {currentRepositories || 0}
               {isUnlimited || limits.max_repositories >= 9999
                 ? ""
                 : `/${limits.max_repositories}`}
             </div>
           </div>
-          <div>
+          <div className="flex items-center gap-2">
             <div className="text-muted-foreground">Total Reports</div>
-            <div className="font-medium">
+            <div className="font-medium font-mono">
               {currentReports || 0}
               {isUnlimited || limits.max_reports >= 9999
                 ? ""
