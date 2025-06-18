@@ -1,5 +1,5 @@
 import { Pricing } from "@/components/pricing";
-import { AppHeader } from "@/components/app-header";
+import { SiteLayout } from "@/components/site-layout";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -41,11 +41,10 @@ export const metadata: Metadata = {
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <main className="pt-16">
+    <SiteLayout>
+      <div className="pt-16">
         <Pricing />
-      </main>
-    </div>
+      </div>
+    </SiteLayout>
   );
 }

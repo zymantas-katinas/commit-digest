@@ -10,7 +10,7 @@ import { AddRepositoryDialog } from "@/components/add-repository-dialog";
 import { AddReportConfigDialog } from "@/components/add-report-config-dialog";
 import { UsageStats } from "@/components/usage-stats";
 import { TimezoneStatus } from "@/components/timezone-status";
-import { AppHeader } from "@/components/app-header";
+import { SiteLayout } from "@/components/site-layout";
 import { useAuthStore } from "@/stores/auth";
 import { api } from "@/lib/api";
 import { Settings, Plus, AlertCircle } from "lucide-react";
@@ -39,12 +39,9 @@ export function Dashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <AppHeader />
-
+    <SiteLayout>
       {/* Main Content */}
-      <main className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-8">
+      <div className="container max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-8">
         {/* Usage Statistics - Top on mobile only */}
         <div className="lg:hidden mb-6">
           <UsageStats />
@@ -170,7 +167,7 @@ export function Dashboard() {
             </div>
           </div>
         </div>
-      </main>
+      </div>
 
       {/* Dialogs */}
       <AddRepositoryDialog
@@ -191,6 +188,6 @@ export function Dashboard() {
           setShowAddConfig(false);
         }}
       />
-    </div>
+    </SiteLayout>
   );
 }

@@ -1,12 +1,9 @@
 import { AlertCircle, CheckCircle, Info, Zap } from "lucide-react";
-import { AppHeader } from "@/components/app-header";
+import { SiteLayout } from "@/components/site-layout";
 
 export default function DocsPage() {
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <AppHeader />
-
+    <SiteLayout>
       <div className="container max-w-screen-xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar Navigation */}
@@ -1144,6 +1141,6 @@ Brief overview of the period's activity
           </div>
         </div>
       </div>
-    </div>
+    </SiteLayout>
   );
 }

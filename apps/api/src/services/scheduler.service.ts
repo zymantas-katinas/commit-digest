@@ -289,7 +289,7 @@ export class SchedulerService {
           ? "day"
           : "week";
         const noCommitsMessage =
-          `📊 **Git Report - No Activity**\n\n` +
+          `${process.env.NODE_ENV === "development" ? "🔧" : ""}📊 **Git Report - No Activity**\n\n` +
           `**Repository:** ${repository.github_url}\n` +
           `**Branch:** ${config.branch}\n` +
           `**Period:** ${this.formatDateRange(sinceDate, new Date())}\n\n` +
@@ -358,7 +358,7 @@ export class SchedulerService {
 
       // Create formatted report with metadata header
       const formattedReport =
-        `📊 **Git Report - ${commits.length} ${commits.length === 1 ? "Commit" : "Commits"}**\n\n` +
+        `${process.env.NODE_ENV === "development" ? "🔧" : ""}📊 **Git Report - ${commits.length} ${commits.length === 1 ? "Commit" : "Commits"}**\n\n` +
         `**Repository:** ${repository.github_url}\n` +
         `**Branch:** ${config.branch}\n` +
         `**Period:** ${this.formatDateRange(sinceDate, new Date())}\n` +
