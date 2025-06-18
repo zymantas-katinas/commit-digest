@@ -153,7 +153,8 @@ export class SupabaseService {
     const { data, error } = await this.supabase
       .from("report_configurations")
       .select("*")
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
     return data || [];

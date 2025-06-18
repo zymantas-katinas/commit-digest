@@ -16,9 +16,97 @@ export function isScheduleDue(
 
   const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
 
-  // If never run before, it's due
+  // If never run before, check if current time matches the schedule
   if (!lastRunAt) {
-    return true;
+    // For new configurations, we need to check if the current time matches the schedule
+    // instead of immediately returning true
+    const now = new Date();
+
+    // For daily schedules, check if current time is at or past the scheduled time
+    if (
+      dayOfMonth === "*" &&
+      month === "*" &&
+      dayOfWeek === "*" &&
+      hour !== "*" &&
+      !hour.includes("/")
+    ) {
+      const targetHour = parseInt(hour);
+      const targetMinute = parseInt(minute) || 0;
+
+      // Get current time in user's timezone
+      const nowInUserTz = new Date().toLocaleString("en-US", {
+        timeZone: userTimezone,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+
+      const [currentHour, currentMinute] = nowInUserTz.split(":");
+      const currentHourNum = parseInt(currentHour);
+      const currentMinuteNum = parseInt(currentMinute);
+
+      const currentTimeMinutes = currentHourNum * 60 + currentMinuteNum;
+      const targetTimeMinutes = targetHour * 60 + targetMinute;
+
+      console.log(
+        `🔍 New configuration schedule check for ${schedule} in ${userTimezone}:`,
+      );
+      console.log(
+        `   Current time: ${currentHour}:${currentMinute} (${currentTimeMinutes} minutes)`,
+      );
+      console.log(
+        `   Target time: ${targetHour}:${String(targetMinute).padStart(2, "0")} (${targetTimeMinutes} minutes)`,
+      );
+
+      const isDue = currentTimeMinutes >= targetTimeMinutes;
+      console.log(`   New config is due: ${isDue}`);
+
+      return isDue;
+    }
+
+    // For hourly schedules
+    if (
+      dayOfMonth === "*" &&
+      month === "*" &&
+      dayOfWeek === "*" &&
+      hour === "*"
+    ) {
+      const targetMinute = parseInt(minute) || 0;
+
+      const nowInUserTz = new Date().toLocaleString("en-US", {
+        timeZone: userTimezone,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+
+      const [currentHour, currentMinute] = nowInUserTz.split(":");
+      const currentMinuteNum = parseInt(currentMinute);
+
+      console.log(
+        `🔍 New configuration hourly schedule check for ${schedule} in ${userTimezone}:`,
+      );
+      console.log(`   Current time: ${currentHour}:${currentMinute}`);
+      console.log(`   Target minute: ${targetMinute}`);
+
+      const isDue = currentMinuteNum >= targetMinute;
+      console.log(`   New config is due: ${isDue}`);
+
+      return isDue;
+    }
+
+    // For other schedules, use the parseNextRunTime logic
+    const nextRunTime = parseNextRunTime(schedule, now, userTimezone);
+    if (nextRunTime) {
+      const isDue = now >= nextRunTime;
+      console.log(
+        `🔍 New configuration custom schedule check: next run ${nextRunTime.toISOString()}, is due: ${isDue}`,
+      );
+      return isDue;
+    }
+
+    // Default to not due for new configurations with unrecognized schedules
+    return false;
   }
 
   const now = new Date();
