@@ -76,8 +76,31 @@ export class SchedulerService {
             config.last_run_at ? new Date(config.last_run_at) : new Date(),
             userTimezone,
           );
+
+          // Show current time in user's timezone for better debugging
+          const currentTimeInUserTz = new Date().toLocaleString("en-US", {
+            timeZone: userTimezone,
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            timeZoneName: "short",
+          });
+
+          // Also show current UTC time for comparison
+          const currentTimeUTC = new Date().toISOString();
+
+          // Calculate if this config should be due right now
+          const isDueNow = isScheduleDue(
+            config.schedule,
+            config.last_run_at,
+            userTimezone,
+          );
+
           this.logger.log(
-            `📅 DUE Config ${config.id}: schedule="${config.schedule}", timezone="${userTimezone}", last_run=${config.last_run_at || "never"}, next_scheduled=${nextRunTime?.toISOString() || "unknown"}, name="${config.name || "unnamed"}"`,
+            `📅 DUE Config ${config.id}: schedule="${config.schedule}", timezone="${userTimezone}", current_time_user_tz="${currentTimeInUserTz}", current_time_utc="${currentTimeUTC}", last_run=${config.last_run_at || "never"}, next_scheduled=${nextRunTime?.toISOString() || "unknown"}, is_due_now=${isDueNow}, name="${config.name || "unnamed"}"`,
           );
         }
       } else {

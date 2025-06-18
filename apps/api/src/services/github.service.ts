@@ -24,6 +24,12 @@ export interface GitHubBranch {
   };
 }
 
+export interface BranchesResponse {
+  branches: GitHubBranch[];
+  hasMore: boolean;
+  totalCount?: number;
+}
+
 @Injectable()
 export class GitHubService {
   constructor(private configService: ConfigService) {}
@@ -31,7 +37,12 @@ export class GitHubService {
   async fetchBranches(
     githubUrl: string,
     pat?: string,
-  ): Promise<GitHubBranch[]> {
+    options?: {
+      search?: string;
+      page?: number;
+      perPage?: number;
+    },
+  ): Promise<BranchesResponse> {
     try {
       // Extract owner and repo from GitHub URL
       const urlParts = githubUrl.replace("https://github.com/", "").split("/");
@@ -42,7 +53,12 @@ export class GitHubService {
       const owner = urlParts[0];
       const repo = urlParts[1].replace(".git", "");
 
-      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/branches`;
+      const page = options?.page || 1;
+      const perPage = Math.min(options?.perPage || 30, 100); // GitHub API max is 100
+
+      let branches: GitHubBranch[] = [];
+      let hasMore = false;
+      let totalCount: number | undefined;
 
       const headers: any = {
         Accept: "application/vnd.github.v3+json",
@@ -59,11 +75,77 @@ export class GitHubService {
         headers.Authorization = `token ${token}`;
       }
 
-      const response = await axios.get(apiUrl, {
-        headers,
-      });
+      if (options?.search) {
+        // Use search API for filtering branches
+        const searchQuery = `${options.search} repo:${owner}/${repo}`;
+        const searchUrl = `https://api.github.com/search/repositories`;
 
-      return response.data;
+        // First, search for branches using the search API (limited functionality)
+        // Since GitHub doesn't have a direct branch search API, we'll fetch all branches
+        // and filter them server-side for better performance than client-side filtering
+        const allBranchesUrl = `https://api.github.com/repos/${owner}/${repo}/branches`;
+
+        let allBranches: GitHubBranch[] = [];
+        let currentPage = 1;
+        let fetchMore = true;
+
+        // Fetch all branches first (for search filtering)
+        while (fetchMore && currentPage <= 10) {
+          // Limit to prevent infinite loops
+          const response = await axios.get(allBranchesUrl, {
+            headers,
+            params: {
+              per_page: 100,
+              page: currentPage,
+            },
+          });
+
+          const pageBranches = response.data;
+          allBranches = allBranches.concat(pageBranches);
+
+          fetchMore = pageBranches.length === 100;
+          currentPage++;
+        }
+
+        // Filter branches by search term
+        const filteredBranches = allBranches.filter((branch) =>
+          branch.name.toLowerCase().includes(options.search!.toLowerCase()),
+        );
+
+        totalCount = filteredBranches.length;
+
+        // Apply pagination to filtered results
+        const startIndex = (page - 1) * perPage;
+        const endIndex = startIndex + perPage;
+        branches = filteredBranches.slice(startIndex, endIndex);
+        hasMore = endIndex < filteredBranches.length;
+      } else {
+        // Regular pagination without search
+        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/branches`;
+
+        const response = await axios.get(apiUrl, {
+          headers,
+          params: {
+            per_page: perPage,
+            page: page,
+          },
+        });
+
+        branches = response.data;
+
+        // Check if there are more pages
+        // GitHub API includes Link header for pagination info
+        const linkHeader = response.headers.link;
+        hasMore = linkHeader
+          ? linkHeader.includes('rel="next"')
+          : branches.length === perPage;
+      }
+
+      return {
+        branches,
+        hasMore,
+        totalCount,
+      };
     } catch (error) {
       console.log({
         error,

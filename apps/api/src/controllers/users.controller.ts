@@ -9,8 +9,6 @@ export class UsersController {
 
   @Get("profile")
   async getProfile(@Request() req) {
-    console.log("User object:", JSON.stringify(req.user, null, 2));
-
     const userId = req.user?.id || req.user?.sub;
 
     if (!userId) {
@@ -35,8 +33,6 @@ export class UsersController {
 
   @Put("timezone")
   async updateTimezone(@Request() req, @Body() body: { timezone: string }) {
-    console.log("User object:", JSON.stringify(req.user, null, 2));
-
     const userId = req.user?.id || req.user?.sub;
 
     if (!userId) {
@@ -74,8 +70,6 @@ export class UsersController {
 
   @Put("profile")
   async updateProfile(@Request() req, @Body() body: { timezone?: string }) {
-    console.log("User object:", JSON.stringify(req.user, null, 2));
-
     const userId = req.user?.id || req.user?.sub;
 
     if (!userId) {

@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   Request,
   HttpException,
@@ -102,7 +103,13 @@ export class RepositoriesController {
   }
 
   @Get(":id/branches")
-  async getRepositoryBranches(@Param("id") id: string, @Request() req) {
+  async getRepositoryBranches(
+    @Param("id") id: string,
+    @Request() req,
+    @Query("search") search?: string,
+    @Query("page") page?: string,
+    @Query("perPage") perPage?: string,
+  ) {
     try {
       const userId = req.user.id;
 
@@ -117,13 +124,38 @@ export class RepositoriesController {
         ? this.encryptionService.decrypt(repository.encrypted_access_token)
         : null;
 
+      // Parse pagination parameters
+      const pageNum = page ? parseInt(page, 10) : 1;
+      const perPageNum = perPage ? parseInt(perPage, 10) : 30;
+
+      // Validate pagination parameters
+      if (pageNum < 1 || perPageNum < 1 || perPageNum > 100) {
+        throw new HttpException(
+          "Invalid pagination parameters",
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       // Fetch branches from GitHub
-      const branches = await this.githubService.fetchBranches(
+      const result = await this.githubService.fetchBranches(
         repository.github_url,
         pat,
+        {
+          search: search?.trim() || undefined,
+          page: pageNum,
+          perPage: perPageNum,
+        },
       );
 
-      return branches;
+      return {
+        branches: result.branches,
+        pagination: {
+          page: pageNum,
+          perPage: perPageNum,
+          hasMore: result.hasMore,
+          totalCount: result.totalCount,
+        },
+      };
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;

@@ -204,18 +204,74 @@ export class SupabaseService {
 
   async getDueReportConfigurations(): Promise<ReportConfiguration[]> {
     try {
-      const { data, error } = await this.supabase
+      // First, get all enabled configurations without any joins
+      const { data: configurations, error } = await this.supabase
         .from("report_configurations")
-        .select(
-          `
-          *,
-          user_profiles!left(timezone)
-        `,
-        )
+        .select("*")
         .eq("enabled", true);
 
       if (error) {
-        console.error("Error fetching due report configurations:", error);
+        throw error;
+      }
+
+      if (!configurations || configurations.length === 0) {
+        return [];
+      }
+
+      // Now check each configuration individually with proper timezone handling
+      const dueConfigurations: ReportConfiguration[] = [];
+
+      for (const config of configurations) {
+        try {
+          // Get the user's timezone for this specific configuration
+          const userTimezone = await this.getUserTimezone(config.user_id);
+
+          console.log(
+            `🔍 Checking config ${config.id}: schedule="${config.schedule}", timezone="${userTimezone}", last_run="${config.last_run_at || "never"}"`,
+          );
+
+          // Check if this configuration is due based on the user's timezone
+          const isDue = isScheduleDue(
+            config.schedule,
+            config.last_run_at,
+            userTimezone,
+          );
+
+          console.log(`🔍 Config ${config.id} isDue: ${isDue}`);
+
+          if (isDue) {
+            dueConfigurations.push(config);
+            console.log(`✅ Added config ${config.id} to due configurations`);
+          } else {
+            console.log(`❌ Config ${config.id} not due yet`);
+          }
+        } catch (error) {
+          console.error(
+            `Error checking schedule for config ${config.id}:`,
+            error,
+          );
+
+          // Fallback: use UTC timezone and basic logic
+          const isDue = isScheduleDue(
+            config.schedule,
+            config.last_run_at,
+            "UTC",
+          );
+          if (isDue) {
+            dueConfigurations.push(config);
+          }
+        }
+      }
+
+      console.log(
+        `🎯 Total due configurations found: ${dueConfigurations.length}`,
+      );
+      return dueConfigurations;
+    } catch (error) {
+      console.error("Error in getDueReportConfigurations:", error);
+
+      // Final fallback: get configurations and use basic logic with UTC
+      try {
         const { data: fallbackData, error: fallbackError } = await this.supabase
           .from("report_configurations")
           .select("*")
@@ -226,21 +282,10 @@ export class SupabaseService {
         }
 
         return this.filterDueConfigurations(fallbackData || [], "UTC");
+      } catch (fallbackError) {
+        console.error("Fallback also failed:", fallbackError);
+        return [];
       }
-
-      return this.filterDueConfigurations(data || [], null);
-    } catch (error) {
-      console.error("Error in getDueReportConfigurations:", error);
-      const { data: fallbackData, error: fallbackError } = await this.supabase
-        .from("report_configurations")
-        .select("*")
-        .eq("enabled", true);
-
-      if (fallbackError) {
-        throw fallbackError;
-      }
-
-      return this.filterDueConfigurations(fallbackData || [], "UTC");
     }
   }
 
