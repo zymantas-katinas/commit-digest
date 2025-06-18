@@ -87,19 +87,10 @@ export function AddReportConfigDialog({
     defaultValues: {
       enabled: true,
     },
+    mode: "onSubmit",
   });
 
-  // Fetch branches when a repository is selected
-  const {
-    data: branches,
-    isLoading: branchesLoading,
-    error: branchesError,
-  } = useQuery({
-    queryKey: ["repository-branches", selectedRepoId],
-    queryFn: () =>
-      api.getRepositoryBranches(selectedRepoId).then((res) => res.data),
-    enabled: !!selectedRepoId,
-  });
+  // Branches are now fetched internally by BranchSelector
 
   const createMutation = useMutation({
     mutationFn: (data: ReportConfigFormData) =>
@@ -147,11 +138,9 @@ export function AddReportConfigDialog({
 
   const scheduleOptions = [
     { value: "0 9 * * *", label: "Daily at 9:00 AM" },
+    { value: "0 9 * * 1-5", label: "Weekdays at 9:00 AM" },
     { value: "0 9 * * 1", label: "Weekly on Monday at 9:00 AM" },
     { value: "0 9 1 * *", label: "Monthly on the 1st at 9:00 AM" },
-    { value: "0 7 * * *", label: "Daily at 7:00 AM" },
-    { value: "0 */6 * * *", label: "Every 6 hours" },
-    { value: "0 9 * * 1-5", label: "Weekdays at 9:00 AM" },
   ];
 
   const handleScheduleTypeChange = (value: string) => {
@@ -225,42 +214,17 @@ export function AddReportConfigDialog({
 
           <div className="space-y-2">
             <Label htmlFor="branch">Branch</Label>
-            {branchesError ? (
-              <div className="p-3 border border-red-200 bg-red-50 rounded-md">
-                <p className="text-sm text-red-600">
-                  Failed to load branches. Please check your repository
-                  connection.
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="mt-2"
-                  onClick={() => {
-                    // Force retry by refetching
-                    if (selectedRepoId) {
-                      window.location.reload();
-                    }
-                  }}
-                >
-                  Retry
-                </Button>
-              </div>
-            ) : (
-              <BranchSelector
-                branches={branches || []}
-                value={watch("branch")}
-                onValueChange={(value) => setValue("branch", value)}
-                placeholder={
-                  !selectedRepoId
-                    ? "Select a repository first"
-                    : "Select a branch"
-                }
-                disabled={createMutation.isPending || !selectedRepoId}
-                loading={branchesLoading}
-                error={false}
-              />
-            )}
+            <BranchSelector
+              repositoryId={selectedRepoId}
+              value={watch("branch")}
+              onValueChange={(value) => setValue("branch", value)}
+              placeholder={
+                !selectedRepoId
+                  ? "Select a repository first"
+                  : "Select a branch"
+              }
+              disabled={createMutation.isPending || !selectedRepoId}
+            />
             {errors.branch && (
               <p className="text-sm text-red-600">{errors.branch.message}</p>
             )}

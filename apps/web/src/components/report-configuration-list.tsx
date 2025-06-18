@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { api } from "@/lib/api";
 import { getScheduleDisplay, getNextRunTime } from "@/lib/cron-utils";
+import { useUserProfile } from "@/lib/hooks/useUserProfile";
 import {
   Trash2,
   Clock,
@@ -63,6 +64,7 @@ export function ReportConfigurationList({
   onRefetch,
 }: ReportConfigurationListProps) {
   const queryClient = useQueryClient();
+  const { data: userProfile } = useUserProfile();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -298,12 +300,21 @@ export function ReportConfigurationList({
 
   if (configurations.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
+      <div className="text-center py-12 text-muted-foreground bg-card rounded-lg p-4 sm:p-6">
         <Settings className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
         <h3 className="text-lg font-medium mb-2">No report configurations</h3>
         <p className="text-sm">
           Configure automated reports for your repositories to get started.
         </p>
+        {/* {repositories.length === 0 && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsAddRepositoryDialogOpen(true)}
+          >
+            Setup Repository
+          </Button>
+        )} */}
       </div>
     );
   }
@@ -739,7 +750,11 @@ export function ReportConfigurationList({
                 <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
                   <span className="font-medium">
                     Next run in:{" "}
-                    {getNextRunTime(config.schedule, config.enabled)}
+                    {getNextRunTime(
+                      config.schedule,
+                      config.enabled,
+                      userProfile?.timezone,
+                    )}
                   </span>
                   <div className="flex flex-col space-y-1 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
                     <span>

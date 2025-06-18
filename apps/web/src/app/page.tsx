@@ -83,7 +83,7 @@ export default function Home() {
                 <div className="flex items-center justify-center space-x-6">
                   {/* GitHub Icon */}
                   <div className="flex flex-col items-center space-y-2">
-                    <div className="p-4 rounded-lg bg-muted/50 border">
+                    <div className="p-4 rounded-lg bg-muted/50 ">
                       <Github className="h-8 w-8 text-foreground" />
                     </div>
                     <span className="text-sm font-medium">GitHub Commits</span>
@@ -113,7 +113,7 @@ export default function Home() {
 
                 {/* Webhook Icon */}
                 <div className="flex justify-center">
-                  <div className="flex items-center space-x-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/20">
+                  <div className="flex items-center space-x-2 px-4 py-2 rounded-full bg-primary/5 border-primary/20">
                     <Webhook className="h-5 w-5 text-primary" />
                     <span className="text-sm font-medium text-primary/70">
                       Automated Delivery
@@ -135,7 +135,7 @@ export default function Home() {
                     href="/integrations/discord"
                     className="flex flex-col items-center space-y-2 hover:scale-105 transition-transform cursor-pointer"
                   >
-                    <div className="p-4 rounded-lg bg-muted/50 border hover:border-[#5865F2]/50">
+                    <div className="p-4 rounded-lg bg-muted/50 hover:border-[#5865F2]/50">
                       <svg
                         width="28"
                         height="28"
@@ -156,7 +156,7 @@ export default function Home() {
                     href="/integrations/slack"
                     className="flex flex-col items-center space-y-2 hover:scale-105 transition-transform cursor-pointer"
                   >
-                    <div className="p-4 rounded-lg bg-muted/50 border hover:border-green-500/50">
+                    <div className="p-4 rounded-lg bg-muted/50 hover:border-green-500/50">
                       <svg width="28" height="28" viewBox="0 0 16 16">
                         <path
                           fill="#E01E5A"
@@ -181,7 +181,7 @@ export default function Home() {
 
                   {/* Gmail */}
                   <div className="flex flex-col items-center space-y-2">
-                    <div className="p-4 rounded-lg bg-muted/50 border">
+                    <div className="p-4 rounded-lg bg-muted/50 ">
                       <svg width="28" height="28" viewBox="0 0 32 32">
                         <path
                           d="M22.0515 8.52295L16.0644 13.1954L9.94043 8.52295V8.52421L9.94783 8.53053V15.0732L15.9954 19.8466L22.0515 15.2575V8.52295Z"
@@ -206,7 +206,7 @@ export default function Home() {
 
                   {/* JSON */}
                   <div className="flex flex-col items-center space-y-2">
-                    <div className="p-4 rounded-lg bg-muted/50 border">
+                    <div className="p-4 rounded-lg bg-muted/50 ">
                       <svg
                         width="28"
                         height="28"
@@ -226,7 +226,7 @@ export default function Home() {
 
                   {/* Zapier */}
                   <div className="flex flex-col items-center space-y-2">
-                    <div className="p-4 rounded-lg bg-muted/50 border">
+                    <div className="p-4 rounded-lg bg-muted/50 ">
                       <svg
                         width="28"
                         height="28"
@@ -244,7 +244,7 @@ export default function Home() {
 
                   {/* Database */}
                   <div className="flex flex-col items-center space-y-2">
-                    <div className="p-4 rounded-lg bg-muted/50 border">
+                    <div className="p-4 rounded-lg bg-muted/50 ">
                       <svg
                         width="28"
                         height="28"

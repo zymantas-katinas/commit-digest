@@ -134,13 +134,22 @@ export function getScheduleDisplay(schedule: string): string {
 
 /**
  * Parse a cron expression and calculate the next run time
+ * @param schedule - Cron expression
+ * @param userTimezone - User's timezone (optional, defaults to browser timezone)
  */
-export function parseNextRunTime(schedule: string): Date | null {
+export function parseNextRunTime(
+  schedule: string,
+  userTimezone?: string,
+): Date | null {
   const parts = schedule.split(" ");
   if (parts.length !== 5) return null;
 
   const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
-  const now = new Date();
+
+  // Get current time in user's timezone or browser timezone
+  const now = userTimezone
+    ? new Date(new Date().toLocaleString("en-US", { timeZone: userTimezone }))
+    : new Date();
   let nextRun = new Date(now);
 
   try {
@@ -277,16 +286,26 @@ function formatTimeDifference(timeDiff: number): string {
 
 /**
  * Get the next run time for a cron schedule with fallback logic
+ * @param schedule - Cron expression
+ * @param enabled - Whether the schedule is enabled
+ * @param userTimezone - User's timezone (optional, defaults to browser timezone)
  */
-export function getNextRunTime(schedule: string, enabled: boolean): string {
+export function getNextRunTime(
+  schedule: string,
+  enabled: boolean,
+  userTimezone?: string,
+): string {
   if (!enabled) {
     return "Paused";
   }
 
-  const now = new Date();
+  // Get current time in user's timezone or browser timezone
+  const now = userTimezone
+    ? new Date(new Date().toLocaleString("en-US", { timeZone: userTimezone }))
+    : new Date();
 
   // Try custom parser first
-  const nextRun = parseNextRunTime(schedule);
+  const nextRun = parseNextRunTime(schedule, userTimezone);
 
   if (nextRun) {
     const timeDiff = nextRun.getTime() - now.getTime();
@@ -323,6 +342,15 @@ export function getNextRunTime(schedule: string, enabled: boolean): string {
       break;
     default:
       return "Unknown schedule";
+  }
+
+  // Convert result back to user's timezone if specified
+  if (userTimezone) {
+    const utcTime = nextRunFallback.getTime();
+    const localTime = new Date(utcTime).toLocaleString("en-US", {
+      timeZone: userTimezone,
+    });
+    nextRunFallback = new Date(localTime);
   }
 
   const timeDiff = nextRunFallback.getTime() - now.getTime();

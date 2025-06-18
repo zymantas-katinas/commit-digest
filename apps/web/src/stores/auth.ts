@@ -45,6 +45,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/dashboard`,
+        // redirectTo: "http://localhost:3000/dashboard",
         queryParams: {
           access_type: "offline",
           prompt: "consent",

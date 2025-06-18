@@ -86,23 +86,12 @@ export function EditReportConfigDialog({
     watch,
   } = useForm<EditReportConfigFormData>({
     resolver: zodResolver(reportConfigSchema),
+    mode: "onSubmit",
   });
 
   const queryClient = useQueryClient();
 
-  // Fetch branches for the repository
-  const {
-    data: branches,
-    isLoading: branchesLoading,
-    error: branchesError,
-  } = useQuery({
-    queryKey: ["repository-branches", configuration?.repository_id],
-    queryFn: () =>
-      api
-        .getRepositoryBranches(configuration!.repository_id)
-        .then((res) => res.data),
-    enabled: !!configuration?.repository_id && open,
-  });
+  // Branches are now fetched internally by BranchSelector
 
   const updateMutation = useMutation({
     mutationFn: (data: EditReportConfigFormData) =>
@@ -133,11 +122,11 @@ export function EditReportConfigDialog({
       // Handle schedule
       const scheduleOptions = [
         { value: "0 9 * * *", label: "Daily at 9:00 AM" },
+        { value: "0 9 * * 1-5", label: "Weekdays at 9:00 AM" },
         { value: "0 9 * * 1", label: "Weekly on Monday at 9:00 AM" },
         { value: "0 9 1 * *", label: "Monthly on the 1st at 9:00 AM" },
-        { value: "0 7 * * *", label: "Daily at 7:00 AM" },
-        { value: "0 */6 * * *", label: "Every 6 hours" },
-        { value: "0 9 * * 1-5", label: "Weekdays at 9:00 AM" },
+        // { value: "0 7 * * *", label: "Daily at 7:00 AM" },
+        // { value: "0 */6 * * *", label: "Every 6 hours" },
       ];
 
       const isPredefined = scheduleOptions.some(
@@ -219,36 +208,15 @@ export function EditReportConfigDialog({
 
           <div className="space-y-2">
             <Label htmlFor="branch">Branch</Label>
-            {branchesError ? (
-              <div className="p-3 border border-red-200 bg-red-50 rounded-md">
-                <p className="text-sm text-red-600">
-                  Failed to load branches. Please check your repository
-                  connection.
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="mt-2"
-                  onClick={() => {
-                    // Force retry by reloading
-                    window.location.reload();
-                  }}
-                >
-                  Retry
-                </Button>
-              </div>
-            ) : (
-              <BranchSelector
-                branches={branches || []}
-                value={watch("branch")}
-                onValueChange={(value) => setValue("branch", value)}
-                placeholder="Select a branch"
-                disabled={updateMutation.isPending}
-                loading={branchesLoading}
-                error={false}
-              />
-            )}
+            <BranchSelector
+              repositoryId={configuration?.repository_id}
+              value={watch("branch")}
+              onValueChange={(value) => setValue("branch", value)}
+              placeholder="Select a branch"
+              disabled={
+                updateMutation.isPending || !configuration?.repository_id
+              }
+            />
             {errors.branch && (
               <p className="text-sm text-red-600">{errors.branch.message}</p>
             )}

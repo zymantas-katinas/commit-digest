@@ -77,7 +77,7 @@ export function RepositoryList({
 
   if (repositories.length === 0) {
     return (
-      <div className="text-center py-6 text-muted-foreground">
+      <div className="text-center py-6 text-muted-foreground bg-card rounded-lg p-4 sm:p-6">
         <GitBranch className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />
         <p className="text-sm">No repositories</p>
         <p className="text-xs mt-1 text-muted-foreground/70">
