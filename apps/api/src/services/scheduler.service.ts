@@ -290,7 +290,7 @@ export class SchedulerService {
           : "week";
         const noCommitsMessage =
           `${process.env.NODE_ENV === "development" ? "🔧" : ""}📊 **Git Report - No Activity**\n\n` +
-          `**Repository:** ${repository.github_url}\n` +
+          `**Repository:** <${repository.github_url}>\n` +
           `**Branch:** ${config.branch}\n` +
           `**Period:** ${this.formatDateRange(sinceDate, new Date())}\n\n` +
           `✅ No new commits found in the last ${timeframe}.\n\n` +
