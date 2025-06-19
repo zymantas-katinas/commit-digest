@@ -247,34 +247,35 @@ export class SchedulerService {
       if (commits.length === 0) {
         this.logger.log(`No new commits found for config ${configId}`);
 
-        // Create a "no commits" message to send via webhook
-        const timeframe = this.isDailySchedule(config.schedule)
-          ? "day"
-          : "week";
-        const noCommitsMessage =
-          `${process.env.NODE_ENV === "development" ? "🔧" : ""}📊 **Git Report - No Activity**\n\n` +
-          `**Repository:** <${repository.github_url}>\n` +
-          `**Branch:** ${config.branch}\n` +
-          `**Period:** ${this.formatDateRange(sinceDate, new Date())}\n\n` +
-          `✅ No new commits found in the last ${timeframe}.\n\n` +
-          `This means your repository has been quiet - no changes were made during this period. ` +
-          `You'll receive your next report according to your schedule: \`${config.schedule}\``;
+        // Check if user wants "No Updates" messages
+        const shouldSendNoUpdates = config.if_no_updates ?? true;
 
-        // Send webhook even when no commits
-        const webhookSuccess = await this.notificationService.sendWebhook(
-          config.webhook_url,
-          noCommitsMessage,
-          {
-            repository: repository.github_url,
-            branch: config.branch,
-            commitsCount: 0,
-            dateRange: {
-              since: sinceDate.toISOString(),
-              until: new Date().toISOString(),
+        let webhookSuccess = true; // Default to success if not sending
+        let noCommitsMessage = `No activity in ${this.extractRepoName(repository.github_url)}/${config.branch}`;
+
+        if (shouldSendNoUpdates) {
+          // Create a compact "no commits" message
+          const repoName = this.extractRepoName(repository.github_url);
+          noCommitsMessage =
+            `${process.env.NODE_ENV === "development" ? "🔧 " : ""}💤 **Code Report** - ${repoName}/${config.branch} • no activity • ${this.formatCompactDateRange(sinceDate, new Date())}\n\n` +
+            `✅ No new commits found - your repository has been quiet!`;
+
+          // Send webhook for no commits
+          webhookSuccess = await this.notificationService.sendWebhook(
+            config.webhook_url,
+            noCommitsMessage,
+            {
+              repository: repository.github_url,
+              branch: config.branch,
+              commitsCount: 0,
+              dateRange: {
+                since: sinceDate.toISOString(),
+                until: new Date().toISOString(),
+              },
+              isTest: false,
             },
-            isTest: false,
-          },
-        );
+          );
+        }
 
         // Update webhook delivery status
         await this.reportRunsService.updateWebhookDelivery(
@@ -312,6 +313,13 @@ export class SchedulerService {
       const summaryResult = await this.llmService.generateCommitSummary(
         commits,
         timeframe,
+        {
+          reportStyle: config.report_style || "Standard",
+          toneOfVoice: config.tone_of_voice || "Informative",
+          authorDisplay: config.author_display ?? false,
+          linkToCommits: config.link_to_commits ?? false,
+          repositoryUrl: repository.github_url,
+        },
       );
 
       // Extract tokens and cost information
@@ -319,14 +327,10 @@ export class SchedulerService {
       const costUsd = summaryResult.costUsd;
       const summary = summaryResult.summary;
 
-      // Create formatted report with metadata header
+      // Create formatted report with concise metadata header
+      const repoName = this.extractRepoName(repository.github_url);
       const formattedReport =
-        `${process.env.NODE_ENV === "development" ? "🔧" : ""}📊 **Git Report - ${commits.length} ${commits.length === 1 ? "Commit" : "Commits"}**\n\n` +
-        `**Repository:** ${repository.github_url}\n` +
-        `**Branch:** ${config.branch}\n` +
-        `**Period:** ${this.formatDateRange(sinceDate, new Date())}\n` +
-        `**Commits:** ${commits.length}\n\n` +
-        `---\n\n` +
+        `${process.env.NODE_ENV === "development" ? "🔧 " : ""}📊 **Code Report** - ${repoName}/${config.branch} • ${commits.length} commit${commits.length === 1 ? "" : "s"} • ${this.formatCompactDateRange(sinceDate, new Date())}\n\n` +
         summary;
 
       // Send webhook with metadata
@@ -455,6 +459,42 @@ export class SchedulerService {
     };
 
     return `${sinceDate.toLocaleDateString("en-US", formatOptions)} - ${endDate.toLocaleDateString("en-US", formatOptions)}`;
+  }
+
+  /**
+   * Format compact date range for Discord/Slack
+   */
+  private formatCompactDateRange(sinceDate: Date, endDate: Date): string {
+    const now = new Date();
+    const diffTime = now.getTime() - sinceDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return "today";
+    } else if (diffDays === 1) {
+      return "yesterday";
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    } else if (diffDays < 14) {
+      return "last week";
+    } else {
+      return sinceDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    }
+  }
+
+  /**
+   * Extract repository name from GitHub URL
+   */
+  private extractRepoName(githubUrl: string): string {
+    try {
+      const match = githubUrl.match(/github\.com\/([^\/]+\/[^\/]+)/);
+      return match ? match[1].replace(".git", "") : githubUrl;
+    } catch {
+      return githubUrl;
+    }
   }
 
   private async updateConfigurationStatus(

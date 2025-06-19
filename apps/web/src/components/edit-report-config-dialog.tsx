@@ -25,9 +25,17 @@ import {
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { BranchSelector, Branch } from "@/components/ui/branch-selector";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { Switch } from "@/components/ui/switch";
 import { api } from "@/lib/api";
 import { isValidCronExpression } from "@/lib/cron-utils";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  REPORT_STYLE,
+  TONE_OF_VOICE,
+  REPORT_CONFIGURATION_DEFAULTS,
+  REPORT_STYLE_OPTIONS,
+  TONE_OF_VOICE_OPTIONS,
+} from "@/lib/report-config-enums";
 
 const reportConfigSchema = z.object({
   name: z.string().min(1, "Configuration name is required"),
@@ -43,6 +51,22 @@ const reportConfigSchema = z.object({
     .string()
     .regex(/^https?:\/\/.+/, "Must be a valid HTTP or HTTPS URL"),
   enabled: z.boolean().default(true),
+  // New report configuration settings
+  report_style: z
+    .nativeEnum(REPORT_STYLE)
+    .default(REPORT_CONFIGURATION_DEFAULTS.REPORT_STYLE),
+  tone_of_voice: z
+    .nativeEnum(TONE_OF_VOICE)
+    .default(REPORT_CONFIGURATION_DEFAULTS.TONE_OF_VOICE),
+  author_display: z
+    .boolean()
+    .default(REPORT_CONFIGURATION_DEFAULTS.AUTHOR_DISPLAY),
+  link_to_commits: z
+    .boolean()
+    .default(REPORT_CONFIGURATION_DEFAULTS.LINK_TO_COMMITS),
+  if_no_updates: z
+    .boolean()
+    .default(REPORT_CONFIGURATION_DEFAULTS.IF_NO_UPDATES),
 });
 
 type EditReportConfigFormData = z.infer<typeof reportConfigSchema>;
@@ -58,6 +82,12 @@ interface ReportConfiguration {
   last_run_at?: string;
   last_run_status?: string;
   created_at: string;
+  // New report configuration settings
+  report_style?: string;
+  tone_of_voice?: string;
+  author_display?: boolean;
+  link_to_commits?: boolean;
+  if_no_updates?: boolean;
 }
 
 interface EditReportConfigDialogProps {
@@ -76,6 +106,9 @@ export function EditReportConfigDialog({
   const [error, setError] = useState<string | null>(null);
   const [isCustomSchedule, setIsCustomSchedule] = useState(false);
   const [customSchedule, setCustomSchedule] = useState("");
+  const [selectedReportStyle, setSelectedReportStyle] = useState<REPORT_STYLE>(
+    REPORT_STYLE.STANDARD,
+  );
 
   const {
     register,
@@ -119,21 +152,46 @@ export function EditReportConfigDialog({
       setValue("webhook_url", configuration.webhook_url);
       setValue("enabled", configuration.enabled);
 
+      // Set new report configuration settings with defaults
+      const reportStyle =
+        (configuration.report_style as REPORT_STYLE) ||
+        REPORT_CONFIGURATION_DEFAULTS.REPORT_STYLE;
+      setValue("report_style", reportStyle);
+      setSelectedReportStyle(reportStyle);
+      setValue(
+        "tone_of_voice",
+        (configuration.tone_of_voice as TONE_OF_VOICE) ||
+          REPORT_CONFIGURATION_DEFAULTS.TONE_OF_VOICE,
+      );
+      setValue(
+        "author_display",
+        configuration.author_display ??
+          REPORT_CONFIGURATION_DEFAULTS.AUTHOR_DISPLAY,
+      );
+      setValue(
+        "link_to_commits",
+        configuration.link_to_commits ??
+          REPORT_CONFIGURATION_DEFAULTS.LINK_TO_COMMITS,
+      );
+      setValue(
+        "if_no_updates",
+        configuration.if_no_updates ??
+          REPORT_CONFIGURATION_DEFAULTS.IF_NO_UPDATES,
+      );
+
       // Handle schedule
       const scheduleOptions = [
         { value: "0 9 * * *", label: "Daily at 9:00 AM" },
         { value: "0 9 * * 1-5", label: "Weekdays at 9:00 AM" },
         { value: "0 9 * * 1", label: "Weekly on Monday at 9:00 AM" },
         { value: "0 9 1 * *", label: "Monthly on the 1st at 9:00 AM" },
-        // { value: "0 7 * * *", label: "Daily at 7:00 AM" },
-        // { value: "0 */6 * * *", label: "Every 6 hours" },
       ];
 
-      const isPredefined = scheduleOptions.some(
+      const isPresetSchedule = scheduleOptions.some(
         (option) => option.value === configuration.schedule,
       );
 
-      if (isPredefined) {
+      if (isPresetSchedule) {
         setIsCustomSchedule(false);
         setValue("schedule", configuration.schedule);
       } else {
@@ -155,17 +213,16 @@ export function EditReportConfigDialog({
       setError(null);
       setIsCustomSchedule(false);
       setCustomSchedule("");
+      setSelectedReportStyle(REPORT_STYLE.STANDARD);
     }
     onOpenChange(newOpen);
   };
 
   const scheduleOptions = [
     { value: "0 9 * * *", label: "Daily at 9:00 AM" },
+    { value: "0 9 * * 1-5", label: "Weekdays at 9:00 AM" },
     { value: "0 9 * * 1", label: "Weekly on Monday at 9:00 AM" },
     { value: "0 9 1 * *", label: "Monthly on the 1st at 9:00 AM" },
-    { value: "0 7 * * *", label: "Daily at 7:00 AM" },
-    { value: "0 */6 * * *", label: "Every 6 hours" },
-    { value: "0 9 * * 1-5", label: "Weekdays at 9:00 AM" },
   ];
 
   const handleScheduleTypeChange = (value: string) => {
@@ -187,7 +244,7 @@ export function EditReportConfigDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Report Configuration</DialogTitle>
         </DialogHeader>
@@ -209,13 +266,11 @@ export function EditReportConfigDialog({
           <div className="space-y-2">
             <Label htmlFor="branch">Branch</Label>
             <BranchSelector
-              repositoryId={configuration?.repository_id}
+              repositoryId={configuration.repository_id}
               value={watch("branch")}
               onValueChange={(value) => setValue("branch", value)}
               placeholder="Select a branch"
-              disabled={
-                updateMutation.isPending || !configuration?.repository_id
-              }
+              disabled={updateMutation.isPending}
             />
             {errors.branch && (
               <p className="text-sm text-red-600">{errors.branch.message}</p>
@@ -227,8 +282,8 @@ export function EditReportConfigDialog({
             {!isCustomSchedule ? (
               <Select
                 onValueChange={handleScheduleTypeChange}
+                value={watch("schedule")}
                 disabled={updateMutation.isPending}
-                value={isCustomSchedule ? "custom" : watch("schedule")}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select schedule" />
@@ -259,7 +314,7 @@ export function EditReportConfigDialog({
                   onClick={() => {
                     setIsCustomSchedule(false);
                     setCustomSchedule("");
-                    setValue("schedule", "");
+                    setValue("schedule", "0 9 * * *");
                   }}
                   disabled={updateMutation.isPending}
                 >
@@ -285,6 +340,138 @@ export function EditReportConfigDialog({
                 {errors.webhook_url.message}
               </p>
             )}
+          </div>
+
+          {/* <div className="flex items-center space-x-2">
+            <Switch
+              id="enabled"
+              checked={watch("enabled")}
+              onCheckedChange={(checked) => setValue("enabled", checked)}
+              disabled={updateMutation.isPending}
+            />
+            <Label htmlFor="enabled">Configuration Enabled</Label>
+          </div> */}
+
+          {/* Report Settings Section */}
+          <div className="border-t pt-4 space-y-4">
+            <h3 className="text-lg font-medium">Report Settings</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="report_style">Report Style</Label>
+                <Select
+                  onValueChange={(value) => {
+                    const reportStyle = value as REPORT_STYLE;
+                    setValue("report_style", reportStyle);
+                    setSelectedReportStyle(reportStyle);
+                  }}
+                  value={watch("report_style")}
+                  disabled={updateMutation.isPending}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select report style" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REPORT_STYLE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.report_style && (
+                  <p className="text-sm text-red-600">
+                    {errors.report_style.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tone_of_voice">Tone of Voice</Label>
+                <Select
+                  onValueChange={(value) =>
+                    setValue("tone_of_voice", value as TONE_OF_VOICE)
+                  }
+                  value={watch("tone_of_voice")}
+                  disabled={updateMutation.isPending}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select tone of voice" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TONE_OF_VOICE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.tone_of_voice && (
+                  <p className="text-sm text-red-600">
+                    {errors.tone_of_voice.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {selectedReportStyle !== REPORT_STYLE.SUMMARY && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="author_display">Show Author Names</Label>
+                      <p className="text-sm text-gray-500">
+                        Display author names in the report
+                      </p>
+                    </div>
+                    <Switch
+                      id="author_display"
+                      checked={watch("author_display")}
+                      onCheckedChange={(checked) =>
+                        setValue("author_display", checked)
+                      }
+                      disabled={updateMutation.isPending}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="link_to_commits">Link to Commits</Label>
+                      <p className="text-sm text-gray-500">
+                        Include clickable links to commits in the report
+                      </p>
+                    </div>
+                    <Switch
+                      id="link_to_commits"
+                      checked={watch("link_to_commits")}
+                      onCheckedChange={(checked) =>
+                        setValue("link_to_commits", checked)
+                      }
+                      disabled={updateMutation.isPending}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="if_no_updates">
+                    Send "No Updates" Message
+                  </Label>
+                  <p className="text-sm text-gray-500">
+                    Send a message when there are no updates to report
+                  </p>
+                </div>
+                <Switch
+                  id="if_no_updates"
+                  checked={watch("if_no_updates")}
+                  onCheckedChange={(checked) =>
+                    setValue("if_no_updates", checked)
+                  }
+                  disabled={updateMutation.isPending}
+                />
+              </div>
+            </div>
           </div>
 
           {error && (

@@ -85,6 +85,11 @@ export class ReportConfigurationsController {
           createReportConfigurationDto.webhook_url,
           createReportConfigurationDto.name,
           createReportConfigurationDto.enabled,
+          createReportConfigurationDto.report_style,
+          createReportConfigurationDto.tone_of_voice,
+          createReportConfigurationDto.author_display,
+          createReportConfigurationDto.link_to_commits,
+          createReportConfigurationDto.if_no_updates,
         );
 
       return reportConfiguration;
@@ -258,6 +263,13 @@ export class ReportConfigurationsController {
         summaryResult = await this.llmService.generateCommitSummary(
           commits,
           "week",
+          {
+            reportStyle: config.report_style || "Standard",
+            toneOfVoice: config.tone_of_voice || "Informative",
+            authorDisplay: config.author_display ?? false,
+            linkToCommits: config.link_to_commits ?? false,
+            repositoryUrl: repository.github_url,
+          },
         );
       } catch (error) {
         if (error instanceof HttpException) {
@@ -290,9 +302,12 @@ export class ReportConfigurationsController {
 
       // Try to send webhook
       try {
+        const repoName = this.extractRepoName(repository.github_url);
+        const testReport = `🧪 **Code Report** - ${repoName}/${config.branch} • ${commits.length} commit${commits.length === 1 ? "" : "s"} • last 7 days\n\n${summaryResult.summary}`;
+
         webhookSuccess = await this.notificationService.sendWebhook(
           config.webhook_url,
-          `# [TEST] ${summaryResult.summary}`,
+          testReport,
           {
             repository: repository.github_url,
             branch: config.branch,
@@ -487,6 +502,13 @@ export class ReportConfigurationsController {
         summaryResult = await this.llmService.generateCommitSummary(
           commits,
           periodType,
+          {
+            reportStyle: config.report_style || "Standard",
+            toneOfVoice: config.tone_of_voice || "Informative",
+            authorDisplay: config.author_display ?? false,
+            linkToCommits: config.link_to_commits ?? false,
+            repositoryUrl: repository.github_url,
+          },
         );
       } catch (error) {
         if (error instanceof HttpException) {
@@ -526,9 +548,12 @@ export class ReportConfigurationsController {
 
       // Try to send webhook
       try {
+        const repoName = this.extractRepoName(repository.github_url);
+        const manualReport = `⚡ **Code Report** - ${repoName}/${config.branch} • ${commits.length} commit${commits.length === 1 ? "" : "s"} • ${this.formatCompactDateRange(fromDate, toDate)}\n\n${summaryResult.summary}`;
+
         webhookSuccess = await this.notificationService.sendWebhook(
           config.webhook_url,
-          `# [MANUAL] ${summaryResult.summary}`,
+          manualReport,
           {
             repository: repository.github_url,
             branch: config.branch,
@@ -628,6 +653,47 @@ export class ReportConfigurationsController {
         "Failed to fetch scheduling information",
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    }
+  }
+
+  /**
+   * Extract repository name from GitHub URL
+   */
+  private extractRepoName(githubUrl: string): string {
+    try {
+      const match = githubUrl.match(/github\.com\/([^\/]+\/[^\/]+)/);
+      return match ? match[1].replace(".git", "") : githubUrl;
+    } catch {
+      return githubUrl;
+    }
+  }
+
+  /**
+   * Format compact date range for Discord/Slack
+   */
+  private formatCompactDateRange(fromDate: Date, toDate: Date): string {
+    const diffTime = toDate.getTime() - fromDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return "today";
+    } else if (diffDays === 1) {
+      return "1 day";
+    } else if (diffDays < 7) {
+      return `${diffDays} days`;
+    } else if (diffDays < 14) {
+      return "1 week";
+    } else if (diffDays < 31) {
+      const weeks = Math.floor(diffDays / 7);
+      return `${weeks} week${weeks === 1 ? "" : "s"}`;
+    } else {
+      return `${fromDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })} - ${toDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })}`;
     }
   }
 }

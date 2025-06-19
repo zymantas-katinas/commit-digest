@@ -15,7 +15,7 @@ interface SiteLayoutProps {
 export function SiteLayout({ children }: SiteLayoutProps) {
   return (
     <div className="dark">
-      {/* <AuthRedirect /> */}
+      <AuthRedirect />
       <AuthLoading />
       <div className="min-h-screen bg-background text-foreground">
         {/* Navigation Bar */}

@@ -1,4 +1,11 @@
-import { IsString, IsOptional, Matches, IsBoolean } from "class-validator";
+import {
+  IsString,
+  IsOptional,
+  Matches,
+  IsBoolean,
+  IsEnum,
+} from "class-validator";
+import { REPORT_STYLE, TONE_OF_VOICE } from "./report-configuration-enums";
 
 export class UpdateReportConfigurationDto {
   @IsString()
@@ -30,4 +37,25 @@ export class UpdateReportConfigurationDto {
   @IsBoolean()
   @IsOptional()
   enabled?: boolean;
+
+  // New report configuration settings
+  @IsEnum(REPORT_STYLE)
+  @IsOptional()
+  report_style?: REPORT_STYLE;
+
+  @IsEnum(TONE_OF_VOICE)
+  @IsOptional()
+  tone_of_voice?: TONE_OF_VOICE;
+
+  @IsBoolean()
+  @IsOptional()
+  author_display?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  link_to_commits?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  if_no_updates?: boolean;
 }

@@ -95,8 +95,35 @@ export class NotificationService {
   }
 
   private createDiscordPayload(content: string, metadata?: any) {
+    // Discord has a 2000 character limit
+    let truncatedContent = content;
+
+    if (content.length > 2000) {
+      // Try smart truncation by reducing links first
+      truncatedContent = this.smartTruncateForDiscord(content);
+
+      // If still too long, do regular truncation
+      if (truncatedContent.length > 2000) {
+        truncatedContent =
+          content.substring(0, 1950) +
+          "\n\n*[Message truncated due to length]*";
+      }
+
+      this.logger.warn(
+        `Discord message truncated from ${content.length} to ${truncatedContent.length} characters`,
+      );
+    }
+
+    // Check for excessive links (Discord can be sensitive to too many links)
+    const linkCount = (truncatedContent.match(/\[.*?\]\(.*?\)/g) || []).length;
+    if (linkCount > 10) {
+      this.logger.warn(
+        `Discord message contains ${linkCount} links, which might cause delivery issues`,
+      );
+    }
+
     return {
-      content: content,
+      content: truncatedContent,
       timestamp: new Date().toISOString(),
       ...metadata,
     };
@@ -108,6 +135,75 @@ export class NotificationService {
       timestamp: new Date().toISOString(),
       ...metadata,
     };
+  }
+
+  /**
+   * Smart truncation for Discord that tries to preserve message readability
+   * by removing links progressively rather than cutting off mid-sentence
+   */
+  private smartTruncateForDiscord(content: string): string {
+    if (content.length <= 2000) {
+      return content;
+    }
+
+    // Split content into header and body
+    const lines = content.split("\n");
+    const headerLine = lines[0]; // The "Code Report" header line
+    const bodyLines = lines.slice(1);
+    const body = bodyLines.join("\n");
+
+    // If header itself is too long, just return it truncated
+    if (headerLine.length > 1900) {
+      return headerLine.substring(0, 1900) + "...";
+    }
+
+    // Try removing links progressively
+    let processedBody = body;
+    const linkRegex = /\[([^\]]+)\]\([^)]+\)/g;
+
+    // First, try replacing links with just the text (no URL)
+    let linkCount = (processedBody.match(linkRegex) || []).length;
+    if (linkCount > 0) {
+      processedBody = processedBody.replace(linkRegex, "$1");
+
+      const testContent = headerLine + "\n" + processedBody;
+      if (testContent.length <= 2000) {
+        this.logger.log(
+          `Removed ${linkCount} commit links to fit Discord character limit`,
+        );
+        return testContent;
+      }
+    }
+
+    // If still too long, try removing commit lines from the end
+    const bodyLinesArray = processedBody.split("\n");
+    let truncatedLines = [...bodyLinesArray];
+
+    while (truncatedLines.length > 1) {
+      // Remove lines from the end, but keep at least the first few lines
+      const testContent =
+        headerLine +
+        "\n" +
+        truncatedLines.join("\n") +
+        "\n\n*[Report shortened for Discord]*";
+
+      if (testContent.length <= 2000) {
+        const removedLines = bodyLinesArray.length - truncatedLines.length;
+        this.logger.log(
+          `Removed ${removedLines} lines to fit Discord character limit`,
+        );
+        return testContent;
+      }
+
+      truncatedLines.pop();
+    }
+
+    // Last resort: just take the header and first part of body
+    const maxBodyLength = 2000 - headerLine.length - 50; // Leave room for truncation message
+    const truncatedBody = processedBody.substring(0, maxBodyLength);
+    return (
+      headerLine + "\n" + truncatedBody + "\n\n*[Report shortened for Discord]*"
+    );
   }
 
   async sendWebhook(
@@ -159,7 +255,13 @@ export class NotificationService {
         attempt++;
         this.logger.error(
           `Webhook attempt ${attempt} failed for ${webhookUrl} (platform: ${platform}):`,
-          error.message,
+          {
+            message: error.message,
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+            payloadLength: JSON.stringify(payload).length,
+          },
         );
 
         if (attempt <= maxRetries) {

@@ -26,6 +26,12 @@ export interface ReportConfiguration {
   last_run_content?: string;
   created_at: string;
   updated_at: string;
+  // New report configuration settings
+  report_style?: string;
+  tone_of_voice?: string;
+  author_display?: boolean;
+  link_to_commits?: boolean;
+  if_no_updates?: boolean;
 }
 
 export interface UsageStats {
@@ -128,6 +134,11 @@ export class SupabaseService {
     webhookUrl: string,
     name?: string,
     enabled: boolean = true,
+    reportStyle?: string,
+    toneOfVoice?: string,
+    authorDisplay?: boolean,
+    linkToCommits?: boolean,
+    ifNoUpdates?: boolean,
   ): Promise<ReportConfiguration> {
     const { data, error } = await this.supabase
       .from("report_configurations")
@@ -139,6 +150,11 @@ export class SupabaseService {
         schedule: schedule,
         webhook_url: webhookUrl,
         enabled: enabled,
+        report_style: reportStyle || "Standard",
+        tone_of_voice: toneOfVoice || "Informative",
+        author_display: authorDisplay || false,
+        link_to_commits: linkToCommits || false,
+        if_no_updates: ifNoUpdates || true,
       })
       .select()
       .single();
@@ -224,7 +240,7 @@ export class SupabaseService {
 
       for (const config of configurations) {
         try {
-          // Get the user's timezone for this specific configuration
+          // Get the user's timezone for this configuration
           const userTimezone = await this.getUserTimezone(config.user_id);
 
           // Check if this configuration is due based on the user's timezone
