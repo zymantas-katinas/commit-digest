@@ -4,6 +4,16 @@ import { ChatOpenAI } from "@langchain/openai";
 import { PromptTemplate } from "langchain/prompts";
 import { GitHubCommit } from "./github.service";
 
+export const MODEL_NAME = "gpt-4.1-mini";
+
+// pricing is per million tokens
+const MODEL_PRICING = {
+  "gpt-4.1-mini": {
+    input: 0.4,
+    output: 1.6,
+  },
+};
+
 export interface LLMSummaryResult {
   summary: string;
   tokensUsed: number;
@@ -18,7 +28,7 @@ export class LLMService {
   constructor(private configService: ConfigService) {
     this.llm = new ChatOpenAI({
       openAIApiKey: this.configService.get("OPENAI_API_KEY"),
-      modelName: "gpt-4o-mini",
+      modelName: MODEL_NAME,
       temperature: 0.3,
       maxRetries: 2,
       timeout: 30000,
@@ -34,7 +44,7 @@ export class LLMService {
         summary: `No commits found for this period.`,
         tokensUsed: 0,
         costUsd: 0,
-        model: "gpt-4o-mini",
+        model: MODEL_NAME,
       };
     }
 
@@ -104,16 +114,17 @@ Write ONLY the summary content in markdown - no meta-commentary.`,
       const outputTokens = this.estimateTokens(response.content as string);
       const totalTokens = inputTokens + outputTokens;
 
-      // GPT-4o-mini pricing (as of 2024): $0.00015 per 1K input tokens, $0.0006 per 1K output tokens
-      const inputCost = (inputTokens / 1000) * 0.00015;
-      const outputCost = (outputTokens / 1000) * 0.0006;
+      const inputCost =
+        (inputTokens / 1000000) * MODEL_PRICING[MODEL_NAME].input;
+      const outputCost =
+        (outputTokens / 1000000) * MODEL_PRICING[MODEL_NAME].output;
       const totalCost = inputCost + outputCost;
 
       return {
         summary: response.content as string,
         tokensUsed: totalTokens,
         costUsd: totalCost,
-        model: "gpt-4o-mini",
+        model: MODEL_NAME,
       };
     } catch (error) {
       console.error("Error generating commit summary:", error);
@@ -121,7 +132,7 @@ Write ONLY the summary content in markdown - no meta-commentary.`,
         summary: `Failed to generate AI summary. Raw commits:\n\n${commitMessages}`,
         tokensUsed: 0,
         costUsd: 0,
-        model: "gpt-4o-mini",
+        model: MODEL_NAME,
       };
     }
   }

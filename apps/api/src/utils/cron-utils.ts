@@ -48,18 +48,25 @@ export function isScheduleDue(
       const currentTimeMinutes = currentHourNum * 60 + currentMinuteNum;
       const targetTimeMinutes = targetHour * 60 + targetMinute;
 
-      console.log(
-        `🔍 New configuration schedule check for ${schedule} in ${userTimezone}:`,
-      );
-      console.log(
-        `   Current time: ${currentHour}:${currentMinute} (${currentTimeMinutes} minutes)`,
-      );
-      console.log(
-        `   Target time: ${targetHour}:${String(targetMinute).padStart(2, "0")} (${targetTimeMinutes} minutes)`,
-      );
+      // Only trigger if we're within a reasonable window after the scheduled time
+      // This prevents reports from running too early due to timezone issues
+      const timeDiffMinutes = currentTimeMinutes - targetTimeMinutes;
+      const isDue = timeDiffMinutes >= 0 && timeDiffMinutes <= 5; // Allow 5-minute window
 
-      const isDue = currentTimeMinutes >= targetTimeMinutes;
-      console.log(`   New config is due: ${isDue}`);
+      // Only log when configuration is actually due to reduce noise
+      if (isDue) {
+        console.log(
+          `🔍 New configuration schedule check for ${schedule} in ${userTimezone}:`,
+        );
+        console.log(
+          `   Current time: ${currentHour}:${currentMinute} (${currentTimeMinutes} minutes)`,
+        );
+        console.log(
+          `   Target time: ${targetHour}:${String(targetMinute).padStart(2, "0")} (${targetTimeMinutes} minutes)`,
+        );
+        console.log(`   Time difference: ${timeDiffMinutes} minutes`);
+        console.log(`   New config is due: ${isDue}`);
+      }
 
       return isDue;
     }
@@ -83,14 +90,20 @@ export function isScheduleDue(
       const [currentHour, currentMinute] = nowInUserTz.split(":");
       const currentMinuteNum = parseInt(currentMinute);
 
-      console.log(
-        `🔍 New configuration hourly schedule check for ${schedule} in ${userTimezone}:`,
-      );
-      console.log(`   Current time: ${currentHour}:${currentMinute}`);
-      console.log(`   Target minute: ${targetMinute}`);
+      // Only trigger if we're within a reasonable window after the scheduled minute
+      const minuteDiff = currentMinuteNum - targetMinute;
+      const isDue = minuteDiff >= 0 && minuteDiff <= 2; // Allow 2-minute window for hourly
 
-      const isDue = currentMinuteNum >= targetMinute;
-      console.log(`   New config is due: ${isDue}`);
+      // Only log when configuration is actually due to reduce noise
+      if (isDue) {
+        console.log(
+          `🔍 New configuration hourly schedule check for ${schedule} in ${userTimezone}:`,
+        );
+        console.log(`   Current time: ${currentHour}:${currentMinute}`);
+        console.log(`   Target minute: ${targetMinute}`);
+        console.log(`   Minute difference: ${minuteDiff}`);
+        console.log(`   New config is due: ${isDue}`);
+      }
 
       return isDue;
     }
@@ -98,10 +111,16 @@ export function isScheduleDue(
     // For other schedules, use the parseNextRunTime logic
     const nextRunTime = parseNextRunTime(schedule, now, userTimezone);
     if (nextRunTime) {
-      const isDue = now >= nextRunTime;
-      console.log(
-        `🔍 New configuration custom schedule check: next run ${nextRunTime.toISOString()}, is due: ${isDue}`,
-      );
+      const timeDiff = now.getTime() - nextRunTime.getTime();
+      // Allow up to 5 minutes past the scheduled time
+      const isDue = timeDiff >= 0 && timeDiff <= 5 * 60 * 1000;
+
+      // Only log when configuration is actually due to reduce noise
+      if (isDue) {
+        console.log(
+          `🔍 New configuration custom schedule check: next run ${nextRunTime.toISOString()}, time diff: ${timeDiff}ms, is due: ${isDue}`,
+        );
+      }
       return isDue;
     }
 
@@ -147,7 +166,10 @@ export function isScheduleDue(
     const currentTimeMinutes = currentHourNum * 60 + currentMinuteNum;
     const targetTimeMinutes = targetHour * 60 + targetMinute;
 
-    const isPassedScheduledTime = currentTimeMinutes >= targetTimeMinutes;
+    // Only consider it "passed" if it's within a reasonable window (not too far past)
+    const timeDiffMinutes = currentTimeMinutes - targetTimeMinutes;
+    const isWithinScheduleWindow =
+      timeDiffMinutes >= 0 && timeDiffMinutes <= 30; // 30-minute window
 
     // Get the date of the last run in user's timezone
     const lastRunInUserTz = new Date(lastRun).toLocaleDateString("en-US", {
@@ -187,24 +209,28 @@ export function isScheduleDue(
       hasRunAtScheduledTimeToday = lastRunTimeMinutes >= targetTimeMinutes;
     }
 
-    console.log(`🔍 Schedule check for ${schedule} in ${userTimezone}:`);
-    console.log(
-      `   Current time: ${currentHour}:${currentMinute} (${currentTimeMinutes} minutes)`,
-    );
-    console.log(
-      `   Target time: ${targetHour}:${String(targetMinute).padStart(2, "0")} (${targetTimeMinutes} minutes)`,
-    );
-    console.log(`   Is past scheduled time: ${isPassedScheduledTime}`);
-    console.log(`   Last run date (user tz): ${lastRunInUserTz}`);
-    console.log(`   Today's date (user tz): ${todayInUserTz}`);
-    console.log(`   Has run today: ${hasRunToday}`);
-    console.log(
-      `   Has run at/after scheduled time today: ${hasRunAtScheduledTimeToday}`,
-    );
+    // IMPROVED: Due if it's within the schedule window today AND we haven't run at or after the scheduled time today
+    const isDue = isWithinScheduleWindow && !hasRunAtScheduledTimeToday;
 
-    // IMPROVED: Due if it's past the scheduled time today AND we haven't run at or after the scheduled time today
-    const isDue = isPassedScheduledTime && !hasRunAtScheduledTimeToday;
-    console.log(`   Is due: ${isDue}`);
+    // Only log detailed information when configuration is actually due to reduce noise
+    if (isDue) {
+      console.log(`🔍 Schedule check for ${schedule} in ${userTimezone}:`);
+      console.log(
+        `   Current time: ${currentHour}:${currentMinute} (${currentTimeMinutes} minutes)`,
+      );
+      console.log(
+        `   Target time: ${targetHour}:${String(targetMinute).padStart(2, "0")} (${targetTimeMinutes} minutes)`,
+      );
+      console.log(`   Time difference: ${timeDiffMinutes} minutes`);
+      console.log(`   Is within schedule window: ${isWithinScheduleWindow}`);
+      console.log(`   Last run date (user tz): ${lastRunInUserTz}`);
+      console.log(`   Today's date (user tz): ${todayInUserTz}`);
+      console.log(`   Has run today: ${hasRunToday}`);
+      console.log(
+        `   Has run at/after scheduled time today: ${hasRunAtScheduledTimeToday}`,
+      );
+      console.log(`   Is due: ${isDue}`);
+    }
 
     return isDue;
   }
@@ -238,15 +264,20 @@ export function isScheduleDue(
 
     const hasRunThisHour = lastRun >= currentHourStart;
 
-    console.log(`🔍 Hourly schedule check for ${schedule} in ${userTimezone}:`);
-    console.log(`   Current time: ${currentHour}:${currentMinute}`);
-    console.log(`   Target minute: ${targetMinute}`);
-    console.log(`   Is past scheduled minute: ${isPassedScheduledMinute}`);
-    console.log(`   Has run this hour: ${hasRunThisHour}`);
-
     // Due if we've passed the target minute this hour AND haven't run this hour
     const isDue = isPassedScheduledMinute && !hasRunThisHour;
-    console.log(`   Is due: ${isDue}`);
+
+    // Only log detailed information when configuration is actually due to reduce noise
+    if (isDue) {
+      console.log(
+        `🔍 Hourly schedule check for ${schedule} in ${userTimezone}:`,
+      );
+      console.log(`   Current time: ${currentHour}:${currentMinute}`);
+      console.log(`   Target minute: ${targetMinute}`);
+      console.log(`   Is past scheduled minute: ${isPassedScheduledMinute}`);
+      console.log(`   Has run this hour: ${hasRunThisHour}`);
+      console.log(`   Is due: ${isDue}`);
+    }
 
     return isDue;
   }

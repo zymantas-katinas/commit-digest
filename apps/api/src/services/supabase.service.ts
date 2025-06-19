@@ -227,10 +227,6 @@ export class SupabaseService {
           // Get the user's timezone for this specific configuration
           const userTimezone = await this.getUserTimezone(config.user_id);
 
-          console.log(
-            `🔍 Checking config ${config.id}: schedule="${config.schedule}", timezone="${userTimezone}", last_run="${config.last_run_at || "never"}"`,
-          );
-
           // Check if this configuration is due based on the user's timezone
           const isDue = isScheduleDue(
             config.schedule,
@@ -238,13 +234,11 @@ export class SupabaseService {
             userTimezone,
           );
 
-          console.log(`🔍 Config ${config.id} isDue: ${isDue}`);
-
           if (isDue) {
             dueConfigurations.push(config);
-            console.log(`✅ Added config ${config.id} to due configurations`);
-          } else {
-            console.log(`❌ Config ${config.id} not due yet`);
+            console.log(
+              `✅ Config ${config.id} (${config.name || "unnamed"}) is due for execution`,
+            );
           }
         } catch (error) {
           console.error(
@@ -264,9 +258,11 @@ export class SupabaseService {
         }
       }
 
-      console.log(
-        `🎯 Total due configurations found: ${dueConfigurations.length}`,
-      );
+      if (dueConfigurations.length > 0) {
+        console.log(
+          `🎯 Total due configurations found: ${dueConfigurations.length}`,
+        );
+      }
       return dueConfigurations;
     } catch (error) {
       console.error("Error in getDueReportConfigurations:", error);

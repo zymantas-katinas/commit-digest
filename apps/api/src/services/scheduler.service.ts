@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
 import { SupabaseService } from "./supabase.service";
 import { GitHubService } from "./github.service";
-import { LLMService } from "./llm.service";
+import { LLMService, MODEL_NAME } from "./llm.service";
 import { NotificationService } from "./notification.service";
 import { EncryptionService } from "./encryption.service";
 import { ReportRunsService } from "./report-runs.service";
@@ -16,6 +16,10 @@ export class SchedulerService {
   private successfulRuns = 0;
   private failedRuns = 0;
   private lastMemoryReset = Date.now();
+
+  // Configuration for scheduling tolerance (hardcoded for better reliability)
+  private readonly SCHEDULE_TOLERANCE_MINUTES = 5; // Allow 5-minute window for reports
+  private readonly STRICT_SCHEDULING = true; // Always enable strict scheduling
 
   constructor(
     private supabaseService: SupabaseService,
@@ -35,9 +39,12 @@ export class SchedulerService {
       "💓 Debug heartbeat cron: @Cron('0 * * * * *') - every minute",
     );
     this.logger.log("🔔 Test cron: @Cron('*/30 * * * * *') - every 30 seconds");
+    this.logger.log(
+      `🎯 Strict scheduling enabled with ${this.SCHEDULE_TOLERANCE_MINUTES} minute tolerance`,
+    );
   }
 
-  @Cron("0 * * * * *") // Changed to every 10 minutes for better memory management
+  @Cron("0 * * * * *")
   async handleReportGeneration() {
     const startTime = new Date();
     this.lastRunTime = startTime;
@@ -55,64 +62,20 @@ export class SchedulerService {
       const dueConfigurations =
         await this.supabaseService.getDueReportConfigurations();
 
-      // Only log details when there are configurations to process
-      if (dueConfigurations.length > 0) {
-        this.logger.log(
-          `🚀 Starting scheduled report generation at ${startTime.toISOString()}`,
-        );
-        this.logger.log(`⏰ Current time: ${startTime.toLocaleString()}`);
-        this.logger.log(
-          `📋 Found ${dueConfigurations.length} due report configurations`,
-        );
-
-        // Log schedule details for debugging
-        for (const config of dueConfigurations) {
-          // Get user timezone for accurate logging
-          const userTimezone = await this.supabaseService.getUserTimezone(
-            config.user_id,
-          );
-          const nextRunTime = parseNextRunTime(
-            config.schedule,
-            config.last_run_at ? new Date(config.last_run_at) : new Date(),
-            userTimezone,
-          );
-
-          // Show current time in user's timezone for better debugging
-          const currentTimeInUserTz = new Date().toLocaleString("en-US", {
-            timeZone: userTimezone,
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            timeZoneName: "short",
-          });
-
-          // Also show current UTC time for comparison
-          const currentTimeUTC = new Date().toISOString();
-
-          // Calculate if this config should be due right now
-          const isDueNow = isScheduleDue(
-            config.schedule,
-            config.last_run_at,
-            userTimezone,
-          );
-
+      if (dueConfigurations.length === 0) {
+        // Only log every 10 minutes to reduce log noise
+        const minutes = startTime.getMinutes();
+        if (minutes % 10 === 0) {
           this.logger.log(
-            `📅 DUE Config ${config.id}: schedule="${config.schedule}", timezone="${userTimezone}", current_time_user_tz="${currentTimeInUserTz}", current_time_utc="${currentTimeUTC}", last_run=${config.last_run_at || "never"}, next_scheduled=${nextRunTime?.toISOString() || "unknown"}, is_due_now=${isDueNow}, name="${config.name || "unnamed"}"`,
+            "⏰ No due configurations found (logged every 10 minutes to reduce noise)",
           );
         }
-      } else {
-        // Minimal logging when nothing to do
-        this.logger.debug(
-          `🔍 Scheduler check at ${startTime.toISOString()} - no configurations due`,
-        );
-      }
-
-      if (dueConfigurations.length === 0) {
         return;
       }
+
+      this.logger.log(
+        `📋 Found ${dueConfigurations.length} due configuration(s) to process`,
+      );
 
       let processedCount = 0;
       let successCount = 0;
@@ -227,7 +190,7 @@ export class SchedulerService {
           webhook_url: config.webhook_url,
           name: config.name,
         },
-        model_used: "gpt-4o-mini", // Default model
+        model_used: MODEL_NAME, // Default model
       });
       this.logger.log(
         `Created report run ${reportRun.id} for config ${configId}`,
@@ -559,6 +522,106 @@ export class SchedulerService {
     }
 
     return isDue;
+  }
+
+  /**
+   * Get detailed scheduling information for a configuration
+   * This method helps troubleshoot timing issues
+   */
+  async getSchedulingInfo(
+    configId: string,
+    userId: string,
+  ): Promise<{
+    success: boolean;
+    config?: any;
+    scheduling?: {
+      currentTime: string;
+      currentTimeUserTz: string;
+      userTimezone: string;
+      schedule: string;
+      lastRunAt?: string;
+      nextRunTime?: string;
+      isDue: boolean;
+      timeUntilNext?: number;
+      strictScheduling: boolean;
+      toleranceMinutes: number;
+    };
+    error?: string;
+  }> {
+    try {
+      const config =
+        await this.supabaseService.getReportConfigurationById(configId);
+
+      if (!config || config.user_id !== userId) {
+        return {
+          success: false,
+          error: "Configuration not found or access denied",
+        };
+      }
+
+      const now = new Date();
+      const userTimezone = await this.supabaseService.getUserTimezone(userId);
+
+      // Get current time in user's timezone
+      const currentTimeUserTz = now.toLocaleString("en-US", {
+        timeZone: userTimezone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      });
+
+      const isDue = isScheduleDue(
+        config.schedule,
+        config.last_run_at,
+        userTimezone,
+      );
+      const nextRunTime = parseNextRunTime(
+        config.schedule,
+        config.last_run_at ? new Date(config.last_run_at) : now,
+        userTimezone,
+      );
+
+      const timeUntilNext = nextRunTime
+        ? nextRunTime.getTime() - now.getTime()
+        : undefined;
+
+      return {
+        success: true,
+        config: {
+          id: config.id,
+          name: config.name,
+          schedule: config.schedule,
+          enabled: config.enabled,
+          last_run_at: config.last_run_at,
+          last_run_status: config.last_run_status,
+        },
+        scheduling: {
+          currentTime: now.toISOString(),
+          currentTimeUserTz,
+          userTimezone,
+          schedule: config.schedule,
+          lastRunAt: config.last_run_at,
+          nextRunTime: nextRunTime?.toISOString(),
+          isDue,
+          timeUntilNext,
+          strictScheduling: this.STRICT_SCHEDULING,
+          toleranceMinutes: this.SCHEDULE_TOLERANCE_MINUTES,
+        },
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error getting scheduling info for config ${configId}:`,
+        error,
+      );
+      return {
+        success: false,
+        error: error.message || "Internal error",
+      };
+    }
   }
 
   /**

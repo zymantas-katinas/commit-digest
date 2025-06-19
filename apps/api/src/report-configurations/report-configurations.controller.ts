@@ -14,10 +14,11 @@ import {
 import { SupabaseAuthGuard } from "../guards/supabase-auth.guard";
 import { SupabaseService } from "../services/supabase.service";
 import { GitHubService } from "../services/github.service";
-import { LLMService } from "../services/llm.service";
+import { LLMService, MODEL_NAME } from "../services/llm.service";
 import { NotificationService } from "../services/notification.service";
 import { EncryptionService } from "../services/encryption.service";
 import { ReportRunsService } from "../services/report-runs.service";
+import { SchedulerService } from "../services/scheduler.service";
 import { CreateReportConfigurationDto } from "../dto/create-report-configuration.dto";
 import { UpdateReportConfigurationDto } from "../dto/update-report-configuration.dto";
 import { ManualTriggerDto } from "../dto/manual-trigger.dto";
@@ -32,6 +33,7 @@ export class ReportConfigurationsController {
     private notificationService: NotificationService,
     private encryptionService: EncryptionService,
     private reportRunsService: ReportRunsService,
+    private schedulerService: SchedulerService,
   ) {}
 
   @Post()
@@ -423,7 +425,7 @@ export class ReportConfigurationsController {
         repository_id: config.repository_id,
         report_configuration_id: config.id,
         configuration_snapshot: config,
-        model_used: "gpt-4o-mini",
+        model_used: MODEL_NAME,
       });
 
       let commits = [];
@@ -592,6 +594,40 @@ export class ReportConfigurationsController {
         commitsFound: 0,
         webhookSent: false,
       };
+    }
+  }
+
+  @Get(":id/scheduling-info")
+  async getSchedulingInfo(@Param("id") id: string, @Request() req) {
+    try {
+      const userId = req.user.id;
+      const reportConfiguration =
+        await this.supabaseService.getReportConfigurationById(id);
+
+      if (!reportConfiguration || reportConfiguration.user_id !== userId) {
+        throw new HttpException(
+          "Report configuration not found",
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      const schedulingInfo = await this.schedulerService.getSchedulingInfo(
+        id,
+        userId,
+      );
+
+      return {
+        ...reportConfiguration,
+        schedulingInfo,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        "Failed to fetch scheduling information",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }
