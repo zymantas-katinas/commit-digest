@@ -276,6 +276,7 @@ export class SchedulerService {
                 until: new Date().toISOString(),
               },
               isTest: false,
+              provider: repository.provider || "github",
             },
           );
         }
@@ -349,6 +350,7 @@ export class SchedulerService {
             until: new Date().toISOString(),
           },
           isTest: false,
+          provider: repository.provider || "github",
         },
       );
 

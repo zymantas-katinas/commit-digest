@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EditReportConfigDialog } from "@/components/edit-report-config-dialog";
@@ -36,6 +37,7 @@ import {
 interface Repository {
   id: string;
   github_url: string;
+  provider?: string;
 }
 
 interface ReportConfiguration {
@@ -224,6 +226,13 @@ export function ReportConfigurationList({
     }
   };
 
+  const getProvider = (repo: Repository | undefined): "github" | "gitlab" => {
+    if (!repo) return "github";
+    if (repo.provider === "gitlab") return "gitlab";
+    if (repo.provider === "github") return "github";
+    return repo.github_url.includes("gitlab.com") ? "gitlab" : "github";
+  };
+
   const getWebhookIcon = (webhookUrl: string) => {
     if (webhookUrl.includes("hooks.slack.com")) {
       return (
@@ -349,7 +358,23 @@ export function ReportConfigurationList({
 
                   {/* Repository Info */}
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-3">
-                    <GitBranch className="h-4 w-4 flex-shrink-0" />
+                    {getProvider(repo) === "github" ? (
+                      <Image
+                        src="/images/github.svg"
+                        alt="GitHub"
+                        width={16}
+                        height={16}
+                        className="flex-shrink-0"
+                      />
+                    ) : (
+                      <Image
+                        src="/images/gitlab.svg"
+                        alt="GitLab"
+                        width={16}
+                        height={16}
+                        className="flex-shrink-0"
+                      />
+                    )}
                     <span className="font-medium truncate font-mono">
                       {getRepositoryName(config.repository_id)}
                     </span>

@@ -322,6 +322,7 @@ export class ReportConfigurationsController {
               until: new Date().toISOString(),
             },
             isTest: true,
+            provider: repository.provider || "github",
           },
         );
 
@@ -568,6 +569,7 @@ export class ReportConfigurationsController {
               until: toDate.toISOString(),
             },
             isManual: true,
+            provider: repository.provider || "github",
           },
         );
 

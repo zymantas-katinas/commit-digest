@@ -34,6 +34,7 @@ type RepositoryFormData = z.infer<typeof repositorySchema>;
 interface Repository {
   id: string;
   github_url: string;
+  provider?: string;
   created_at: string;
 }
 

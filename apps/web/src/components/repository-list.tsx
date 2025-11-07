@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EditRepositoryDialog } from "@/components/edit-repository-dialog";
@@ -24,6 +25,7 @@ import {
 interface Repository {
   id: string;
   github_url: string;
+  provider?: string;
   created_at: string;
 }
 
@@ -84,6 +86,12 @@ export function RepositoryList({
     }
   };
 
+  const getProvider = (repo: Repository): "github" | "gitlab" => {
+    if (repo.provider === "gitlab") return "gitlab";
+    if (repo.provider === "github") return "github";
+    return repo.github_url.includes("gitlab.com") ? "gitlab" : "github";
+  };
+
   if (repositories.length === 0) {
     return (
       <div className="text-center py-6 text-muted-foreground bg-card rounded-lg p-4 sm:p-6">
@@ -105,8 +113,24 @@ export function RepositoryList({
         >
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center space-x-1">
-                <GitBranch className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+              <div className="flex items-center space-x-2">
+                {getProvider(repo) === "github" ? (
+                  <Image
+                    src="/images/github.svg"
+                    alt="GitHub"
+                    width={12}
+                    height={12}
+                    className="flex-shrink-0"
+                  />
+                ) : (
+                  <Image
+                    src="/images/gitlab.svg"
+                    alt="GitLab"
+                    width={12}
+                    height={12}
+                    className="flex-shrink-0"
+                  />
+                )}
                 <h3 className="text-sm font-medium truncate font-mono">
                   {getRepoName(repo.github_url)}
                 </h3>

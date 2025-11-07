@@ -41,14 +41,16 @@ export class NotificationService {
 
   private createSlackPayload(content: string, metadata?: any): any {
     const formattedContent = this.formatContentForSlack(content);
+    
+    const provider = metadata?.provider || "github";
+    const emoji = provider === "gitlab" ? ":gitlab:" : ":github:";
 
-    // Create Slack blocks format for better rendering
     const blocks: any[] = [
       {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: formattedContent,
+          text: `${emoji} ${formattedContent}`,
         },
       },
     ];
@@ -87,7 +89,7 @@ export class NotificationService {
     }
 
     return {
-      text: formattedContent, // Fallback for clients that don't support blocks
+      text: `${emoji} ${formattedContent}`, // Fallback for clients that don't support blocks
       blocks: blocks,
       timestamp: new Date().toISOString(),
       ...metadata,
@@ -216,6 +218,7 @@ export class NotificationService {
       dateRange?: { since: string; until: string };
       isTest?: boolean;
       isManual?: boolean;
+      provider?: string;
     },
   ): Promise<boolean> {
     const maxRetries = 2;
