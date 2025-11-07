@@ -18,6 +18,8 @@ export interface GitCommit {
   author: {
     login: string;
   } | null;
+  diff?: string; // Optional diff content
+  committed_date?: string; // Optional committed date (for GitLab commits)
 }
 
 export interface GitBranch {
@@ -46,20 +48,27 @@ export class GitService {
   }
 
   private normalizeGitLabCommit(gitlabCommit: GitLabCommit): GitCommit {
-    return {
-      sha: gitlabCommit.id,
-      commit: {
-        message: gitlabCommit.message,
-        author: {
-          name: gitlabCommit.author_name,
-          email: gitlabCommit.author_email,
-          date: gitlabCommit.authored_date,
+    try {
+      const normalized = {
+        sha: gitlabCommit.id,
+        commit: {
+          message: gitlabCommit.message,
+          author: {
+            name: gitlabCommit.author_name,
+            email: gitlabCommit.author_email,
+            date: gitlabCommit.authored_date,
+          },
         },
-      },
-      author: {
-        login: gitlabCommit.author_name,
-      },
-    };
+        author: {
+          login: gitlabCommit.author_name,
+        },
+        committed_date: gitlabCommit.committed_date, // Include committed_date for GitLab commits
+      };
+      return normalized;
+    } catch (error) {
+      console.error("Error normalizing GitLab commit:", error, gitlabCommit);
+      throw error;
+    }
   }
 
   private normalizeGitLabBranch(gitlabBranch: GitLabBranch): GitBranch {
@@ -124,12 +133,27 @@ export class GitService {
         pat,
         since,
       );
-      return commits.map((c) => this.normalizeGitLabCommit(c));
+      const normalized = commits.map((c) => this.normalizeGitLabCommit(c));
+      return normalized;
     }
     throw new Error(`Unsupported provider: ${provider}`);
   }
 
   detectProviderFromUrl(url: string): GitProvider {
     return this.detectProvider(url);
+  }
+
+  async fetchCommitDiff(
+    repositoryUrl: string,
+    provider: GitProvider,
+    sha: string,
+    pat?: string,
+  ): Promise<string> {
+    if (provider === "github") {
+      return await this.githubService.fetchCommitDiff(repositoryUrl, sha, pat);
+    } else if (provider === "gitlab") {
+      return await this.gitlabService.fetchCommitDiff(repositoryUrl, sha, pat);
+    }
+    throw new Error(`Unsupported provider: ${provider}`);
   }
 }

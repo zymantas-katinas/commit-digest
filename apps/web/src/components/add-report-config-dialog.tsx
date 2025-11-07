@@ -71,6 +71,9 @@ const reportConfigSchema = z.object({
   if_no_updates: z
     .boolean()
     .default(REPORT_CONFIGURATION_DEFAULTS.IF_NO_UPDATES),
+  include_diffs: z
+    .boolean()
+    .default(REPORT_CONFIGURATION_DEFAULTS.INCLUDE_DIFFS),
 });
 
 type ReportConfigFormData = z.infer<typeof reportConfigSchema>;
@@ -118,6 +121,7 @@ export function AddReportConfigDialog({
       author_display: REPORT_CONFIGURATION_DEFAULTS.AUTHOR_DISPLAY,
       link_to_commits: REPORT_CONFIGURATION_DEFAULTS.LINK_TO_COMMITS,
       if_no_updates: REPORT_CONFIGURATION_DEFAULTS.IF_NO_UPDATES,
+      include_diffs: REPORT_CONFIGURATION_DEFAULTS.INCLUDE_DIFFS,
     },
     mode: "onSubmit",
   });
@@ -430,6 +434,23 @@ export function AddReportConfigDialog({
                       checked={watch("link_to_commits")}
                       onCheckedChange={(checked) =>
                         setValue("link_to_commits", checked)
+                      }
+                      disabled={createMutation.isPending}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="include_diffs">Include Code Diffs</Label>
+                      <p className="text-sm text-gray-500">
+                        Include code changes (diffs) in the report for deeper analysis
+                      </p>
+                    </div>
+                    <Switch
+                      id="include_diffs"
+                      checked={watch("include_diffs")}
+                      onCheckedChange={(checked) =>
+                        setValue("include_diffs", checked)
                       }
                       disabled={createMutation.isPending}
                     />

@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { ChatOpenAI } from "@langchain/openai";
 import { PromptTemplate } from "langchain/prompts";
-import { GitHubCommit } from "./github.service";
+import { GitCommit } from "./git.service";
 
 export const MODEL_NAME = "gpt-4.1-mini";
 
@@ -26,6 +26,7 @@ export interface ReportConfigSettings {
   toneOfVoice: string; // 'Professional', 'Informative', 'Friendly & Casual'
   authorDisplay: boolean; // true = show author names, false = hide
   linkToCommits: boolean; // true = include commit links, false = don't include
+  includeDiffs?: boolean; // true = include code diffs, false = don't include
   repositoryUrl?: string; // GitHub repository URL for constructing commit links
 }
 
@@ -44,7 +45,7 @@ export class LLMService {
   }
 
   async generateCommitSummary(
-    commits: GitHubCommit[],
+    commits: GitCommit[],
     timeframe: string,
     config?: ReportConfigSettings,
   ): Promise<LLMSummaryResult> {
@@ -70,6 +71,7 @@ export class LLMService {
         config?.reportStyle === "Summary"
           ? false
           : (config?.linkToCommits ?? false),
+      includeDiffs: config?.includeDiffs ?? false,
       repositoryUrl: config?.repositoryUrl,
     };
 
@@ -90,11 +92,18 @@ export class LLMService {
       maxCommits = Math.min(maxCommits, 15);
     }
 
+    // If diffs are enabled, be very conservative due to large token usage
+    if (settings.includeDiffs) {
+      maxCommits = Math.min(maxCommits, 10);
+    }
+
     const limitedCommits = commits.slice(0, maxCommits);
     if (commits.length > maxCommits) {
-      const reason = settings.linkToCommits
-        ? "(reduced due to link inclusion)"
-        : `(${settings.reportStyle} style limit)`;
+      const reason = settings.includeDiffs
+        ? "(reduced due to diff inclusion)"
+        : settings.linkToCommits
+          ? "(reduced due to link inclusion)"
+          : `(${settings.reportStyle} style limit)`;
       console.warn(
         `Limited commits from ${commits.length} to ${maxCommits} ${reason}`,
       );
@@ -122,9 +131,28 @@ export class LLMService {
           commitLine += ` [${sha}](${commitUrl})`;
         }
 
+        // Add diff if enabled and available
+        if (settings.includeDiffs) {
+          if (commit.diff) {
+            // Truncate very long diffs to avoid token limits
+            const maxDiffLength = 2000;
+            const truncatedDiff =
+              commit.diff.length > maxDiffLength
+                ? commit.diff.substring(0, maxDiffLength) +
+                  "\n... (diff truncated)"
+                : commit.diff;
+            commitLine += `\n\n\`\`\`diff\n${truncatedDiff}\n\`\`\``;
+          } else {
+            // Log warning if diff was requested but not available
+            console.warn(
+              `Diff requested for commit ${commit.sha} but diff not available`,
+            );
+          }
+        }
+
         return commitLine;
       })
-      .join("\n");
+      .join("\n\n");
 
     // Build prompt based on configuration settings
     const styleInstructions = this.getStyleInstructions(settings.reportStyle);
@@ -136,7 +164,7 @@ export class LLMService {
 
 ${toneInstructions}
 
-Given the following commit messages, create a report in **markdown format**.
+Given the following commit messages${settings.includeDiffs ? " and code diffs" : ""}, create a report in **markdown format**.
 
 ${styleInstructions}
 
@@ -149,8 +177,9 @@ IMPORTANT RULES:
 - If there's only one trivial change, just show it simply without headers
 - Use ## for section headers only when needed for organization
 - Adapt your approach based on the style requirements above
+${settings.includeDiffs ? "- When diffs are included, analyze the actual code changes, not just commit messages\n- Focus on what changed in the code and the impact of those changes" : ""}
 
-Commit Messages:
+Commit Messages${settings.includeDiffs ? " and Diffs" : ""}:
 {commitMessages}
 
 Write ONLY the report content in markdown - no meta-commentary, no main title.`,
@@ -161,6 +190,14 @@ Write ONLY the report content in markdown - no meta-commentary, no main title.`,
       const prompt = await promptTemplate.format({
         commitMessages,
       });
+
+      // Log if diffs are included for debugging
+      if (settings.includeDiffs) {
+        const commitsWithDiffs = limitedCommits.filter((c) => c.diff);
+        console.log(
+          `[LLM] Generating report with ${commitsWithDiffs.length}/${limitedCommits.length} commits having diffs`,
+        );
+      }
 
       const response = await this.llm.invoke(prompt);
 
@@ -253,6 +290,13 @@ Use simple, direct language that's easy to understand. Include relevant details 
     } else {
       instructions +=
         "- Commit links are included in the data - you may reference them if relevant\n";
+    }
+
+    if (settings.includeDiffs) {
+      instructions +=
+        "- Code diffs are included - analyze the actual changes made in the code\n";
+      instructions +=
+        "- Focus on what changed technically and the implications of those changes\n";
     }
 
     return instructions;

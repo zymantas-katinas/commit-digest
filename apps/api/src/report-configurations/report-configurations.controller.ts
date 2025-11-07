@@ -227,6 +227,7 @@ export class ReportConfigurationsController {
       }
 
       let commits = [];
+      let commitsWithDiffs: any[] = [];
       let summaryResult = null;
       let webhookSuccess = false;
       let errorType = null;
@@ -262,15 +263,28 @@ export class ReportConfigurationsController {
           };
         }
 
+        // Fetch diffs if enabled
+        const includeDiffs = config.include_diffs ?? false;
+        commitsWithDiffs = commits;
+        if (includeDiffs) {
+          commitsWithDiffs = await this.fetchCommitsWithDiffs(
+            commits,
+            repository.github_url,
+            provider,
+            pat,
+          );
+        }
+
         // Generate summary
         summaryResult = await this.llmService.generateCommitSummary(
-          commits,
+          commitsWithDiffs,
           "week",
           {
             reportStyle: config.report_style || "Standard",
             toneOfVoice: config.tone_of_voice || "Informative",
             authorDisplay: config.author_display ?? false,
             linkToCommits: config.link_to_commits ?? false,
+            includeDiffs: includeDiffs,
             repositoryUrl: repository.github_url,
           },
         );
@@ -306,7 +320,7 @@ export class ReportConfigurationsController {
       // Try to send webhook
       try {
         const repoName = this.extractRepoName(repository.github_url);
-        const testReport = `🧪 **Code Report** - ${repoName}/${config.branch} • ${commits.length} commit${commits.length === 1 ? "" : "s"} • last 7 days\n\n${summaryResult.summary}`;
+        const testReport = `🧪 **Code Report** - ${repoName}/${config.branch} • ${commitsWithDiffs.length} commit${commitsWithDiffs.length === 1 ? "" : "s"} • last 7 days\n\n${summaryResult.summary}`;
 
         webhookSuccess = await this.notificationService.sendWebhook(
           config.webhook_url,
@@ -314,7 +328,7 @@ export class ReportConfigurationsController {
           {
             repository: repository.github_url,
             branch: config.branch,
-            commitsCount: commits.length,
+            commitsCount: commitsWithDiffs.length,
             dateRange: {
               since: new Date(
                 Date.now() - 7 * 24 * 60 * 60 * 1000,
@@ -448,6 +462,7 @@ export class ReportConfigurationsController {
       });
 
       let commits = [];
+      let commitsWithDiffs: any[] = [];
       let summaryResult = null;
       let webhookSuccess = false;
       let errorType = null;
@@ -489,10 +504,26 @@ export class ReportConfigurationsController {
         }
 
         // Filter commits to the specified date range (since fetchCommits only supports since parameter)
+        // For GitLab commits, use committed_date; for GitHub, use authored_date
         commits = commits.filter((commit) => {
-          const commitDate = new Date(commit.commit.author.date);
+          // Use committed_date if available (GitLab), otherwise use authored_date (GitHub)
+          const commitDate = new Date(
+            commit.committed_date || commit.commit.author.date,
+          );
           return commitDate >= fromDate && commitDate <= toDate;
         });
+
+        // Fetch diffs if enabled
+        const includeDiffs = config.include_diffs ?? false;
+        commitsWithDiffs = commits;
+        if (includeDiffs) {
+          commitsWithDiffs = await this.fetchCommitsWithDiffs(
+            commits,
+            repository.github_url,
+            provider,
+            pat,
+          );
+        }
 
         // Determine period type based on date range
         let periodType = "custom";
@@ -506,13 +537,14 @@ export class ReportConfigurationsController {
 
         // Generate summary
         summaryResult = await this.llmService.generateCommitSummary(
-          commits,
+          commitsWithDiffs,
           periodType,
           {
             reportStyle: config.report_style || "Standard",
             toneOfVoice: config.tone_of_voice || "Informative",
             authorDisplay: config.author_display ?? false,
             linkToCommits: config.link_to_commits ?? false,
+            includeDiffs: includeDiffs,
             repositoryUrl: repository.github_url,
           },
         );
@@ -555,7 +587,7 @@ export class ReportConfigurationsController {
       // Try to send webhook
       try {
         const repoName = this.extractRepoName(repository.github_url);
-        const manualReport = `⚡ **Code Report** - ${repoName}/${config.branch} • ${commits.length} commit${commits.length === 1 ? "" : "s"} • ${this.formatCompactDateRange(fromDate, toDate)}\n\n${summaryResult.summary}`;
+        const manualReport = `⚡ **Code Report** - ${repoName}/${config.branch} • ${commitsWithDiffs.length} commit${commitsWithDiffs.length === 1 ? "" : "s"} • ${this.formatCompactDateRange(fromDate, toDate)}\n\n${summaryResult.summary}`;
 
         webhookSuccess = await this.notificationService.sendWebhook(
           config.webhook_url,
@@ -563,7 +595,7 @@ export class ReportConfigurationsController {
           {
             repository: repository.github_url,
             branch: config.branch,
-            commitsCount: commits.length,
+            commitsCount: commitsWithDiffs.length,
             dateRange: {
               since: fromDate.toISOString(),
               until: toDate.toISOString(),
@@ -597,10 +629,11 @@ export class ReportConfigurationsController {
       await this.reportRunsService.markRunAsSuccess(reportRun.id, userId, {
         tokens_used: summaryResult?.tokensUsed || 0,
         cost_usd: summaryResult?.costUsd || 0,
-        commits_processed: commits.length,
+        commits_processed: commitsWithDiffs.length,
         commit_range_from:
-          commits[commits.length - 1]?.sha || fromDate.toISOString(),
-        commit_range_to: commits[0]?.sha || toDate.toISOString(),
+          commitsWithDiffs[commitsWithDiffs.length - 1]?.sha ||
+          fromDate.toISOString(),
+        commit_range_to: commitsWithDiffs[0]?.sha || toDate.toISOString(),
         report_content: summaryResult.summary,
       });
 
@@ -610,7 +643,7 @@ export class ReportConfigurationsController {
           ? "Manual report generated and sent successfully"
           : errorMessage,
         errorType: webhookSuccess ? null : errorType,
-        commitsFound: commits.length,
+        commitsFound: commitsWithDiffs.length,
         webhookSent: webhookSuccess,
         dateRange: {
           since: fromDate.toISOString(),
@@ -677,6 +710,45 @@ export class ReportConfigurationsController {
     } catch {
       return repositoryUrl;
     }
+  }
+
+  /**
+   * Fetch diffs for commits
+   */
+  private async fetchCommitsWithDiffs(
+    commits: any[],
+    repositoryUrl: string,
+    provider: GitProvider,
+    pat?: string,
+  ): Promise<any[]> {
+    const commitsWithDiffs = await Promise.all(
+      commits.map(async (commit) => {
+        try {
+          const diff = await this.gitService.fetchCommitDiff(
+            repositoryUrl,
+            provider,
+            commit.sha,
+            pat,
+          );
+          return { ...commit, diff };
+        } catch (error) {
+          // Log warning but return commit without diff if fetch fails
+          console.warn(
+            `Failed to fetch diff for commit ${commit.sha}: ${error.message}`,
+          );
+          // Return commit without diff if fetch fails
+          return commit;
+        }
+      }),
+    );
+
+    // Log how many commits have diffs
+    const commitsWithDiffsCount = commitsWithDiffs.filter((c) => c.diff).length;
+    console.log(
+      `[ManualTrigger] Fetched diffs: ${commitsWithDiffsCount}/${commits.length} commits have diffs`,
+    );
+
+    return commitsWithDiffs;
   }
 
   /**

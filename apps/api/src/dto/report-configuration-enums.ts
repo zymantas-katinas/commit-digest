@@ -20,4 +20,5 @@ export const REPORT_CONFIGURATION_DEFAULTS = {
   AUTHOR_DISPLAY: false, // false = hide author names, true = show author names
   LINK_TO_COMMITS: false,
   IF_NO_UPDATES: true, // true = send "No Updates" message, false = send nothing
+  INCLUDE_DIFFS: false, // false = don't include diffs, true = include diffs
 } as const;

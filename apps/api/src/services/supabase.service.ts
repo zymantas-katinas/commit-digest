@@ -33,6 +33,7 @@ export interface ReportConfiguration {
   author_display?: boolean;
   link_to_commits?: boolean;
   if_no_updates?: boolean;
+  include_diffs?: boolean;
 }
 
 export interface UsageStats {

@@ -190,6 +190,7 @@ export class SchedulerService {
           schedule: config.schedule,
           webhook_url: config.webhook_url,
           name: config.name,
+          include_diffs: config.include_diffs ?? false,
         },
         model_used: MODEL_NAME, // Default model
       });
@@ -246,6 +247,21 @@ export class SchedulerService {
         pat,
         sinceDate,
       );
+
+      this.logger.log(
+        `Fetched ${commits.length} commits for config ${configId} (provider: ${provider})`,
+      );
+
+      // Fetch diffs if enabled
+      const includeDiffs = config.include_diffs ?? false;
+      const commitsWithDiffs = includeDiffs
+        ? await this.fetchCommitsWithDiffs(
+            commits,
+            repository.github_url,
+            provider,
+            pat,
+          )
+        : commits;
 
       if (commits.length === 0) {
         this.logger.log(`No new commits found for config ${configId}`);
@@ -315,13 +331,14 @@ export class SchedulerService {
       // Generate summary
       const timeframe = this.isDailySchedule(config.schedule) ? "day" : "week";
       const summaryResult = await this.llmService.generateCommitSummary(
-        commits,
+        commitsWithDiffs,
         timeframe,
         {
           reportStyle: config.report_style || "Standard",
           toneOfVoice: config.tone_of_voice || "Informative",
           authorDisplay: config.author_display ?? false,
           linkToCommits: config.link_to_commits ?? false,
+          includeDiffs: includeDiffs,
           repositoryUrl: repository.github_url,
         },
       );
@@ -400,6 +417,37 @@ export class SchedulerService {
 
       await this.updateConfigurationStatus(config, "failed", null);
     }
+  }
+
+  /**
+   * Fetch diffs for commits
+   */
+  private async fetchCommitsWithDiffs(
+    commits: any[],
+    repositoryUrl: string,
+    provider: GitProvider,
+    pat?: string,
+  ): Promise<any[]> {
+    const commitsWithDiffs = await Promise.all(
+      commits.map(async (commit) => {
+        try {
+          const diff = await this.gitService.fetchCommitDiff(
+            repositoryUrl,
+            provider,
+            commit.sha,
+            pat,
+          );
+          return { ...commit, diff };
+        } catch (error) {
+          this.logger.warn(
+            `Failed to fetch diff for commit ${commit.sha}: ${error.message}`,
+          );
+          // Return commit without diff if fetch fails
+          return commit;
+        }
+      }),
+    );
+    return commitsWithDiffs;
   }
 
   /**

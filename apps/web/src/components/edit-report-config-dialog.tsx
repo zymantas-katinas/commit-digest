@@ -67,6 +67,9 @@ const reportConfigSchema = z.object({
   if_no_updates: z
     .boolean()
     .default(REPORT_CONFIGURATION_DEFAULTS.IF_NO_UPDATES),
+  include_diffs: z
+    .boolean()
+    .default(REPORT_CONFIGURATION_DEFAULTS.INCLUDE_DIFFS),
 });
 
 type EditReportConfigFormData = z.infer<typeof reportConfigSchema>;
@@ -88,6 +91,7 @@ interface ReportConfiguration {
   author_display?: boolean;
   link_to_commits?: boolean;
   if_no_updates?: boolean;
+  include_diffs?: boolean;
 }
 
 interface EditReportConfigDialogProps {
@@ -177,6 +181,11 @@ export function EditReportConfigDialog({
         "if_no_updates",
         configuration.if_no_updates ??
           REPORT_CONFIGURATION_DEFAULTS.IF_NO_UPDATES,
+      );
+      setValue(
+        "include_diffs",
+        configuration.include_diffs ??
+          REPORT_CONFIGURATION_DEFAULTS.INCLUDE_DIFFS,
       );
 
       // Handle schedule
@@ -446,6 +455,23 @@ export function EditReportConfigDialog({
                       checked={watch("link_to_commits")}
                       onCheckedChange={(checked) =>
                         setValue("link_to_commits", checked)
+                      }
+                      disabled={updateMutation.isPending}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="include_diffs">Include Code Diffs</Label>
+                      <p className="text-sm text-gray-500">
+                        Include code changes (diffs) in the report for deeper analysis
+                      </p>
+                    </div>
+                    <Switch
+                      id="include_diffs"
+                      checked={watch("include_diffs")}
+                      onCheckedChange={(checked) =>
+                        setValue("include_diffs", checked)
                       }
                       disabled={updateMutation.isPending}
                     />

@@ -243,4 +243,74 @@ export class GitLabService {
       );
     }
   }
+
+  async fetchCommitDiff(
+    gitlabUrl: string,
+    sha: string,
+    pat?: string,
+  ): Promise<string> {
+    try {
+      const projectPath = this.extractProjectPath(gitlabUrl);
+
+      const apiUrl = `https://gitlab.com/api/v4/projects/${projectPath}/repository/commits/${sha}/diff`;
+
+      const headers: any = {
+        "User-Agent": "CommitDigest",
+      };
+
+      const token =
+        pat && pat.trim()
+          ? pat
+          : this.configService.get<string>("GITLAB_TOKEN");
+
+      if (token) {
+        headers["PRIVATE-TOKEN"] = token;
+      }
+
+      const response = await axios.get(apiUrl, {
+        headers,
+      });
+
+      // GitLab returns an array of file diffs, we need to format them
+      const diffs = response.data;
+      console.log({
+        diffs,
+      });
+      if (!Array.isArray(diffs) || diffs.length === 0) {
+        return "";
+      }
+    } catch (error) {
+      console.log({
+        error,
+      });
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          if (pat && pat.trim()) {
+            throw new HttpException(
+              "Invalid GitLab token",
+              HttpStatus.UNAUTHORIZED,
+            );
+          } else {
+            throw new HttpException(
+              "This repository is private and requires a Personal Access Token",
+              HttpStatus.UNAUTHORIZED,
+            );
+          }
+        }
+        if (error.response?.status === 403) {
+          throw new HttpException(
+            "GitLab API rate limit exceeded or access forbidden",
+            HttpStatus.TOO_MANY_REQUESTS,
+          );
+        }
+        if (error.response?.status === 404) {
+          throw new HttpException("Commit not found", HttpStatus.NOT_FOUND);
+        }
+      }
+      throw new HttpException(
+        "Failed to fetch commit diff from GitLab",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

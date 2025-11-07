@@ -58,4 +58,8 @@ export class UpdateReportConfigurationDto {
   @IsBoolean()
   @IsOptional()
   if_no_updates?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  include_diffs?: boolean;
 }

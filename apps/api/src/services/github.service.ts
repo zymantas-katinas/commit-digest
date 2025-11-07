@@ -17,6 +17,11 @@ export interface GitHubCommit {
   } | null;
 }
 
+export interface CommitDiff {
+  sha: string;
+  diff: string;
+}
+
 export interface GitHubBranch {
   name: string;
   commit: {
@@ -280,6 +285,89 @@ export class GitHubService {
       }
       throw new HttpException(
         "Failed to fetch commits from GitHub",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async fetchCommitDiff(
+    githubUrl: string,
+    sha: string,
+    pat?: string,
+  ): Promise<string> {
+    try {
+      // Extract owner and repo from GitHub URL
+      const urlParts = githubUrl.replace("https://github.com/", "").split("/");
+      if (urlParts.length < 2) {
+        throw new Error("Invalid GitHub URL format");
+      }
+
+      const owner = urlParts[0];
+      const repo = urlParts[1].replace(".git", "");
+
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/commits/${sha}`;
+      
+      const headers: any = {
+        Accept: "application/vnd.github.v3.diff",
+        "User-Agent": "CommitDigest",
+      };
+
+      // Use provided PAT or fallback to app's default GitHub token
+      const token =
+        pat && pat.trim()
+          ? pat
+          : this.configService.get<string>("GITHUB_TOKEN");
+
+      if (token) {
+        headers.Authorization = `token ${token}`;
+      }
+
+      // Fetch the diff directly
+      const diffResponse = await axios.get(apiUrl, {
+        headers,
+      });
+
+      return diffResponse.data;
+    } catch (error) {
+      console.log({
+        error,
+      });
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          if (pat && pat.trim()) {
+            throw new HttpException(
+              "Invalid GitHub token",
+              HttpStatus.UNAUTHORIZED,
+            );
+          } else {
+            throw new HttpException(
+              "This repository is private and requires a Personal Access Token",
+              HttpStatus.UNAUTHORIZED,
+            );
+          }
+        }
+        if (error.response?.status === 403) {
+          const resetTime = error.response?.headers["x-ratelimit-reset"];
+          let message = "GitHub API rate limit exceeded";
+
+          if (resetTime) {
+            const resetDate = new Date(parseInt(resetTime) * 1000);
+            message += `. Rate limit resets at ${resetDate.toISOString()}`;
+          }
+
+          if (!pat || !pat.trim()) {
+            message +=
+              ". Consider adding a Personal Access Token to increase rate limits.";
+          }
+
+          throw new HttpException(message, HttpStatus.TOO_MANY_REQUESTS);
+        }
+        if (error.response?.status === 404) {
+          throw new HttpException("Commit not found", HttpStatus.NOT_FOUND);
+        }
+      }
+      throw new HttpException(
+        "Failed to fetch commit diff from GitHub",
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
