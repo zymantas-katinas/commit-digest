@@ -1,0 +1,5 @@
+variables:
+  ENV_STAGE: |-
+    SUPABASE_URL: your_supabase_project_url
+    PORT: 3003
+    FRONTEND_URL: https://cd.cyberbutis.io

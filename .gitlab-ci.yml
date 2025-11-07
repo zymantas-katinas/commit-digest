@@ -1,0 +1,19 @@
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "merge_request_event"
+
+stages:
+  - deploy-stage
+
+variables:
+  SERVICE_NAME: commit-digest
+  ENV_FILE_NAME: .env.local
+  BD_PACKAGE_MANAGER: packagist
+
+include:
+  - project: 'decodo/templates/kubernetes-build'
+    ref: latest
+    file: build-stage.yml
+
+  - local: 'ci_templates/secrets.yml'
+  - local: 'ci_templates/env-stage.yml'
