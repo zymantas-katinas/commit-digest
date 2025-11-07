@@ -208,8 +208,17 @@ export function ReportConfigurationList({
     if (!repo) return "Unknown Repository";
 
     try {
-      const match = repo.github_url.match(/github\.com\/([^\/]+\/[^\/]+)/);
-      return match ? match[1] : repo.github_url;
+      if (repo.github_url.includes("github.com")) {
+        const match = repo.github_url.match(/github\.com\/([^\/]+\/[^\/]+)/);
+        return match ? match[1] : repo.github_url;
+      } else if (repo.github_url.includes("gitlab.com")) {
+        const urlObj = new URL(repo.github_url);
+        const path = urlObj.pathname
+          .replace(/^\/|\/$/g, "")
+          .replace(/\.git$/, "");
+        return path || repo.github_url;
+      }
+      return repo.github_url;
     } catch {
       return repo.github_url;
     }
@@ -354,7 +363,7 @@ export function ReportConfigurationList({
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-                        title="Open in GitHub"
+                        title="Open Repository"
                       >
                         <ExternalLink className="h-3 w-3" />
                       </a>
@@ -555,19 +564,18 @@ export function ReportConfigurationList({
                       {/* Error-specific help text */}
                       {!testResult.success && testResult.errorType && (
                         <div className="mt-2 p-2 bg-red-950/30 rounded text-xs">
-                          {testResult.errorType === "GITHUB_TOKEN_INVALID" && (
+                          {testResult.errorType === "TOKEN_INVALID" && (
                             <div>
                               <div className="font-medium text-red-300 mb-1">
                                 💡 How to fix:
                               </div>
                               <div className="text-red-100">
                                 Go to your repository settings and update the
-                                GitHub access token with a valid one.
+                                access token with a valid one.
                               </div>
                             </div>
                           )}
-                          {testResult.errorType ===
-                            "GITHUB_REPOSITORY_NOT_FOUND" && (
+                          {testResult.errorType === "REPOSITORY_NOT_FOUND" && (
                             <div>
                               <div className="font-medium text-red-300 mb-1">
                                 💡 How to fix:
@@ -677,7 +685,7 @@ export function ReportConfigurationList({
                           manualTriggerResult.errorType && (
                             <div className="mt-2 p-2 bg-red-950/30 rounded text-xs">
                               {manualTriggerResult.errorType ===
-                                "GITHUB_TOKEN_INVALID" && (
+                                "TOKEN_INVALID" && (
                                 <div>
                                   <div className="font-medium text-red-300 mb-1">
                                     💡 How to fix:
@@ -689,7 +697,7 @@ export function ReportConfigurationList({
                                 </div>
                               )}
                               {manualTriggerResult.errorType ===
-                                "GITHUB_REPOSITORY_NOT_FOUND" && (
+                                "REPOSITORY_NOT_FOUND" && (
                                 <div>
                                   <div className="font-medium text-red-300 mb-1">
                                     💡 How to fix:

@@ -23,8 +23,8 @@ const repositorySchema = z.object({
     .string()
     .url("Invalid URL")
     .refine(
-      (url) => url.includes("github.com"),
-      "Must be a GitHub repository URL",
+      (url) => url.includes("github.com") || url.includes("gitlab.com"),
+      "Must be a GitHub or GitLab repository URL",
     ),
   pat: z.string().optional(),
 });
@@ -105,10 +105,13 @@ export function EditRepositoryDialog({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="githubUrl">GitHub Repository URL</Label>
+            <Label htmlFor="githubUrl">Repository URL</Label>
             <Input
               id="githubUrl"
-              placeholder="https://github.com/username/repository"
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
+              placeholder="https://github.com/username/repository or https://gitlab.com/username/repository"
               {...register("githubUrl")}
               disabled={updateMutation.isPending}
             />
@@ -121,6 +124,9 @@ export function EditRepositoryDialog({
             <Label htmlFor="pat">Personal Access Token (PAT)</Label>
             <Input
               id="pat"
+              autoComplete="new-password"
+              data-1p-ignore
+              data-lpignore="true"
               type="password"
               placeholder="Leave empty to keep current token"
               {...register("pat")}

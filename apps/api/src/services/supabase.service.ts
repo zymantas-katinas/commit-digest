@@ -7,6 +7,7 @@ export interface Repository {
   id: string;
   user_id: string;
   github_url: string;
+  provider: string;
   encrypted_access_token: string;
   created_at: string;
   updated_at: string;
@@ -58,6 +59,7 @@ export class SupabaseService {
     userId: string,
     githubUrl: string,
     encryptedPat: string | null,
+    provider: string = "github",
   ): Promise<Repository> {
     const { data, error } = await this.supabase
       .from("repositories")
@@ -65,6 +67,7 @@ export class SupabaseService {
         user_id: userId,
         github_url: githubUrl,
         encrypted_access_token: encryptedPat,
+        provider: provider,
       })
       .select()
       .single();
@@ -100,6 +103,7 @@ export class SupabaseService {
     userId: string,
     updates: {
       github_url?: string;
+      provider?: string;
       encrypted_access_token?: string;
     },
   ): Promise<Repository> {

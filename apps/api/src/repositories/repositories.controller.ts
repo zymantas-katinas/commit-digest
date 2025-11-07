@@ -14,9 +14,9 @@ import {
 } from "@nestjs/common";
 import { SupabaseAuthGuard } from "../guards/supabase-auth.guard";
 import { SupabaseService } from "../services/supabase.service";
-import { GitHubService } from "../services/github.service";
+import { GitService } from "../services/git.service";
 import { EncryptionService } from "../services/encryption.service";
-import { CreateRepositoryDto } from "../dto/create-repository.dto";
+import { CreateRepositoryDto, GitProvider } from "../dto/create-repository.dto";
 import { UpdateRepositoryDto } from "../dto/update-repository.dto";
 
 @Controller("repositories")
@@ -24,7 +24,7 @@ import { UpdateRepositoryDto } from "../dto/update-repository.dto";
 export class RepositoriesController {
   constructor(
     private supabaseService: SupabaseService,
-    private githubService: GitHubService,
+    private gitService: GitService,
     private encryptionService: EncryptionService,
   ) {}
 
@@ -60,10 +60,15 @@ export class RepositoriesController {
         ? this.encryptionService.encrypt(createRepositoryDto.pat)
         : null;
 
+      const provider =
+        createRepositoryDto.provider ||
+        this.gitService.detectProviderFromUrl(createRepositoryDto.githubUrl);
+
       const repository = await this.supabaseService.createRepository(
         userId,
         createRepositoryDto.githubUrl,
         encryptedPat,
+        provider,
       );
 
       // Return repository without the encrypted PAT
@@ -136,9 +141,11 @@ export class RepositoriesController {
         );
       }
 
-      // Fetch branches from GitHub
-      const result = await this.githubService.fetchBranches(
+      const provider = (repository.provider || "github") as GitProvider;
+
+      const result = await this.gitService.fetchBranches(
         repository.github_url,
+        provider,
         pat,
         {
           search: search?.trim() || undefined,
@@ -177,11 +184,19 @@ export class RepositoriesController {
     try {
       const userId = req.user.id;
 
-      // Build update object
       const updates: any = {};
 
       if (updateRepositoryDto.githubUrl) {
         updates.github_url = updateRepositoryDto.githubUrl;
+        if (!updateRepositoryDto.provider) {
+          updates.provider = this.gitService.detectProviderFromUrl(
+            updateRepositoryDto.githubUrl,
+          );
+        }
+      }
+
+      if (updateRepositoryDto.provider) {
+        updates.provider = updateRepositoryDto.provider;
       }
 
       if (updateRepositoryDto.pat) {

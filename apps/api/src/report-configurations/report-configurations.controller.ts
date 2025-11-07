@@ -13,7 +13,7 @@ import {
 } from "@nestjs/common";
 import { SupabaseAuthGuard } from "../guards/supabase-auth.guard";
 import { SupabaseService } from "../services/supabase.service";
-import { GitHubService } from "../services/github.service";
+import { GitService } from "../services/git.service";
 import { LLMService, MODEL_NAME } from "../services/llm.service";
 import { NotificationService } from "../services/notification.service";
 import { EncryptionService } from "../services/encryption.service";
@@ -22,13 +22,14 @@ import { SchedulerService } from "../services/scheduler.service";
 import { CreateReportConfigurationDto } from "../dto/create-report-configuration.dto";
 import { UpdateReportConfigurationDto } from "../dto/update-report-configuration.dto";
 import { ManualTriggerDto } from "../dto/manual-trigger.dto";
+import { GitProvider } from "../dto/create-repository.dto";
 
 @Controller("report-configurations")
 @UseGuards(SupabaseAuthGuard)
 export class ReportConfigurationsController {
   constructor(
     private supabaseService: SupabaseService,
-    private githubService: GitHubService,
+    private gitService: GitService,
     private llmService: LLMService,
     private notificationService: NotificationService,
     private encryptionService: EncryptionService,
@@ -240,9 +241,11 @@ export class ReportConfigurationsController {
         // Calculate since date for testing (last 7 days for more commits)
         const sinceDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-        // Fetch commits
-        commits = await this.githubService.fetchCommits(
+        const provider = (repository.provider || "github") as GitProvider;
+
+        commits = await this.gitService.fetchCommits(
           repository.github_url,
+          provider,
           config.branch,
           pat,
           sinceDate,
@@ -274,17 +277,17 @@ export class ReportConfigurationsController {
       } catch (error) {
         if (error instanceof HttpException) {
           if (error.getStatus() === HttpStatus.UNAUTHORIZED) {
-            errorType = "GITHUB_TOKEN_INVALID";
+            errorType = "TOKEN_INVALID";
             errorMessage =
-              "GitHub token is invalid or expired. Please update your repository access token.";
+              "Access token is invalid or expired. Please update your repository access token.";
           } else if (error.getStatus() === HttpStatus.NOT_FOUND) {
-            errorType = "GITHUB_REPOSITORY_NOT_FOUND";
+            errorType = "REPOSITORY_NOT_FOUND";
             errorMessage =
-              "Repository not found on GitHub. Check if the repository URL and branch are correct.";
+              "Repository not found. Check if the repository URL and branch are correct.";
           } else {
-            errorType = "GITHUB_ERROR";
+            errorType = "GIT_ERROR";
             errorMessage =
-              "Failed to fetch commits from GitHub. Please check your repository settings.";
+              "Failed to fetch commits. Please check your repository settings.";
           }
         } else {
           errorType = "INTERNAL_ERROR";
@@ -455,9 +458,11 @@ export class ReportConfigurationsController {
           ? this.encryptionService.decrypt(repository.encrypted_access_token)
           : null;
 
-        // Fetch commits for the specified date range
-        commits = await this.githubService.fetchCommits(
+        const provider = (repository.provider || "github") as GitProvider;
+
+        commits = await this.gitService.fetchCommits(
           repository.github_url,
+          provider,
           config.branch,
           pat,
           fromDate,
@@ -513,17 +518,17 @@ export class ReportConfigurationsController {
       } catch (error) {
         if (error instanceof HttpException) {
           if (error.getStatus() === HttpStatus.UNAUTHORIZED) {
-            errorType = "GITHUB_TOKEN_INVALID";
+            errorType = "TOKEN_INVALID";
             errorMessage =
-              "GitHub token is invalid or expired. Please update your repository access token.";
+              "Access token is invalid or expired. Please update your repository access token.";
           } else if (error.getStatus() === HttpStatus.NOT_FOUND) {
-            errorType = "GITHUB_REPOSITORY_NOT_FOUND";
+            errorType = "REPOSITORY_NOT_FOUND";
             errorMessage =
-              "Repository not found on GitHub. Check if the repository URL and branch are correct.";
+              "Repository not found. Check if the repository URL and branch are correct.";
           } else {
-            errorType = "GITHUB_ERROR";
+            errorType = "GIT_ERROR";
             errorMessage =
-              "Failed to fetch commits from GitHub. Please check your repository settings.";
+              "Failed to fetch commits. Please check your repository settings.";
           }
         } else {
           errorType = "INTERNAL_ERROR";
@@ -656,15 +661,19 @@ export class ReportConfigurationsController {
     }
   }
 
-  /**
-   * Extract repository name from GitHub URL
-   */
-  private extractRepoName(githubUrl: string): string {
+  private extractRepoName(repositoryUrl: string): string {
     try {
-      const match = githubUrl.match(/github\.com\/([^\/]+\/[^\/]+)/);
-      return match ? match[1].replace(".git", "") : githubUrl;
+      if (repositoryUrl.includes("github.com")) {
+        const match = repositoryUrl.match(/github\.com\/([^\/]+\/[^\/]+)/);
+        return match ? match[1].replace(".git", "") : repositoryUrl;
+      } else if (repositoryUrl.includes("gitlab.com")) {
+        const url = new URL(repositoryUrl);
+        const path = url.pathname.replace(/^\/|\/$/g, "").replace(/\.git$/, "");
+        return path || repositoryUrl;
+      }
+      return repositoryUrl;
     } catch {
-      return githubUrl;
+      return repositoryUrl;
     }
   }
 

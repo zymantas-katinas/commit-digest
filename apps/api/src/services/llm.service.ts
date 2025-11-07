@@ -259,23 +259,26 @@ Use simple, direct language that's easy to understand. Include relevant details 
   }
 
   /**
-   * Build GitHub commit URL from repository URL and commit SHA
+   * Build commit URL from repository URL and commit SHA
    */
   private buildCommitUrl(repositoryUrl: string, sha: string): string {
     try {
-      // Extract owner/repo from GitHub URL
       const cleanUrl = repositoryUrl.replace(/\.git$/, "");
-      const match = cleanUrl.match(/github\.com\/([^\/]+\/[^\/]+)/);
 
-      if (match) {
-        const ownerRepo = match[1];
-        return `https://github.com/${ownerRepo}/commit/${sha}`;
+      if (cleanUrl.includes("github.com")) {
+        const match = cleanUrl.match(/github\.com\/([^\/]+\/[^\/]+)/);
+        if (match) {
+          const ownerRepo = match[1];
+          return `https://github.com/${ownerRepo}/commit/${sha}`;
+        }
+      } else if (cleanUrl.includes("gitlab.com")) {
+        const url = new URL(cleanUrl);
+        const path = url.pathname.replace(/^\/|\/$/g, "");
+        return `https://gitlab.com/${path}/-/commit/${sha}`;
       }
 
-      // Fallback if pattern doesn't match
       return `${cleanUrl}/commit/${sha}`;
     } catch {
-      // Fallback for any parsing errors
       return `${repositoryUrl}/commit/${sha}`;
     }
   }

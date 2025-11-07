@@ -1,12 +1,13 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
 import { SupabaseService } from "./supabase.service";
-import { GitHubService } from "./github.service";
+import { GitService } from "./git.service";
 import { LLMService, MODEL_NAME } from "./llm.service";
 import { NotificationService } from "./notification.service";
 import { EncryptionService } from "./encryption.service";
 import { ReportRunsService } from "./report-runs.service";
 import { isScheduleDue, parseNextRunTime } from "../utils/cron-utils";
+import { GitProvider } from "../dto/create-repository.dto";
 
 @Injectable()
 export class SchedulerService {
@@ -23,7 +24,7 @@ export class SchedulerService {
 
   constructor(
     private supabaseService: SupabaseService,
-    private githubService: GitHubService,
+    private gitService: GitService,
     private llmService: LLMService,
     private notificationService: NotificationService,
     private encryptionService: EncryptionService,
@@ -236,9 +237,11 @@ export class SchedulerService {
         lastRunAt: config.last_run_at,
       });
 
-      // Fetch commits
-      const commits = await this.githubService.fetchCommits(
+      const provider = (repository.provider || "github") as GitProvider;
+
+      const commits = await this.gitService.fetchCommits(
         repository.github_url,
+        provider,
         config.branch,
         pat,
         sinceDate,
@@ -485,15 +488,19 @@ export class SchedulerService {
     }
   }
 
-  /**
-   * Extract repository name from GitHub URL
-   */
-  private extractRepoName(githubUrl: string): string {
+  private extractRepoName(repositoryUrl: string): string {
     try {
-      const match = githubUrl.match(/github\.com\/([^\/]+\/[^\/]+)/);
-      return match ? match[1].replace(".git", "") : githubUrl;
+      if (repositoryUrl.includes("github.com")) {
+        const match = repositoryUrl.match(/github\.com\/([^\/]+\/[^\/]+)/);
+        return match ? match[1].replace(".git", "") : repositoryUrl;
+      } else if (repositoryUrl.includes("gitlab.com")) {
+        const url = new URL(repositoryUrl);
+        const path = url.pathname.replace(/^\/|\/$/g, "").replace(/\.git$/, "");
+        return path || repositoryUrl;
+      }
+      return repositoryUrl;
     } catch {
-      return githubUrl;
+      return repositoryUrl;
     }
   }
 

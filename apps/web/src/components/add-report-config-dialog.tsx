@@ -162,8 +162,17 @@ export function AddReportConfigDialog({
 
   const getRepositoryName = (url: string) => {
     try {
-      const match = url.match(/github\.com\/([^\/]+\/[^\/]+)/);
-      return match ? `${match[1]}` : url;
+      if (url.includes("github.com")) {
+        const match = url.match(/github\.com\/([^\/]+\/[^\/]+)/);
+        return match ? `${match[1]}` : url;
+      } else if (url.includes("gitlab.com")) {
+        const urlObj = new URL(url);
+        const path = urlObj.pathname
+          .replace(/^\/|\/$/g, "")
+          .replace(/\.git$/, "");
+        return path || url;
+      }
+      return url;
     } catch {
       return url;
     }

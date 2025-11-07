@@ -68,8 +68,17 @@ export function RepositoryList({
 
   const getRepoName = (url: string) => {
     try {
-      const match = url.match(/github\.com\/([^\/]+\/[^\/]+)/);
-      return match ? match[1] : url;
+      if (url.includes("github.com")) {
+        const match = url.match(/github\.com\/([^\/]+\/[^\/]+)/);
+        return match ? match[1] : url;
+      } else if (url.includes("gitlab.com")) {
+        const urlObj = new URL(url);
+        const path = urlObj.pathname
+          .replace(/^\/|\/$/g, "")
+          .replace(/\.git$/, "");
+        return path || url;
+      }
+      return url;
     } catch {
       return url;
     }
@@ -133,7 +142,7 @@ export function RepositoryList({
                   className="cursor-pointer"
                 >
                   <ExternalLink className="h-3 w-3 mr-2" />
-                  Open in GitHub
+                  Open Repository
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

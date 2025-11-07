@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
 import { SupabaseService } from "./supabase.service";
 import { GitHubService } from "./github.service";
+import { GitLabService } from "./gitlab.service";
+import { GitService } from "./git.service";
 import { LLMService } from "./llm.service";
 import { NotificationService } from "./notification.service";
 import { EncryptionService } from "./encryption.service";
@@ -11,6 +13,8 @@ import { ReportRunsService } from "./report-runs.service";
   providers: [
     SupabaseService,
     GitHubService,
+    GitLabService,
+    GitService,
     LLMService,
     NotificationService,
     EncryptionService,
@@ -20,6 +24,8 @@ import { ReportRunsService } from "./report-runs.service";
   exports: [
     SupabaseService,
     GitHubService,
+    GitLabService,
+    GitService,
     LLMService,
     NotificationService,
     EncryptionService,
